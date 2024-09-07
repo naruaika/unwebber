@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metadata -->
+    <meta charset="UTF-8">
+    <meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+    />
+    <meta
+        http-equiv="X-Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+    />
+
+    <title>Unwebber</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Main Top Bar -->
+    <div class="main-topbar__container">
+        <div class="main-topbar">
+
+            <!-- Application Menu Button -->
+            <button id="application-menu-button">
+                <div class="icon icon-unwebber application-logo"></div>
+            </button>
+
+            <!-- Application Titlebar -->
+            <div class="titlebar">
+                <div id="application-name">Welcome to Unwebber</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content__container">
+        <div class="main-content">
+            <div class="grid">
+                <!-- Start Section -->
+                <div class="rounded-box" id="start-section">
+                    <h2>Start</h2>
+                    <button onclick="window.app.project.create()">Create project</button>
+                    <button>Open project</button>
+                    <button>Clone repository</button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <span class="decoration">Start</span>
+                </div>
+
+                <!-- Recent Section -->
+                <div class="rounded-box" id="recent-section">
+                    <h2>Recent</h2>
+                    <button class="placeholder">Coming soon</button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <div class="decoration">Recent</div>
+                </div>
+
+                <!-- News Section -->
+                <div class="rounded-box" id="news-section">
+                    <h2>News</h2>
+                    <button class="placeholder">Coming soon</button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <div class="decoration">News</div>
+                </div>
+
+                <!-- Community Section -->
+                <div class="rounded-box" id="community-section">
+                    <h2>Community</h2>
+                    <button class="placeholder">Coming soon</button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <div class="decoration">Community</div>
+                </div>
+
+                <!-- Academy Section -->
+                <div class="rounded-box" id="academy-section">
+                    <h2>Academy</h2>
+                    <button class="placeholder">Coming soon</button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <button class="placeholder"></button>
+                    <div class="decoration">Academy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>

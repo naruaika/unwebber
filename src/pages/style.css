@@ -1,6 +1,11 @@
 :root {
     --color-base: #FFFFFF;
-    --color-gray: #555555;
+    --color-gray: #333333;
+    --color-blue: #0099ff;
+    --color-dark-blue: #0066cc;
+    --color-green: #89d185;
+    --color-dark-green: #16825d;
+    --color-orange: #CC6633;
 
     --color-primary: #252525;
     --color-secondary: #111111;
@@ -15,12 +20,45 @@
     --width-main-sidebar: 250px;
 
     --border-size: 1px;
+
+    --default-border: var(--border-size) solid var(--color-secondary);
 }
 
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--color-primary);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.scrollable {
+    overflow: auto;
+
+    &::-webkit-scrollbar {
+        width: 20px;
+    }
+
+    &::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: var(--color-primary);
+        border-left: var(--default-border);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--color-gray);
+        border: 4px solid var(--color-primary);
+        border-radius: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: var(--color-primary);
+    }
 }
 
 .main-topbar__container {
@@ -31,7 +69,7 @@ body {
     display: flex;
     position: absolute;
 
-    border-bottom: var(--border-size) solid var(--color-secondary);
+    border-bottom: var(--default-border);
 
     .main-topbar {
         height: 100%;
@@ -55,29 +93,41 @@ body {
         app-region: drag;
         user-select: none;
 
-        .button {
+        button {
             padding: 0 var(--padding-main-topbar);
 
             display: flex;
             align-items: center;
 
+            border: 0;
+            background-color: transparent;
+
             app-region: no-drag;
             -webkit-app-region: no-drag;
 
-            img {
+            &:hover {
+                background: var(--color-gray);
+            }
+
+            &.selected {
+                margin: 5px 0;
+                border-radius: 20px;
+                background: linear-gradient(135deg, var(--color-blue), var(--color-dark-blue));
+
+                &:hover {
+                    background: var(--color-blue);
+                }
+            }
+
+            .icon {
                 height: 16px;
                 width: 16px;
-                filter: invert(100%);
-            }
 
-            &:hover {
-                background-color: var(--color-ternary);
-            }
-        }
+                background: var(--color-base);
+                mask-size: cover;
 
-        .dropdown-icon {
-            height: 8px;
-            width: 8px;
+                pointer-events: none;
+            }
         }
 
         .titlebar {
@@ -100,7 +150,7 @@ body {
             flex-direction: row;
         }
 
-        .left-toolbar .application-logo {
+        #application-menu-button .application-logo {
             height: 24px;
             width: 24px;
         }
@@ -133,66 +183,32 @@ body {
             display: flex;
             flex-direction: column;
 
-            .main-canvas {
+            .main-canvas__container {
+                position: relative;
+
                 flex: 1;
+                display: flex;
+                background-color: var(--color-base);
 
-                /* background-color: var(--color-base); */
-
-                overflow: auto;
-
-                &::-webkit-scrollbar {
-                    width: 20px;
+                .main-canvas__overlay {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
                 }
 
-                &::-webkit-scrollbar {
-                    width: 12px;
-                }
-
-                &::-webkit-scrollbar-corner {
-                    background: var(--color-primary);
-                    border-left: 1px solid var(--color-secondary);
-                }
-
-                &::-webkit-scrollbar-thumb {
-                    background-color: var(--color-gray);
-                    border: 4px solid var(--color-primary);
-                    border-radius: 6px;
-                }
-
-                &::-webkit-scrollbar-track {
-                    background-color: var(--color-primary);
+                .main-canvas {
+                    width: 100%;
+                    height: 100%;
+                    box-sizing: border-box;
+                    border: 0;
                 }
             }
 
             .main-bottombar {
                 max-height: var(--height-main-bottombar);
-
-                border-top: var(--border-size) solid var(--color-secondary);
-
-                overflow: auto;
-
-                &::-webkit-scrollbar {
-                    width: 20px;
-                }
-
-                &::-webkit-scrollbar {
-                    width: 12px;
-                }
-
-                &::-webkit-scrollbar-corner {
-                    background: var(--color-primary);
-                    border-left: 1px solid var(--color-secondary);
-                }
-
-                &::-webkit-scrollbar-thumb {
-                    background-color: var(--color-gray);
-                    border: 4px solid var(--color-primary);
-                    border-radius: 6px;
-                }
-
-                &::-webkit-scrollbar-track {
-                    background-color: var(--color-primary);
-                }
+                border-top: var(--default-border);
             }
         }
 
@@ -205,47 +221,25 @@ body {
 
             background-color: var(--color-primary);
 
-            overflow-y: auto;
-
-            &::-webkit-scrollbar {
-                width: 20px;
-            }
-
-            &::-webkit-scrollbar {
-                width: 12px;
-            }
-
-            &::-webkit-scrollbar-corner {
-                background: var(--color-primary);
-                border-left: 1px solid var(--color-secondary);
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background-color: var(--color-gray);
-                border: 4px solid var(--color-primary);
-                border-radius: 6px;
-            }
-
-            &::-webkit-scrollbar-track {
-                background-color: var(--color-primary);
-            }
+            overflow-x: hidden;
         }
 
         .main-sidebar__left {
-            border-right: 1px solid var(--color-secondary);
+            border-right: var(--default-border);
         }
 
         .main-sidebar__right {
-            border-left: 1px solid var(--color-secondary);
+            border-left: var(--default-border);
         }
 
-        .main-sidebar__section {
+        .main-sidebar__panel,
+        .main-bottombar__panel {
             display: flex;
             flex-direction: column;
 
             transition: all 0.15s;
 
-            &.opened {
+            &.expanded {
                 flex: 1;
             }
 
@@ -262,46 +256,54 @@ body {
                 font-size: 12px;
                 font-weight: 400;
 
-                color: white;
+                color: var(--color-base);
                 background-color: var(--color-primary);
                 border: 0;
 
                 -webkit-user-select: none;
                 user-select: none;
 
-                &.opened {
-                    .dropdown-icon {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+
+                &:hover {
+                    background-color: var(--color-gray);
+                }
+
+                &.expanded {
+                    .icon-chevron-down {
                         transform: rotate(180deg);
                     }
                 }
 
-                &:hover {
-                    background-color: var(--color-ternary);
-                }
-
-                .dropdown-icon {
+                .icon {
+                    margin-right: -4px;
                     height: 16px;
                     width: 16px;
-                    filter: invert(100%);
-                    margin-right: -4px;
+
+                    background: var(--color-base);
+                    mask-size: cover;
+
+                    pointer-events: none;
                 }
             }
 
-            .content {
-                padding: 8px 14px;
+            .content__container {
+                padding: 8px;
 
                 display: none;
 
                 font-size: 12px;
                 font-weight: 400;
 
-                color: white;
+                color: var(--color-base);
                 background-color: var(--color-primary);
 
                 -webkit-user-select: none;
                 user-select: none;
 
-                &.opened {
+                &.expanded {
                     flex: 1;
 
                     height: fit-content;
@@ -309,12 +311,12 @@ body {
                     display: flex;
                     flex-direction: column;
 
-                    border-top: 1px solid var(--color-secondary);
+                    /* border-top: var(--default-border); */
                 }
             }
 
             &:not(:first-child) .header {
-                border-top: 1px solid var(--color-secondary);
+                border-top: var(--default-border);
             }
         }
     }
@@ -330,15 +332,28 @@ body {
         white-space: nowrap;
         text-overflow: ellipsis;
 
-        background-color: var(--color-primary);
-        border-top: 1px solid var(--color-secondary);
-
-        color: white;
+        color: var(--color-base);
         font-size: 11px;
+        font-weight: 400;
+        background-color: var(--color-dark-green);
 
         overflow: hidden;
 
         -webkit-user-select: none;
         user-select: none;
+
+        &.preview {
+            background-color: var(--color-orange);
+        }
     }
 }
+
+/* Icons */
+.icon-unwebber { mask: url('../../res/icons/unwebber.svg'); }
+.icon-chevron-down { mask: url('../../res/icons/chevron-down.svg'); }
+.icon-mouse-pointer { mask: url('../../res/icons/mouse-pointer.svg'); }
+.icon-code { mask: url('../../res/icons/code.svg'); }
+.icon-play { mask: url('../../res/icons/play.svg'); }
+.icon-monitor { mask: url('../../res/icons/monitor.svg'); }
+.icon-git-branch { mask: url('../../res/icons/git-branch.svg'); }
+.icon-settings { mask: url('../../res/icons/settings.svg'); }

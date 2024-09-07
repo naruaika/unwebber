@@ -1,0 +1,33 @@
+@import url('../style.css');
+
+#components-panel,
+#layouts-panel {
+    .content-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+
+        gap: 8px;
+
+        .content-option {
+            height: auto;
+            width: calc(50% - 2px - 4px);
+            aspect-ratio: 1;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--color-base);
+            background: var(--color-secondary);
+            border: var(--default-border);
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            &:hover {
+                background: var(--color-gray);
+            }
+        }
+    }
+}

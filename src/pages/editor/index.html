@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metadata -->
+    <meta charset="UTF-8">
+    <meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+    />
+    <meta
+        http-equiv="X-Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+    />
+
+    <title>Unwebber</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Main Top Bar -->
+    <div class="main-topbar__container">
+        <div class="main-topbar">
+
+            <!-- Application Titlebar -->
+            <div class="titlebar">
+                <div id="document-name">Untitled</div>
+            </div>
+
+            <!-- Left Toolbar -->
+            <div class="left-toolbar">
+
+                <!-- Application Menu Button -->
+                <button class="button button-setting" id="application-menu-button" onclick="window.app.project.close()">
+                    <div class="icon icon-unwebber application-logo"></div>
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+
+                <!-- Visual Edit Button -->
+                <button class="button button-action" id="visual-edit-button" data-action-group="edit-mode">
+                    <div class="icon icon-mouse-pointer"></div>
+                </button>
+
+                <!-- Code Edit Button -->
+                <button class="button button-action" id="code-edit-button" data-action-group="edit-mode">
+                    <div class="icon icon-code"></div>
+                </button>
+            </div>
+
+            <!-- Right Toolbar -->
+            <div class="right-toolbar">
+
+                <!-- Website Preview Button -->
+                <button class="button button-action" id="website-preview-button">
+                    <div class="icon icon-play"></div>
+                </button>
+
+                <!-- Document View Button -->
+                <button class="button button-setting" id="document-view-button">
+                    <div class="icon icon-monitor"></div>
+                </button>
+
+                <!-- Document Version Button -->
+                <button class="button button-setting" id="document-version-button">
+                    <div class="icon icon-git-branch"></div>
+                </button>
+
+                <!-- Document Setting Button -->
+                <button class="button button-setting" id="document-setting-button">
+                    <div class="icon icon-settings"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content__container">
+        <div class="main-content">
+
+            <!-- Main Left Sidebar -->
+            <div class="main-sidebar__left scrollable">
+
+                <!-- Components Panel -->
+                <div class="main-sidebar__panel" id="components-panel">
+                    <div class="header">
+                        <div class="title">Components</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </div>
+                    <div class="content__container">
+                        <div class="content-list">
+                            <!-- TODO: programmatically populate this content list -->
+                            <div class="content-option template-component" id="c-heading" draggable="true">Heading</div>
+                            <div class="content-option template-component" id="c-paragraph" draggable="true">Paragraph</div>
+                            <div class="content-option template-component" id="c-quote" draggable="true">Quote</div>
+                            <div class="content-option template-component" id="c-block-quote" draggable="true">Block Quote</div>
+                            <div class="content-option template-component" id="c-code-highlight" draggable="true">Code Highlight</div>
+                            <div class="content-option template-component" id="c-list" draggable="true">List</div>
+                            <div class="content-option template-component" id="c-button" draggable="true">Button</div>
+                            <div class="content-option template-component" id="c-link" draggable="true">Link</div>
+                            <div class="content-option template-component" id="c-table" draggable="true">Table</div>
+                            <div class="content-option template-component" id="c-image" draggable="true">Image</div>
+                            <div class="content-option template-component" id="c-video" draggable="true">Video</div>
+                            <div class="content-option template-component" id="c-form" draggable="true">Form</div>
+                            <div class="content-option template-component" id="c-input-box" draggable="true">Input Box</div>
+                            <div class="content-option template-component" id="c-text-area" draggable="true">Text Area</div>
+                            <div class="content-option template-component" id="c-check-box" draggable="true">Check Box</div>
+                            <div class="content-option template-component" id="c-radio-button" draggable="true">Radio Button</div>
+                            <div class="content-option template-component" id="c-inline-frame" draggable="true">Inline Frame</div>
+                            <div class="content-option template-component" id="c-maps" draggable="true">Maps</div>
+                            <div class="content-option template-component" id="c-basic-shape" draggable="true">Basic Shape</div>
+                            <div class="content-option template-component" id="c-divider" draggable="true">Divider</div>
+                            <div class="content-option template-component" id="c-spacer" draggable="true">Spacer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layouts Panel -->
+                <div class="main-sidebar__panel" id="layouts-panel">
+                    <button class="header">
+                        <div class="title">Layouts</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        <div class="content-list">
+                            <div class="content-option template-layout" id="l-tabs" draggable="true">Tabs</div>
+                            <div class="content-option template-layout" id="l-accordion" draggable="true">Accordion</div>
+                            <div class="content-option template-layout" id="l-carousel" draggable="true">Carousel</div>
+                            <div class="content-option template-layout" id="l-gallery" draggable="true">Gallery</div>
+                            <div class="content-option template-layout" id="l-video-playlist" draggable="true">Video Playlist</div>
+                            <div class="content-option template-layout" id="l-table-of-content" draggable="true">Table of Content</div>
+                            <div class="content-option template-layout" id="l-breadcrumb" draggable="true">Breadcrumb</div>
+                            <div class="content-option template-layout" id="l-post-navigation" draggable="true">Post Navigation</div>
+                            <div class="content-option template-layout" id="l-navigation-bar" draggable="true">Navigation Bar</div>
+                            <div class="content-option template-layout" id="l-footer-bar" draggable="true">Footer Bar</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assets Panel -->
+                <div class="main-sidebar__panel" id="assets-panel">
+                    <button class="header">
+                        <div class="title">Assets</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel">
+
+                <!-- Main Canvas -->
+                <div class="main-canvas__container scrollable">
+                    <div class="main-canvas__overlay hidden"></div>
+                    <iframe
+                        src=""
+                        title=""
+                        class="main-canvas"
+                        id="main-canvas"
+                        loading="lazy"
+                        frameborder="0"
+                        seamless
+                    ></iframe>
+                </div>
+
+                <!-- Main Bottombar -->
+                <div class="main-bottombar scrollable hidden">
+
+                    <!-- Timeline Panel -->
+                    <div class="main-bottombar__panel" id="timeline-panel">
+                        <button class="header">
+                            <div class="title">Timeline</div>
+                            <div class="icon icon-chevron-down"></div>
+                        </button>
+                        <div class="content__container">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Exercitationem facilis reiciendis, ut natus, repudiandae minus id dignissimos provident magni illo necessitatibus ex reprehenderit atque voluptas temporibus dolorum voluptate quasi. Laboriosam! Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aperiam sed deleniti voluptates? Nesciunt quibusdam delectus, quo soluta pariatur voluptatibus fugiat suscipit sapiente asperiores, optio provident hic? Nemo ipsa nobis odio. Lorem ipsum dolor sit amet consectetur adipisicing elit. Necessitatibus provident labore modi dicta molestias voluptas optio in corporis deleniti quia ducimus placeat voluptates voluptatem adipisci quas facilis facere, quasi ratione? Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nesciunt sint tempora exercitationem voluptatum non, veritatis perferendis veniam assumenda earum culpa eos incidunt reiciendis tenetur eligendi a. Laudantium aspernatur accusamus eum. Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic obcaecati aliquam ullam eos quod harum quis sint enim repellendus rerum? Dolore deleniti, fugiat molestiae officia aliquam nobis atque rerum quas! Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugit reiciendis atque, repellat non sunt cupiditate magnam magni commodi optio esse ea veritatis, quasi dolores? Repudiandae similique quia cumque impedit distinctio.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Right Sidebar -->
+            <div class="main-sidebar__right scrollable">
+
+                <!-- Properties Panel -->
+                <div class="main-sidebar__panel" id="properties-panel">
+                    <button class="header">
+                        <div class="title">Properties</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+
+                <!-- Animations Panel -->
+                <div class="main-sidebar__panel" id="animations-panel">
+                    <button class="header">
+                        <div class="title">Animations</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+
+                <!-- Events Panel -->
+                <div class="main-sidebar__panel" id="events-panel">
+                    <button class="header">
+                        <div class="title">Events</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+
+                <!-- Pages Panel -->
+                <div class="main-sidebar__panel" id="pages-panel">
+                    <button class="header">
+                        <div class="title">Pages</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+
+                <!-- Layers Panel -->
+                <div class="main-sidebar__panel" id="layers-panel">
+                    <button class="header">
+                        <div class="title">Layers</div>
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                    <div class="content__container">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus perspiciatis quia alias incidunt. In earum, autem vel sed doloremque quisquam quibusdam. Tenetur cupiditate iure temporibus assumenda ipsa dignissimos aperiam repudiandae!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Status Bar -->
+        <div class="main-statusbar">
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi iusto, consequuntur dolorem consequatur modi corrupti incidunt atque.
+        </div>
+    </div>
+</body>
+
+<!-- Scripts -->
+<script src="script.js"></script>
+</html>

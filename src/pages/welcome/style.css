@@ -1,0 +1,135 @@
+@import url('../style.css');
+
+.main-topbar__container {
+    border-bottom: 0;
+}
+
+.main-content__container {
+    .main-content {
+        padding: 30px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: var(--color-base);
+
+        .grid {
+            flex: 1;
+
+            height: 100%;
+            max-height: 600px;
+            max-width: 800px;
+
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+
+            .rounded-box {
+                flex: 1;
+
+                z-index: 1;
+                position: relative;
+                padding: 16px;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: end;
+                gap: 10px;
+
+                background-color: var(--color-ternary);
+                border: var(--border-size) solid var(--color-ternary);
+                border-radius: 200px;
+
+                font-size: 14px;
+
+                overflow: hidden;
+
+                -webkit-user-select: none;
+                user-select: none;
+
+                &:hover {
+                    border: var(--default-border);
+
+                    box-shadow: rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px;
+
+                    transform: scale(1.025);
+                    transition: all 0.15s;
+
+                    &:nth-of-type(1) {
+                        background-color: rgb(17, 120, 255);
+                    }
+                    &:nth-of-type(2) {
+                        background-color: rgb(130, 255, 119);
+                    }
+                    &:nth-of-type(3) {
+                        background-color: rgb(255, 80, 49);
+                    }
+                    &:nth-of-type(4) {
+                        background-color: rgb(167, 34, 255);
+                    }
+                    &:nth-of-type(5) {
+                        background-color: rgb(255, 19, 149);
+                    }
+
+                    h2 {
+                        transform: rotateZ(-90deg);
+                        transform-origin: left;
+                        transition: transform 0.25s;
+                    }
+
+                    button, div {
+                        color: #000;
+                    }
+
+                    .decoration {
+                        left: -40px;
+                        transition: all 1s;
+                    }
+                }
+
+                h2 {
+                    margin: 0;
+                    margin-bottom: 5px;
+                }
+
+                button {
+                    padding: 0;
+
+                    font-size: inherit;
+                    text-align: left;
+
+                    color: var(--color-blue);
+                    background-color: transparent;
+                    border: 0;
+
+                    cursor: pointer;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
+
+                .placeholder {
+                    width: 100%;
+                    height: 1rem;
+                    display: block;
+
+                    color: inherit;
+                    font-style: italic;
+                }
+
+                .decoration {
+                    position: absolute;
+                    top: 48%;
+                    left: -20px;
+
+                    font-size: 150px;
+                    color: var(--color-primary);
+
+                    z-index: -1;
+                }
+            }
+        }
+    }
+}

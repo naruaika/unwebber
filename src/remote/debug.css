@@ -17,9 +17,11 @@ body {
     min-height: 100vh;
 
     &::-webkit-scrollbar {
+        height: 20px;
         width: 20px;
     }
     &::-webkit-scrollbar {
+        height: 12px;
         width: 12px;
     }
     &::-webkit-scrollbar-corner {
@@ -45,17 +47,35 @@ body {
         cursor: default;
     }
     .uw-element-highlight,
-    .uw-element-hover {
+    .uw-element-hover,
+    .uw-element-skeleton,
+    .uw-element-parent-highlight,
+    .uw-element-parent-hover {
         position: absolute;
-        outline: 2px solid var(--color-blue);
-        outline-offset: -1px;
+        box-sizing: border-box;
+        border: 2px solid var(--color-blue);
         pointer-events: none;
+    }
+    .uw-element-highlight {
+        &.uw-element-highlight-editable {
+            border: 2px solid var(--color-orange) !important;
+            cursor: initial;
+
+            &::before {
+                background: var(--color-orange) !important;
+            }
+        }
+    }
+    .uw-element-hover {
+        border: 2px solid var(--color-light-blue);
+        z-index: 2;
 
         &::before {
-            /* TODO: set the absolute position offset programmatically */
+            display: none;
             position: absolute;
-            top: calc(-12px - 3px);
-            left: -1px;
+            box-sizing: border-box;
+            top: calc(-12px - 4px);
+            left: -2px;
             width: fit-content;
             padding: 0 4px;
             z-index: 1;
@@ -65,58 +85,27 @@ body {
             font-weight: 500;
             font-size: 12px;
             line-height: 16px;
-            background: var(--color-blue);
+            background: var(--color-light-blue);
             color: var(--color-base);
 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
 
-        &.uw-element-container-highlight {
-            &::before {
-                top: unset;
-                left: unset;
-                bottom: 0;
-                right: 0;
-            }
-        }
-    }
-    .uw-element-highlight {
-        z-index: 3;
-
-        &.uw-element-highlight-editable {
-            outline: 2px solid var(--color-orange) !important;
-            cursor: initial;
-
-            &::before {
-                background: var(--color-orange) !important;
-            }
+            pointer-events: none;
         }
     }
     .uw-element-parent-highlight,
     .uw-element-parent-hover {
-        position: absolute;
-        outline: 2px dashed var(--color-blue);
-        outline-offset: -1px;
-        pointer-events: none;
+        border: 2px dashed var(--color-blue);
     }
-    .uw-element-hover {
-        outline: 2px solid var(--color-light-blue);
-        z-index: 2;
+    .uw-element-skeleton {
+        pointer-events: all;
+        background-color: color-mix(in srgb, var(--color-blue), transparent 80%);
+    }
 
-        &::before {
-            background: var(--color-light-blue);
-        }
-    }
     [contenteditable="true"] {
         outline: none;
-    }
-
-    .uw-element-skeleton {
-        outline: 2px dashed var(--color-blue);
-        outline-offset: -1px;
-        background-color: color-mix(in srgb, var(--color-blue), transparent 80%);
     }
 
     .uw-element-paddings,

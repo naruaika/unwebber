@@ -1,7 +1,9 @@
 :root {
     --color-base: #FFFFFF;
     --color-gray: #333333;
+    --color-light-gray: #555555;
     --color-blue: #0099ff;
+    --color-light-blue: #66ccff;
     --color-dark-blue: #0066cc;
     --color-green: #89d185;
     --color-dark-green: #16825d;
@@ -39,10 +41,12 @@ body {
 
     &::-webkit-scrollbar {
         width: 20px;
+        height: 20px;
     }
 
     &::-webkit-scrollbar {
         width: 12px;
+        height: 12px;
     }
 
     &::-webkit-scrollbar-corner {
@@ -350,10 +354,13 @@ body {
 
 /* Icons */
 .icon-unwebber { mask: url('../../res/icons/unwebber.svg'); }
+.icon-box { mask: url('../../res/icons/box.svg'); }
 .icon-chevron-down { mask: url('../../res/icons/chevron-down.svg'); }
-.icon-mouse-pointer { mask: url('../../res/icons/mouse-pointer.svg'); }
 .icon-code { mask: url('../../res/icons/code.svg'); }
-.icon-play { mask: url('../../res/icons/play.svg'); }
-.icon-monitor { mask: url('../../res/icons/monitor.svg'); }
 .icon-git-branch { mask: url('../../res/icons/git-branch.svg'); }
+.icon-monitor { mask: url('../../res/icons/monitor.svg'); }
+.icon-mouse-pointer { mask: url('../../res/icons/mouse-pointer.svg'); }
+.icon-play { mask: url('../../res/icons/play.svg'); }
 .icon-settings { mask: url('../../res/icons/settings.svg'); }
+.icon-square { mask: url('../../res/icons/square.svg'); }
+.icon-type { mask: url('../../res/icons/type.svg'); }

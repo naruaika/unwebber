@@ -1,5 +1,5 @@
 var hoveredElement = null;
-var selectedElement = null;
+var selectedElement = null; // TODO: add support for multiple selection
 
 var elementToPaste = null;
 var elementSkeleton = null;
@@ -11,7 +11,7 @@ var elementParentHighlight = null;
 
 var mousePosition = { x: 0, y: 0, offsetX: 0, offsetY: 0, visible: true };
 
-const uniqueId = (type = 'element') => {
+const generateUniqueId = (type = 'element') => {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
@@ -77,47 +77,33 @@ const selectElement = (element) => {
     }
 
     // Send the selected element to the parent window
-    window.parent.postMessage({
-        type: 'element:selected',
-        payload: {
-            tagName: element.tagName,
-            id: element.id,
-            classList: Array.from(element.classList).filter(className => ! className.startsWith('uw-')),
-            innerHTML: element.innerHTML,
-            innerText: element.innerText,
-            outerHTML: element.outerHTML,
-            style: element.style.cssText,
-            boundingRect: element.getBoundingClientRect(),
-            paddings: {
-                top: parseInt(window.getComputedStyle(element).paddingTop),
-                right: parseInt(window.getComputedStyle(element).paddingRight),
-                bottom: parseInt(window.getComputedStyle(element).paddingBottom),
-                left: parseInt(window.getComputedStyle(element).paddingLeft),
-            },
-            margins: {
-                top: parseInt(window.getComputedStyle(element).marginTop),
-                right: parseInt(window.getComputedStyle(element).marginRight),
-                bottom: parseInt(window.getComputedStyle(element).marginBottom),
-                left: parseInt(window.getComputedStyle(element).marginLeft),
-            },
-            dataset: Object.assign({}, element.dataset),
-        },
-    }, '*');
+    sendSelectedElement();
+
+    // Hide the hover element
+    hideElementHover();
 };
 
-const copyElement = (element) => {
+const copyElement = () => {
+    if (selectedElement.tagName === 'BODY') {
+        return; // do nothing
+    }
+
     // Copy the selected element to the clipboard
-    elementToPaste = element.cloneNode(true);
+    elementToPaste = selectedElement.cloneNode(true);
 }
 
 const pasteElement = () => {
+    if (selectedElement.tagName === 'BODY') {
+        return; // do nothing
+    }
+
     // Generate a new id for the copied element
-    elementToPaste.id = uniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
+    elementToPaste.id = generateUniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
 
     // Loop through the copied element children recursively
     elementToPaste.querySelectorAll('*[id]').forEach(child => {
         // generate a new id for the copied element
-        child.id = uniqueId(child.id.split('-').slice(0, -1).join('-'));
+        child.id = generateUniqueId(child.id.split('-').slice(0, -1).join('-'));
     });
 
     // Paste the copied element from the clipboard
@@ -137,22 +123,26 @@ const pasteElement = () => {
     deleteElementHighlights();
 
     // Update the current selection
-    selectedElement = elementToPaste;
+    selectElement(elementToPaste);
 
     // Make the newly pasted element draggable
     makeElementDraggable(selectedElement);
-
-    // Add selection class to the clicked element
-    createElementHighlights();
 
     // Refresh the hover element
     refreshElementHover();
 
     // Copy the selected element to the clipboard
-    copyElement(selectedElement);
+    copyElement();
+
+    // Send the document tree to the parent window
+    sendDocumentTree();
 }
 
-const deleteElement = (element) => {
+const deleteElement = () => {
+    if (selectedElement.tagName === 'BODY') {
+        return; // do nothing
+    }
+
     // Remove selection class to the clicked elements
     deleteElementHighlights();
 
@@ -163,8 +153,14 @@ const deleteElement = (element) => {
     }
 
     // Remove the selected element
-    element.remove();
-    selectedElement = document.body;
+    selectedElement.remove();
+    selectedElement = null;
+
+    // Refresh the hover element
+    refreshElementHover();
+
+    // Send the document tree to the parent window
+    sendDocumentTree();
 }
 
 const makeElementDraggable = (element) => {
@@ -218,19 +214,25 @@ const makeElementNotEditable = (element) => {
     }
 }
 
-const refreshElementHover = () => {
-    // If the mouse is outside the viewport
-    if (! mousePosition.visible) {
-        // hide the hover element
-        hideElementHover();
-        return;
+const refreshElementHover = (element = null) => {
+    // If the hovered element is not defined
+    if (! element) {
+        // find the element over the mouse
+        element = document.elementFromPoint(mousePosition.x, mousePosition.y);
+
+        // and if the element over the mouse is null
+        if (! element) {
+            // hide the hover element
+            hideElementHover();
+            return;
+        }
     }
 
-    // Find the element over the mouse
-    hoveredElement = document.elementFromPoint(mousePosition.x, mousePosition.y);
+    // Update the hovered element
+    hoveredElement = element;
 
-    // If the element over the mouse is null
-    if (! hoveredElement) {
+    // If the element over the mouse is the selected element
+    if (hoveredElement === selectedElement) {
         // hide the hover element
         hideElementHover();
         return;
@@ -268,11 +270,17 @@ const refreshElementHover = () => {
     if (hoveredElement.id) {
         elementHover.dataset.title += ` #${hoveredElement.id}`;
     }
+
+    // Send the hovered element to the parent window
+    sendHoveredElement(hoveredElement);
 }
 
 const hideElementHover = () => {
     // Hide the hover element
     elementHover?.classList.add('hidden');
+
+    // Send the hovered element to the parent window
+    sendHoveredElement(null);
 }
 
 const createElementHighlights = () => {
@@ -358,6 +366,7 @@ const createElementSkeleton = (element) => {
     // Create a skeleton element to visualize the element being moved
     elementSkeleton = element.cloneNode(true);
     elementSkeleton.style.position = 'relative';
+    elementSkeleton.classList.add('uw-helper');
     element.parentElement.insertBefore(elementSkeleton, element.nextSibling);
 
     // Create a new element to highlight the skeleton element
@@ -368,8 +377,14 @@ const createElementSkeleton = (element) => {
     elementSkeletonHighlight.style.bottom = 0;
     elementSkeletonHighlight.style.right = 0;
     elementSkeletonHighlight.classList.add('uw-helper');
-    elementSkeletonHighlight.classList.add('uw-element-highlight');
+    elementSkeletonHighlight.classList.add('uw-element-skeleton');
     elementSkeleton.appendChild(elementSkeletonHighlight);
+
+    // If the element is a container
+    if (elementSkeleton.classList.contains('container')) {
+        // add a container class to the skeleton element
+        elementSkeletonHighlight.classList.add('uw-element-container-highlight');
+    }
 
     // Add a title to the highlight element
     elementSkeletonHighlight.dataset.title = elementSkeleton.tagName.toLowerCase();
@@ -407,38 +422,34 @@ const moveElementSkeleton = () => {
 
         // and if the container layout direction is left-to-right
         if (containerLayoutDirection.startsWith('row')) {
-            // and if the mouse position 1/3 of the left of the element over the mouse
+            // and if the mouse position 1/3 of the width from the left of the element over the mouse
             if (mousePosition.offsetX < hoveredElement.offsetLeft + hoveredElement.offsetWidth / 3) {
                 // move the skeleton element before the element over the mouse
                 hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
 
-            // and if the mouse position 1/3 of the right of the element over the mouse
+            // and if the mouse position 1/3 of the width from the right of the element over the mouse
             if (mousePosition.offsetX > hoveredElement.offsetLeft + hoveredElement.offsetWidth * 2 / 3) {
                 // move the skeleton element after the element over the mouse
                 hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement.nextSibling);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
         }
 
         // and if the container layout direction is top-to-bottom
         if (containerLayoutDirection.startsWith('column')) {
-            // and if the mouse position 1/3 of the top of the element over the mouse
+            // and if the mouse position 1/3 of the height from the top of the element over the mouse
             if (mousePosition.offsetY < hoveredElement.offsetTop + hoveredElement.offsetHeight / 3) {
                 // move the skeleton element before the element over the mouse
                 hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
 
-            // and if the mouse position 1/3 of the bottom of the element over the mouse
+            // and if the mouse position 1/3 of the height from the bottom of the element over the mouse
             if (mousePosition.offsetY > hoveredElement.offsetTop + hoveredElement.offsetHeight * 2 / 3) {
                 // move the skeleton element after the element over the mouse
                 hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement.nextSibling);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
         }
@@ -446,17 +457,72 @@ const moveElementSkeleton = () => {
 
     // If the element over the mouse is the container
     if (hoveredElement.classList.contains('container')) {
+        // and if the container inside another container
+        if (hoveredElement.parentElement?.classList.contains('container')) {
+            const containerStyle = window.getComputedStyle(hoveredElement.parentElement);
+            const containerLayoutDirection = containerStyle.flexDirection || containerStyle.gridAutoFlow || 'column';
+
+            // and if the container layout direction is left-to-right
+            if (containerLayoutDirection.startsWith('row')) {
+                // and if the mouse position 10px from the left of the element over the mouse
+                // or maximum 1/3 of the left padding width from the left if the element has padding
+                if (
+                    mousePosition.offsetX < hoveredElement.offsetLeft + 10 ||
+                    mousePosition.offsetX < hoveredElement.offsetLeft + parseInt(window.getComputedStyle(hoveredElement).paddingLeft) * 1 / 3
+                ) {
+                    // move the skeleton element outside before the container
+                    hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement);
+                    return;
+                }
+
+                // and if the mouse position 10px from the right of the element over the mouse
+                // or maximum 1/3 of the right padding width from the right if the element has padding
+                if (
+                    mousePosition.offsetX > hoveredElement.offsetLeft + hoveredElement.offsetWidth - 10 ||
+                    mousePosition.offsetX > hoveredElement.offsetLeft + hoveredElement.offsetWidth - parseInt(window.getComputedStyle(hoveredElement).paddingRight) * 1 / 3
+                ) {
+                    // move the skeleton element outside after the container
+                    hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement.nextSibling);
+                    return;
+                }
+            }
+
+            // and if the container layout direction is top-to-bottom
+            if (containerLayoutDirection.startsWith('column')) {
+                // and if the mouse position 10px from the top of the element over the mouse
+                // or maximum 1/3 of the top padding height from the top if the element has padding
+                if (
+                    mousePosition.offsetY < hoveredElement.offsetTop + 10 ||
+                    mousePosition.offsetY < hoveredElement.offsetTop + parseInt(window.getComputedStyle(hoveredElement).paddingTop) * 1 / 3
+                ) {
+                    // move the skeleton element outside before the container
+                    hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement);
+                    return;
+                }
+
+                // and if the mouse position 10px from the bottom of the element over the mouse
+                // or maximum 1/3 of the bottom padding height from the bottom if the element has padding
+                if (
+                    mousePosition.offsetY > hoveredElement.offsetTop + hoveredElement.offsetHeight - 10 ||
+                    mousePosition.offsetY > hoveredElement.offsetTop + hoveredElement.offsetHeight - parseInt(window.getComputedStyle(hoveredElement).paddingBottom) * 1 / 3
+                ) {
+                    // move the skeleton element outside after the container
+                    hoveredElement.parentElement.insertBefore(elementSkeleton, hoveredElement.nextSibling);
+                    return;
+                }
+            }
+        }
+
         // and if the container has no child elements
         if (hoveredElement.children.length === 0) {
             // move the skeleton element to the container
             hoveredElement.appendChild(elementSkeleton);
-            elementSkeleton.classList.remove('hidden');
             return;
         }
 
         // find out the layout direction of the container
         const containerStyle = window.getComputedStyle(hoveredElement);
-        const containerLayoutDirection = containerStyle.flexDirection || container.gridAutoFlow || 'column';
+        const containerLayoutDirection = containerStyle.flexDirection || containerStyle.gridAutoFlow || 'column';
 
         // and if the container layout direction is left-to-right
         if (containerLayoutDirection.startsWith('row')) {
@@ -479,13 +545,11 @@ const moveElementSkeleton = () => {
             if (! elementBeforeMouse) {
                 // move the skeleton element to the container
                 hoveredElement.insertBefore(elementSkeleton, hoveredElement.firstChild);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
 
             // move the skeleton element after the element before the mouse
             hoveredElement.insertBefore(elementSkeleton, elementBeforeMouse.nextSibling);
-            elementSkeleton.classList.remove('hidden');
         }
 
         // and if the container layout direction is top-to-bottom
@@ -509,13 +573,11 @@ const moveElementSkeleton = () => {
             if (! elementBeforeMouse) {
                 // move the skeleton element to the container
                 hoveredElement.insertBefore(elementSkeleton, hoveredElement.firstChild);
-                elementSkeleton.classList.remove('hidden');
                 return;
             }
 
             // move the skeleton element after the element before the mouse
             hoveredElement.insertBefore(elementSkeleton, elementBeforeMouse.nextSibling);
-            elementSkeleton.classList.remove('hidden');
         }
     }
 }
@@ -559,6 +621,9 @@ const moveElementToUpTree = (element) => {
             // scroll the window to the selected element
             scrollToElement(element);
 
+            // send the document tree to the parent window
+            sendDocumentTree();
+
             return;
         }
 
@@ -574,6 +639,9 @@ const moveElementToUpTree = (element) => {
         // scroll the window to the selected element
         scrollToElement(element);
 
+        // send the document tree to the parent window
+        sendDocumentTree();
+
         return;
     }
 
@@ -587,6 +655,9 @@ const moveElementToUpTree = (element) => {
 
         // refresh the highlight element
         refreshElementHighlight();
+
+        // send the document tree to the parent window
+        sendDocumentTree();
     }
 
     // Scroll the window to the selected element
@@ -618,6 +689,9 @@ const moveElementToDownTree = (element) => {
             // scroll the window to the selected element
             scrollToElement(element);
 
+            // send the document tree to the parent window
+            sendDocumentTree();
+
             return;
         }
 
@@ -633,6 +707,9 @@ const moveElementToDownTree = (element) => {
         // scroll the window to the selected element
         scrollToElement(element);
 
+        // send the document tree to the parent window
+        sendDocumentTree();
+
         return;
     }
 
@@ -646,6 +723,9 @@ const moveElementToDownTree = (element) => {
 
         // refresh the highlight element
         refreshElementHighlight();
+
+        // send the document tree to the parent window
+        sendDocumentTree();
     }
 
     // Scroll the window to the selected element
@@ -653,32 +733,95 @@ const moveElementToDownTree = (element) => {
 }
 
 const scrollToElement = (element) => {
-    // Scroll the window to the selected element
-    window.scrollTo(0, element.offsetTop - window.innerHeight / 2);
+    // If it is not already visible on the viewport
+    if (
+        element.offsetTop < window.scrollY
+        || element.offsetTop + element.offsetHeight > window.scrollY + window.innerHeight
+    ) {
+        // scroll the window to the selected element
+        window.scrollTo({
+            top: element.offsetTop - window.innerHeight / 2,
+            behavior: 'smooth'
+        });
+    }
+}
+
+const sendSelectedElement = () => {
+    // Send the selected element to the parent window
+    window.parent.postMessage({
+        type: 'element:select',
+        payload: {
+            tagName: selectedElement.tagName,
+            id: selectedElement.id,
+            classList: Array.from(selectedElement.classList).filter(className => ! className.startsWith('uw-')),
+            innerHTML: selectedElement.innerHTML,
+            innerText: selectedElement.innerText,
+            outerHTML: selectedElement.outerHTML,
+            style: selectedElement.style.cssText,
+            boundingRect: selectedElement.getBoundingClientRect(),
+            paddings: {
+                top: parseInt(window.getComputedStyle(selectedElement).paddingTop),
+                right: parseInt(window.getComputedStyle(selectedElement).paddingRight),
+                bottom: parseInt(window.getComputedStyle(selectedElement).paddingBottom),
+                left: parseInt(window.getComputedStyle(selectedElement).paddingLeft),
+            },
+            margins: {
+                top: parseInt(window.getComputedStyle(selectedElement).marginTop),
+                right: parseInt(window.getComputedStyle(selectedElement).marginRight),
+                bottom: parseInt(window.getComputedStyle(selectedElement).marginBottom),
+                left: parseInt(window.getComputedStyle(selectedElement).marginLeft),
+            },
+            dataset: Object.assign({}, selectedElement.dataset),
+        },
+    }, '*');
+}
+
+const sendHoveredElement = (element = null) => {
+    // Send the hovered element to the parent window
+    window.parent.postMessage({
+        type: 'element:hover',
+        payload: {
+            id: element?.id,
+        },
+    }, '*');
+}
+
+const sendDocumentTree = () => {
+    // Read the document tree
+    const readDocumentTree = (node) => {
+        return {
+            tagName: node.tagName,
+            id: node.id,
+            label: node.dataset.label || null,
+            children: Array
+                .from(node.children)
+                .filter(child =>
+                    ! child.classList.contains('uw-helper') &&
+                    child.tagName !== 'SCRIPT'
+                )
+                .map(child => readDocumentTree(child)),
+        };
+    };
+
+    // Send the document tree to the parent window
+    window.parent.postMessage({
+        type: 'document:tree',
+        payload: {
+            tree: readDocumentTree(document.body),
+        },
+    }, '*');
 }
 
 const onElementDragStart = (event) => {
     event.stopImmediatePropagation();
 
     //
-    event.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = 'move';
 
     // Create a transparent canvas to set as drag image
-    const canvas = document.createElement('canvas');
-    event.dataTransfer.setDragImage(canvas, 0, 0);
-    canvas.remove();
-
-    // Create a skeleton element to visualize the element being moved
-    createElementSkeleton(event.target);
-
-    // Hide the target element
-    window.requestAnimationFrame(() => event.target.classList.add('hidden'));
-
-    // Remove selection class to the clicked elements
-    deleteElementHighlights();
-
-    // Hide the hover element
-    hideElementHover();
+    const transparentCanvas = document.createElement('canvas');
+    event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
+    transparentCanvas.remove();
 }
 
 const onElementDragEnd = (event) => {
@@ -691,6 +834,9 @@ const onElementDragEnd = (event) => {
     if (hoveredElement !== event.target) {
         // move the target element before the skeleton element
         elementSkeleton.parentElement.insertBefore(event.target, elementSkeleton);
+
+        // send the document tree to the parent window
+        sendDocumentTree();
     }
 
     // Show the target element
@@ -698,9 +844,6 @@ const onElementDragEnd = (event) => {
 
     // Remove the skeleton element
     deleteElementSkeleton();
-
-    // Clear the helper variables
-    hoveredElement = null;
 
     // Add selection class to the clicked element
     createElementHighlights();
@@ -716,14 +859,29 @@ const onElementDragOver = (event) => {
 const onElementDrag = (event) => {
     event.stopImmediatePropagation();
 
-    // Check if the mouse has moved less than 5 pixels
-    // to prevent flickering when hovering over border elements
-    if (
-        Math.abs(event.clientX - mousePosition.x) < 5 &&
-        Math.abs(event.clientY - mousePosition.y) < 5
-    ) {
-        return; // do nothing
+    // If the target element is not hidden
+    if (! event.target.classList.contains('hidden')) {
+        // create a skeleton element to visualize the element being moved
+        createElementSkeleton(event.target);
+
+        // hide the target element
+        event.target.classList.add('hidden')
+
+        // remove selection class to the clicked elements
+        deleteElementHighlights();
+
+        // hide the hover element
+        hideElementHover();
     }
+
+    // // Check if the mouse has moved less than 5 pixels
+    // // to prevent flickering when hovering over border elements
+    // if (
+    //     Math.abs(event.clientX - mousePosition.x) < 5 &&
+    //     Math.abs(event.clientY - mousePosition.y) < 5
+    // ) {
+    //     return; // do nothing
+    // }
 
     // Update the mouse position
     mousePosition.x = event.clientX;
@@ -737,12 +895,6 @@ const onElementDrag = (event) => {
     // If the element over the mouse is null
     if (! hoveredElement) {
         return; // do nothing
-    }
-
-    // If the element over the mouse is the target element
-    if (hoveredElement === event.target) {
-        elementSkeleton.classList.add('hidden');
-        return;
     }
 
     // If the element over the mouse is the skeleton element
@@ -809,6 +961,9 @@ document.addEventListener('mousedown', event => {
 document.addEventListener('mouseenter', () => {
     // Update the mouse visibility
     mousePosition.visible = true;
+
+    // Refresh the hover element
+    refreshElementHover();
 });
 
 // Handler for mouse leave events
@@ -837,7 +992,7 @@ document.addEventListener('keydown', event => {
             selectedElement.tagName !== 'BODY'
         ) {
             // Delete the selected element
-            deleteElement(selectedElement);
+            deleteElement();
             return;
         }
     }
@@ -849,7 +1004,7 @@ document.addEventListener('keydown', event => {
             selectedElement.tagName !== 'BODY'
         ) {
             // Copy the selected element
-            copyElement(selectedElement);
+            copyElement();
             return;
         }
     }
@@ -931,4 +1086,91 @@ document.addEventListener('dragenter', event => {
 // Handler for window scroll events
 window.addEventListener('scroll', () => {
     refreshElementHighlight();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Send the document tree to the parent window
+    sendDocumentTree();
+});
+
+// Handler for receiving messages from the main window
+window.addEventListener('message', event => {
+    if (event.origin !== window.location.origin) {
+        return; // do nothing
+    }
+
+    if (event.data.type === 'element:copy') {
+        // Find the element by id
+        const element = document.getElementById(event.data.payload.id);
+
+        // If the element is found
+        if (element) {
+            // copy the selected element
+            copyElement();
+        }
+        return;
+    }
+
+    if (event.data.type === 'element:paste') {
+        // Find the element by id
+        const element = document.getElementById(event.data.payload.id);
+
+        // If the element is found
+        if (element) {
+            // paste after the selected element
+            pasteElement();
+
+            // force to hide the hover element
+            hideElementHover();
+        }
+        return;
+    }
+
+    if (event.data.type === 'element:delete') {
+        // Find the element by id
+        const element = document.getElementById(event.data.payload.id);
+
+        // If the element is found
+        if (element) {
+            // delete the selected element
+            deleteElement();
+
+            // force to hide the hover element
+            hideElementHover();
+        }
+        return;
+    }
+
+    if (event.data.type === 'element:select') {
+        // Find the element by id
+        const element = document.getElementById(event.data.payload.id);
+
+        // If the element is found
+        if (element) {
+            // select the element
+            selectElement(element);
+
+            // scroll the window to the selected element
+            scrollToElement(element);
+        }
+    }
+
+    if (event.data.type === 'element:hover') {
+        // Find the element by id
+        const element = document.getElementById(event.data.payload.id);
+
+        // If the element is found
+        if (element) {
+            // refresh the hover element
+            refreshElementHover(element);
+
+            // scroll the window to the selected element
+            scrollToElement(element);
+        }
+    }
+
+    if (event.data.type === 'element:unhover') {
+        // Hide the hover element
+        hideElementHover();
+    }
 });

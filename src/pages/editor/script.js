@@ -1,5 +1,5 @@
 var appConfig = {};
-var apiIndex = {};
+var apiSchema = {};
 
 var hoveredElementId = null;
 var selectedElement = null;
@@ -25,12 +25,12 @@ const mainCanvas = document.getElementById('main-canvas');
 
     // Load API index file
     window.app.apis.load().then(apis => {
-        apiIndex = apis;
+        apiSchema = apis;
 
         // Populate template options
         const templatesPanel = document.getElementById('templates-panel');
         const listContainer = templatesPanel.querySelector('.content-list');
-        apiIndex.htmlElements
+        apiSchema.htmlElements
             .filter(template =>
                 ! template.categories.includes('metadata') &&
                 ! [
@@ -52,7 +52,7 @@ const mainCanvas = document.getElementById('main-canvas');
                 contentOption.dataset.tagname = template.tag;
                 contentOption.innerHTML = `${template.alias} &lt;${template.tag}&gt;`;
                 contentOption.title = template.description;
-                contentOption.id = `uw-t-e-${template.tag}`;
+                contentOption.id = `uw-template-element-${template.tag}`;
                 listContainer.appendChild(contentOption);
             });
 
@@ -198,7 +198,12 @@ document.addEventListener('dragenter', event => event.preventDefault());
 // Handler for the hover event on the document tree
 document.querySelector('#layers-panel .content__container').addEventListener('mouseover', event => {
     if (event.target.tagName.toLowerCase() === 'button') {
-        hoveredElementId = event.target.getAttribute('data-id');
+        // If the hovered element ID is the same as the current target ID
+        if (hoveredElementId === event.target.getAttribute('data-uw-id')) {
+            return; // do nothing
+        }
+
+        hoveredElementId = event.target.getAttribute('data-uw-id');
 
         // Send the hovered element ID to the main canvas
         mainCanvas.contentWindow.postMessage({
@@ -212,7 +217,7 @@ document.querySelector('#layers-panel .content__container').addEventListener('mo
 // Handler for the click event on the document tree
 document.querySelector('#layers-panel .content__container').addEventListener('mousedown', event => {
     if (event.target.tagName.toLowerCase() === 'button') {
-        const selectedElementId = event.target.getAttribute('data-id');
+        const selectedElementId = event.target.getAttribute('data-uw-id');
 
         // Send the selected element ID to the main canvas
         mainCanvas.contentWindow.postMessage({
@@ -247,36 +252,36 @@ document.querySelector('#layers-panel .content__container').addEventListener('mo
 // Handler for keydown event on the window
 window.addEventListener('keydown', event => {
     if (event.key === 'c' && event.ctrlKey) {
-        if (selectedElement?.id) {
+        if (selectedElement?.dataset.uwId) {
             // Send the request to copy the selected element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:copy',
                 payload: {
-                    id: selectedElement?.id,
+                    id: selectedElement?.dataset.uwId,
                 },
             }, '*');
         }
     }
 
     if (event.key === 'v' && event.ctrlKey) {
-        if (selectedElement?.id) {
+        if (selectedElement?.dataset.uwId) {
             // Send the request to paste the copied element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:paste',
                 payload: {
-                    id: selectedElement?.id,
+                    id: selectedElement?.dataset.uwId,
                 },
             }, '*');
         }
     }
 
     if (event.key === 'Delete') {
-        if (selectedElement?.id) {
+        if (selectedElement?.dataset.uwId) {
             // Send the request to remove the selected element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:delete',
                 payload: {
-                    id: selectedElement?.id,
+                    id: selectedElement?.dataset.uwId,
                 },
             }, '*');
         }
@@ -285,12 +290,12 @@ window.addEventListener('keydown', event => {
     if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
         event.preventDefault();
 
-        if (selectedElement?.id) {
+        if (selectedElement?.dataset.uwId) {
             // Send the request to move the selected element up/left the tree to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:move-up-or-left',
                 payload: {
-                    id: selectedElement?.id,
+                    id: selectedElement?.dataset.uwId,
                 },
             }, '*');
         }
@@ -299,12 +304,12 @@ window.addEventListener('keydown', event => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
         event.preventDefault();
 
-        if (selectedElement?.id) {
+        if (selectedElement?.dataset.uwId) {
             // Send the request to move the selected element down/right the tree to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:move-down-or-right',
                 payload: {
-                    id: selectedElement?.id,
+                    id: selectedElement?.dataset.uwId,
                 },
             }, '*');
         }
@@ -322,7 +327,7 @@ const refreshAttributesPanel = () => {
     const listContainer = attributesPanel.querySelector('.content__container');
     listContainer.querySelector('.placeholder')?.remove();
     listContainer.innerHTML = '';
-    apiIndex.htmlAttributes
+    apiSchema.htmlAttributes
         .filter(attribute =>
             (
                 attribute.belongsTo === 'global' ||
@@ -355,20 +360,22 @@ window.addEventListener('message', event => {
             const button = document.createElement('button');
             button.style.paddingLeft = `${8 + level * 15}px`;
             button.setAttribute('data-tagname', node.tagName.toLowerCase());
-            if (node.id) button.setAttribute('data-id', node.id);
+            if (node.id) button.setAttribute('data-uw-id', node.id);
             listItem.appendChild(button);
 
-            // Add an icon to the button element
+            // Add icon(s) to the button element
             if (node.children.length > 0) {
+                // add a chevron icon
                 let icon = document.createElement('div');
                 icon.classList.add('icon', 'icon-chevron-down');
                 icon.style.pointerEvents = 'all';
                 button.appendChild(icon);
-
+                // add a box icon
                 icon = document.createElement('div');
                 icon.classList.add('icon', 'icon-box');
                 button.appendChild(icon);
             } else {
+                // add a square icon
                 const icon = document.createElement('div');
                 icon.classList.add('icon', 'icon-square');
                 button.appendChild(icon);
@@ -376,8 +383,8 @@ window.addEventListener('message', event => {
 
             // Add a label to the button element
             const labelSpan = document.createElement('span');
-            labelSpan.innerHTML = `<span class="element-label" contenteditable="true">${node.label || 'Element'}</span>`;
-            labelSpan.innerHTML += (node.id ? ` <span class="element-id">#${node.id}</span>` : '');
+            labelSpan.innerHTML = `<span class="element-label" contenteditable="true">${node.label || node.tagName.toLowerCase()}</span>`;
+            labelSpan.innerHTML += ` <span class="element-id">${node.elementId ? '#' + node.elementId : '@' + node.id}</span>`;
             labelSpan.style.pointerEvents = 'none';
             button.appendChild(labelSpan);
 
@@ -385,7 +392,7 @@ window.addEventListener('message', event => {
             if (node.id === hoveredElementId) {
                 button.classList.add('hovered');
             }
-            if (node.id === selectedElement?.id) {
+            if (node.id === selectedElement?.dataset.uwId) {
                 button.classList.add('selected');
             }
 
@@ -422,7 +429,7 @@ window.addEventListener('message', event => {
             element.classList.remove('selected');
 
             // find the selected element
-            if (element.getAttribute('data-id') === selectedElement.id) {
+            if (element.getAttribute('data-uw-id') === selectedElement.id) {
                 // mark the selected element
                 element.classList.add('selected');
 
@@ -440,7 +447,7 @@ window.addEventListener('message', event => {
             element.classList.remove('hovered');
 
             // find the hovered element
-            if (element.getAttribute('data-id') === hoveredElementId) {
+            if (element.getAttribute('data-uw-id') === hoveredElementId) {
                 // mark the hovered element
                 element.classList.add('hovered');
 
@@ -461,5 +468,16 @@ window.addEventListener('message', event => {
                 }
             }
         });
+    }
+
+    if (event.data.type === 'window:ready') {
+        // Send the API index to the main canvas
+        mainCanvas.contentWindow.postMessage({
+            type: 'document:init',
+            payload: {
+                appConfig: appConfig,
+                apiSchema: apiSchema,
+            },
+        }, '*');
     }
 });

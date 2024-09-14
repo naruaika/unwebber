@@ -1,3 +1,8 @@
+var appConfig = {};
+var apiSchema = {};
+
+var isDocumentReady = false;
+
 var hoveredElement = null;
 var selectedElement = null;
 
@@ -30,21 +35,83 @@ const debounce = (func, timeout = 1000 / 60 / 2) => {
     };
 };
 
-const selectElement = (element) => {
+const isElementTextable = (element) => {
+    if (! element) {
+        return false;
+    }
+
+    // Check if the element has no text node
+    if (! Array.from(element.childNodes).some(child => child.nodeType === Node.TEXT_NODE)) {
+        return false;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    const tagSpecs = apiSchema.htmlElements?.find(htmlElement => htmlElement.tag === tagName);
+
+    //
+    if (
+        tagName !== 'html' &&
+        tagName !== 'body' &&
+        ! tagSpecs?.categories.includes('void') &&
+        ! tagSpecs?.categories.includes('embedded') &&
+        ! element.classList.contains('uw-helper')
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+const isElementVoid = (element) => {
+    if (! element) {
+        return false;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    const tagSpecs = apiSchema.htmlElements?.find(htmlElement => htmlElement.tag === tagName);
+
+    if (tagSpecs?.categories.includes('void')) {
+        return true;
+    }
+
+    return false;
+}
+
+const enableWhitespaceInsertionOnButton = event => {
+    if (event.key === ' ') {
+        event.preventDefault();
+
+        // Add whitespace character at the caret position
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const textNode = range.startContainer;
+        const text = textNode.textContent;
+        const startOffset = range.startOffset;
+        const endOffset = range.endOffset;
+        const newText = text.slice(0, startOffset) + '\u00A0' + text.slice(endOffset);
+        textNode.textContent = newText;
+        range.setStart(textNode, startOffset + 1);
+        range.setEnd(textNode, startOffset + 1);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+
+const selectElement = element => {
     // If there is a current selection
     if (selectedElement) {
         // clear current text selection
         window.getSelection().removeAllRanges();
 
         // and if the element is not a container
-        if (! selectedElement.classList.contains('container')) {
+        if (isElementTextable(selectedElement)) {
             // remove the contentEditable attribute
             // from the previously selected element
             makeElementNotEditable(selectedElement);
         }
 
         // and if the element inside a container
-        if (selectedElement.parentElement?.classList.contains('container')) {
+        if (! isElementVoid(selectedElement.parentElement)) {
             // remove drag event listeners
             // from the previously selected element
             makeElementNotDraggable(selectedElement);
@@ -68,7 +135,7 @@ const selectElement = (element) => {
 
     // If the element inside a container
     if (
-        element.parentElement?.classList.contains('container') &&
+        ! isElementVoid(element.parentElement) &&
         // TODO: add support for absolute and fixed position
         element.style.position !== 'absolute' &&
         element.style.position !== 'fixed'
@@ -99,12 +166,18 @@ const pasteElement = () => {
     }
 
     // Generate a new id for the copied element
-    elementToPaste.id = generateUniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
+    elementToPaste.dataset.uwId = generateUniqueId(elementToPaste.dataset.uwId.split('-').slice(0, -1).join('-'));
+    if (elementToPaste.id) {
+        elementToPaste.id = generateUniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
+    }
 
     // Loop through the copied element children recursively
-    elementToPaste.querySelectorAll('*[id]').forEach(child => {
+    elementToPaste.querySelectorAll('*[data-uw-id]').forEach(child => {
         // generate a new id for the copied element
-        child.id = generateUniqueId(child.id.split('-').slice(0, -1).join('-'));
+        child.dataset.uwId = generateUniqueId(child.dataset.uwId.split('-').slice(0, -1).join('-'));
+        if (child.id) {
+            child.id = generateUniqueId(child.id.split('-').slice(0, -1).join('-'));
+        }
     });
 
     // Paste the copied element from the clipboard
@@ -174,8 +247,8 @@ const insertElement = () => {
     }
 
     // Generate a new id for the copied element
-    elementToInsert.id = generateUniqueId(
-        elementToInsert.id
+    elementToInsert.dataset.uwId = generateUniqueId(
+        elementToInsert.dataset.uwId
             ? elementToInsert.id.split('-').slice(0, -1).join('-')
             : elementToInsert.tagName.toLowerCase()
     );
@@ -183,8 +256,8 @@ const insertElement = () => {
     // Loop through the copied element children recursively
     elementToInsert.querySelectorAll('*[id]').forEach(child => {
         // generate a new id for the copied element
-        child.id = generateUniqueId(
-            child.id
+        child.dataset.uwId = generateUniqueId(
+            child.dataset.uwId
                 ? child.id.split('-').slice(0, -1).join('-')
                 : child.tagName.toLowerCase()
         );
@@ -235,12 +308,18 @@ const makeElementNotDraggable = (element) => {
 
 const makeElementEditable = (element) => {
     // If the element is not a text container
-    if (! element.classList.contains('editable')) {
+    if (! isElementTextable(element)) {
         return; // do nothing
     }
 
     // Make the element editable
     element.contentEditable = true;
+
+    // If the element is a button
+    if (element.tagName.toLowerCase() === 'button') {
+        // enable whitespace insertion by manually handling the space key
+        element.addEventListener('keydown', enableWhitespaceInsertionOnButton);
+    }
 
     // Make the clicked element not draggable
     makeElementNotDraggable(element);
@@ -253,12 +332,27 @@ const makeElementEditable = (element) => {
 
 const makeElementNotEditable = (element) => {
     // If the element is not a text container
-    if (! element.classList.contains('editable')) {
+    if (! isElementTextable(element)) {
         return; // do nothing
     }
 
     // Make the element not editable
     element.contentEditable = false;
+
+    // If the element is a button
+    if (element.tagName.toLowerCase() === 'button') {
+        // remove the event listener to enable whitespace insertion
+        element.removeEventListener('keydown', enableWhitespaceInsertionOnButton);
+    }
+
+    // Enable click event triggered by the space key for button only
+    if (element.tagName.toLowerCase() === 'button') {
+        element.removeEventListener('keyup', event => {
+            if (event.key === ' ') {
+                event.preventDefault();
+            }
+        });
+    }
 
     if (element === selectedElement) {
         // Remove the class to highlight the editable element
@@ -278,6 +372,13 @@ const refreshElementHover = (element = null) => {
             hideElementHover();
             return;
         }
+    }
+
+    // If the element over the mouse is the helper element
+    if (element.classList.contains('uw-helper')) {
+        // hide the hover element
+        hideElementHover();
+        return;
     }
 
     // Update the hovered element
@@ -309,7 +410,7 @@ const refreshElementHover = (element = null) => {
     elementHover.style.height = `${boundingRect.height}px`;
     elementHover.classList.remove('hidden');
 
-    if (hoveredElement.classList.contains('container')) {
+    if (! isElementVoid(hoveredElement)) {
         // Add a container class to the hover element
         elementHover.classList.add('uw-element-container-highlight');
     } else {
@@ -351,7 +452,7 @@ const createElementHighlights = () => {
     elementHighlight.classList.add('uw-element-highlight');
 
     // Add a container class to the element
-    if (selectedElement.classList.contains('container')) {
+    if (! isElementVoid(selectedElement)) {
         elementHighlight.classList.add('uw-element-container-highlight');
     }
 
@@ -411,10 +512,11 @@ const refreshElementHighlight = () => {
 
     if (elementParentHighlight) {
         // Update the position of the highlight element
-        elementParentHighlight.style.top = `${selectedElement.parentElement.offsetTop}px`;
-        elementParentHighlight.style.left = `${selectedElement.parentElement.offsetLeft}px`;
-        elementParentHighlight.style.width = `${selectedElement.parentElement.offsetWidth}px`;
-        elementParentHighlight.style.height = `${selectedElement.parentElement.offsetHeight}px`;
+        const boundingRect = selectedElement.parentElement.getBoundingClientRect();
+        elementParentHighlight.style.top = `${boundingRect.top + window.scrollY}px`;
+        elementParentHighlight.style.left = `${boundingRect.left + window.scrollX}px`;
+        elementParentHighlight.style.width = `${boundingRect.width}px`;
+        elementParentHighlight.style.height = `${boundingRect.height}px`;
     }
 }
 
@@ -437,7 +539,7 @@ const createElementSkeleton = (element) => {
     elementSkeleton.appendChild(elementSkeletonHighlight);
 
     // If the element is a container
-    if (elementSkeleton.classList.contains('container')) {
+    if (! isElementVoid(elementSkeleton)) {
         // add a container class to the skeleton element
         elementSkeletonHighlight.classList.add('uw-element-container-highlight');
     }
@@ -469,8 +571,8 @@ const createElementSkeleton = (element) => {
 const moveElementSkeleton = () => {
     // If the element over the mouse is not a container
     if (
-        ! hoveredElement.classList.contains('container') &&
-        hoveredElement.parentElement?.classList.contains('container')
+        isElementVoid(hoveredElement) &&
+        ! isElementVoid(hoveredElement.parentElement)
     ) {
         // find out the layout direction of the container
         const containerStyle = window.getComputedStyle(hoveredElement.parentElement);
@@ -511,10 +613,10 @@ const moveElementSkeleton = () => {
         }
     }
 
-    // If the element over the mouse is the container
-    if (hoveredElement.classList.contains('container')) {
+    // If the element over the mouse is a container
+    if (! isElementVoid(hoveredElement)) {
         // and if the container inside another container
-        if (hoveredElement.parentElement?.classList.contains('container')) {
+        if (hoveredElement.parentElement) {
             const containerStyle = window.getComputedStyle(hoveredElement.parentElement);
             const containerLayoutDirection = containerStyle.flexDirection || containerStyle.gridAutoFlow || 'column';
 
@@ -664,7 +766,7 @@ const moveElementToUpTree = () => {
     // If the selected element has previous sibling
     if (selectedElement.previousElementSibling) {
         // and if the previous sibling is a container
-        if (selectedElement.previousElementSibling.classList.contains('container')) {
+        if (! isElementVoid(selectedElement.previousElementSibling)) {
             // move the selected element to the bottom of the container
             selectedElement.previousElementSibling.appendChild(selectedElement);
 
@@ -702,7 +804,7 @@ const moveElementToUpTree = () => {
     }
 
     // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement?.classList.contains('container')) {
+    if (selectedElement.parentElement.parentElement) {
         // move the selected element up the tree
         selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement);
 
@@ -732,7 +834,7 @@ const moveElementToDownTree = () => {
         }
 
         // and if the next sibling is a container
-        if (selectedElement.nextElementSibling.classList.contains('container')) {
+        if (! isElementVoid(selectedElement.nextElementSibling)) {
             // move the selected element to the top of the container
             selectedElement.nextElementSibling.insertBefore(selectedElement, selectedElement.nextElementSibling.firstChild);
 
@@ -770,7 +872,7 @@ const moveElementToDownTree = () => {
     }
 
     // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement?.classList.contains('container')) {
+    if (selectedElement.parentElement.parentElement) {
         // move the selected element down the tree
         selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextSibling);
 
@@ -808,7 +910,8 @@ const sendSelectedElement = () => {
         type: 'element:select',
         payload: {
             tagName: selectedElement.tagName,
-            id: selectedElement.id,
+            id: selectedElement.dataset.uwId,
+            elementId: selectedElement.id,
             classList: Array.from(selectedElement.classList).filter(className => ! className.startsWith('uw-')),
             innerHTML: selectedElement.innerHTML,
             innerText: selectedElement.innerText,
@@ -837,7 +940,7 @@ const sendHoveredElement = (element = null) => {
     window.parent.postMessage({
         type: 'element:hover',
         payload: {
-            id: element?.id,
+            id: element?.dataset.uwId,
         },
     }, '*');
 }
@@ -847,13 +950,14 @@ const sendDocumentTree = () => {
     const readDocumentTree = (node) => {
         return {
             tagName: node.tagName,
-            id: node.id,
-            label: node.dataset.label || null,
+            id: node.dataset.uwId,
+            label: node.dataset.uwLabel,
+            elementId: node.id,
             children: Array
                 .from(node.children)
                 .filter(child =>
                     ! child.classList.contains('uw-helper') &&
-                    child.tagName !== 'SCRIPT'
+                    child.tagName.toLowerCase() !== 'script'
                 )
                 .map(child => readDocumentTree(child)),
         };
@@ -967,6 +1071,12 @@ const onElementDrag = (event) => {
 
 // Handler for mouse move events
 document.addEventListener('mousemove', event => {
+    // If the document is not ready
+    // FIXME: sometimes the document is not ready when the mouse move event is triggered
+    if (! isDocumentReady) {
+        return; // do nothing
+    }
+
     // If the element over the mouse is not the target element
     if (hoveredElement !== event.target) {
         // update the mouse position
@@ -999,9 +1109,9 @@ document.addEventListener('mousedown', event => {
         // and is not html/body and is not a container
         if (
             selectedElement === event.target &&
-            selectedElement.tagName !== 'HTML' &&
-            selectedElement.tagName !== 'BODY' &&
-            ! selectedElement.classList.contains('container')
+            selectedElement.tagName.toLowerCase() !== 'html' &&
+            selectedElement.tagName.toLowerCase() !== 'body' &&
+            isElementTextable(selectedElement)
         ) {
             // make the clicked element editable
             makeElementEditable(selectedElement);
@@ -1084,8 +1194,8 @@ document.addEventListener('keydown', event => {
 
         if (
             selectedElement &&
-            selectedElement.tagName !== 'HTML' &&
-            selectedElement.tagName !== 'BODY'
+            selectedElement.tagName.toLowerCase() !== 'html' &&
+            selectedElement.tagName.toLowerCase() !== 'body'
         ) {
             // Move the selected element up the tree
             moveElementToUpTree(selectedElement);
@@ -1107,8 +1217,8 @@ document.addEventListener('keydown', event => {
 
         if (
             selectedElement &&
-            selectedElement.tagName !== 'HTML' &&
-            selectedElement.tagName !== 'BODY'
+            selectedElement.tagName.toLowerCase() !== 'html' &&
+            selectedElement.tagName.toLowerCase() !== 'body'
         ) {
             // Move the selected element down the tree
             moveElementToDownTree(selectedElement);
@@ -1118,6 +1228,17 @@ document.addEventListener('keydown', event => {
 
             return;
         }
+    }
+});
+document.addEventListener('keydown', () => {
+    if (selectedElement?.contentEditable === 'true') {
+        // Refresh the element highlight
+        refreshElementHighlight();
+
+        // Refresh the hover element
+        refreshElementHover();
+
+        return;
     }
 });
 document.addEventListener('keyup', () => {
@@ -1146,8 +1267,10 @@ window.addEventListener('scroll', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Send the document tree to the parent window
-    sendDocumentTree();
+    // Disable click events on hyperlinks
+    document.querySelectorAll('a').forEach(element => {
+        element.setAttribute('onclick', 'return false;');
+    });
 });
 
 // Handler for receiving messages from the main window
@@ -1216,7 +1339,7 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:copy') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
@@ -1228,7 +1351,7 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:paste') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
@@ -1243,7 +1366,7 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:delete') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
@@ -1258,7 +1381,7 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:select') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
@@ -1272,10 +1395,15 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:hover') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
+            // if the element is not changed
+            if (element === hoveredElement) {
+                return; // do nothing
+            }
+
             // refresh the hover element
             refreshElementHover(element);
 
@@ -1291,29 +1419,47 @@ window.addEventListener('message', event => {
 
     if (event.data.type === 'element:move-up-or-left') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
             // move the selected element up/left the tree
             moveElementToUpTree(selectedElement);
-
-            // force to hide the hover element
-            hideElementHover();
         }
     }
 
     if (event.data.type === 'element:move-down-or-right') {
         // Find the element by id
-        const element = document.getElementById(event.data.payload.id);
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
 
         // If the element is found
         if (element) {
             // move the selected element down/right the tree
             moveElementToDownTree(selectedElement);
-
-            // force to hide the hover element
-            hideElementHover();
         }
     }
+
+    if (event.data.type === 'document:init') {
+        // Update global variables
+        // TODO: find a better way to interact with the API
+        // without exposing the API index to the client
+        appConfig = event.data.payload.appConfig;
+        apiSchema = event.data.payload.apiSchema;
+
+        // Set unique ID for all elements inside the document' body
+        document.querySelectorAll('*').forEach(element => {
+            element.dataset.uwId = generateUniqueId(element.tagName.toLocaleLowerCase());
+            element.dataset.uwLabel = apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name || 'Element';
+        });
+
+        // Send the document tree to the parent window
+        sendDocumentTree();
+
+        isDocumentReady = true;
+    }
 });
+
+window.parent.postMessage({
+    type: 'window:ready',
+    payload: {},
+}, '*');

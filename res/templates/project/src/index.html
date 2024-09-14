@@ -7,44 +7,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body
-    id="root"
-    class="container"
     style="
         display: flex;
         flex-direction: column;
         align-items: start;
     "
-    data-label="Root"
 >
     <div
-        id="container-1"
-        class="container"
         style="
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: start;
         "
-        data-label="Container"
     >
-        <h1
-            id="heading-1"
-            class="editable"
-            style="margin: 0;"
-            data-label="Heading"
-        >
+        <h1 style="margin: 0;">
             Heading
         </h1>
-        <p
-            id="paragraph-1"
-            class="editable"
-            data-label="Paragraph"
-        >
+        <p>
             Lorem ipsum dolor sit amet, consectetur adipisicing elit. Reprehenderit dolores nobis nemo rerum qui nostrum placeat tempore vel ipsam magni corporis quidem ex optio non in accusantium porro, fuga voluptates!
         </p>
         <button
-            id="button-1"
-            class="container"
             style="
                 background-color: black;
                 color: white;
@@ -52,16 +35,15 @@
                 border: none;
                 border-radius: 5px;
             "
-            data-label="Button"
         >
-            <span
-                id="text-1"
-                class="editable"
-                data-label="Text"
-            >
-                Button
-            </span>
+            Button
         </button>
+        <a
+            href="https://example.com"
+            style="margin: 10px 0;"
+        >
+            Go to example.com
+        </a>
     </div>
     <script src="script.js"></script>
 </body>

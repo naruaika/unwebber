@@ -15,6 +15,10 @@
             min-width: 100%;
         }
 
+        .placeholder {
+            padding: 8px;
+        }
+
         ul {
             display: flex;
             flex-direction: column;

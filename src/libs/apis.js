@@ -2,26 +2,26 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const read = () => {
-    // Get API index file path
+    // Get API schema file path
     const filePath = path.join(__dirname, '../apis/index.json');
 
-    let apiIndex = {};
+    let apiSchema = {};
 
     try {
-        // Read the API index file
-        apiIndex = JSON.parse(fs.readFileSync(filePath));
-        console.debug(`Web API index file loaded from ${filePath}`);
+        // Read the API schema file
+        apiSchema = JSON.parse(fs.readFileSync(filePath));
+        console.debug(`Web API schema file loaded from ${filePath}`);
     } catch (error) {
         if (error.code === 'ENOENT') {
-            // Create the API index file if it doesn't exist
-            fs.writeFileSync(filePath, JSON.stringify(apiIndex));
-            console.debug(`Web API index file created at ${filePath}`);
+            // Create the API schema file if it doesn't exist
+            fs.writeFileSync(filePath, JSON.stringify(apiSchema));
+            console.debug(`Web API schema file created at ${filePath}`);
         } else {
             console.error(error);
         }
     }
 
-    return apiIndex;
+    return apiSchema;
 };
 
 // Alias for read() function

@@ -1,11 +1,17 @@
+var appConfig = {};
+var apiIndex = {};
+
 var hoveredElementId = null;
-var selectedElementId = null; // TODO: add support for multiple selection
+var selectedElement = null;
+var templateElementId = null;
 
 const mainCanvas = document.getElementById('main-canvas');
 
 (() => {
     // Load app configuration
-    window.app.config.load().then(appConfig => {
+    window.app.config.load().then(config => {
+        appConfig = config;
+
         // Load the project index.html
         const projectPath = appConfig.project.current.path;
         const indexPath = projectPath + '/src/index.d.html';
@@ -16,11 +22,51 @@ const mainCanvas = document.getElementById('main-canvas');
         const projectName = appConfig.project.current.name;
         document.getElementById('document-name').innerText = projectName;
     });
+
+    // Load API index file
+    window.app.apis.load().then(apis => {
+        apiIndex = apis;
+
+        // Populate template options
+        const templatesPanel = document.getElementById('templates-panel');
+        const listContainer = templatesPanel.querySelector('.content-list');
+        apiIndex.htmlElements
+            .filter(template =>
+                ! template.categories.includes('metadata') &&
+                ! [
+                    'html',
+                    'head',
+                    'title',
+                    'style',
+                    'script',
+                    'body',
+                    'template',
+                    'slot',
+                ].includes(template.tag)
+            )
+            .forEach(template => {
+                const contentOption = document.createElement('div');
+                contentOption.classList.add('content-option');
+                contentOption.classList.add('template-element');
+                contentOption.dataset.label = template.alias;
+                contentOption.dataset.tagname = template.tag;
+                contentOption.innerHTML = `${template.alias} &lt;${template.tag}&gt;`;
+                contentOption.title = template.description;
+                contentOption.id = `uw-t-e-${template.tag}`;
+                listContainer.appendChild(contentOption);
+            });
+
+        // Remove the placeholder element from the templates panel
+        templatesPanel.querySelector('.placeholder').remove();
+
+        // Attach draggable events to template elements
+        makeTemplateElementsDraggable();
+    });
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
     // Automatically open default panels
-    document.querySelectorAll('#layers-panel .header, #properties-panel .header').forEach(element => {
+    document.querySelectorAll('.main-sidebar__panel .header').forEach(element => {
         element.click();
     });
 
@@ -61,35 +107,90 @@ document.getElementById('website-preview-button').addEventListener('click', () =
 });
 
 // Handler for drag/drop web components
-document.querySelector('.main-canvas__overlay').addEventListener('dragenter', () => {
-    console.debug('Object has entered the drop space');
-});
-document.querySelector('.main-canvas__overlay').addEventListener('dragleave', () => {
-    console.debug('Object has left the drop space');
-});
 document.querySelector('.main-canvas__overlay').addEventListener('dragover', event => {
     event.preventDefault();
+
+    // Send the mouse position to the main canvas
+    const rect = event.target.getBoundingClientRect();
+    mainCanvas.contentWindow.postMessage({
+        type: 'element:beforeinsert',
+        payload: {
+            position: {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            },
+        },
+    }, '*');
 });
 document.querySelector('.main-canvas__overlay').addEventListener('drop', event => {
     event.preventDefault();
+
+    // Send the mouse position to the main canvas
+    const rect = event.target.getBoundingClientRect();
+    mainCanvas.contentWindow.postMessage({
+        type: 'element:insert',
+        payload: {
+            position: {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            },
+        },
+    }, '*');
 });
-document.querySelectorAll('.template-component').forEach(element => {
-    element.addEventListener('dragstart', event => {
-        // Setup the drag data
-        event.dataTransfer.dropEffect = 'copy';
-        event.dataTransfer.setData('text', event.target.id);
-        // Show the selection indicator
-        event.currentTarget.classList.toggle('selected');
-        // Show the drop space
-        document.querySelector('.main-canvas__overlay').classList.toggle('hidden');
+const makeTemplateElementsDraggable = () => {
+    document.querySelectorAll('#templates-panel .content-option').forEach(element => {
+        element.draggable = true;
+
+        element.addEventListener('dragstart', event => {
+            // Setup the drag data
+            event.dataTransfer.dropEffect = 'copy';
+            templateElementId = event.target.id;
+
+            // Create a transparent canvas to set as drag image
+            const transparentCanvas = document.createElement('canvas');
+            event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
+            transparentCanvas.remove();
+
+            // Show the selection indicator
+            event.currentTarget.classList.toggle('selected');
+
+            // Show the drop space
+            document.querySelector('.main-canvas__overlay').classList.toggle('hidden');
+
+            // Send the template element to the main canvas
+            mainCanvas.contentWindow.postMessage({
+                type: 'element:beforeinsert',
+                payload: {
+                    // TODO: get the real template
+                    template: document.getElementById(templateElementId).outerHTML,
+                },
+            }, '*');
+        });
+
+        element.addEventListener('dragend', event => {
+            // Hide the selection indicator
+            event.currentTarget.classList.toggle('selected');
+
+            // Hide the drop space
+            document.querySelector('.main-canvas__overlay').classList.toggle('hidden');
+
+            // Remove the template element from the main canvas
+            mainCanvas.contentWindow.postMessage({
+                type: 'element:beforeinsert',
+                payload: {
+                    template: null,
+                },
+            }, '*');
+
+            // Clear the template element ID
+            templateElementId = null;
+        });
+
+        element.addEventListener('dragover', event => {
+            event.preventDefault();
+        });
     });
-    element.addEventListener('dragend', event => {
-        // Hide the selection indicator
-        event.currentTarget.classList.toggle('selected');
-        // Hide the drop space
-        document.querySelector('.main-canvas__overlay').classList.toggle('hidden');
-    });
-});
+}
 // To hide the not-allowed cursor while dragging
 document.addEventListener('dragover', event => event.preventDefault());
 document.addEventListener('dragenter', event => event.preventDefault());
@@ -146,41 +247,102 @@ document.querySelector('#layers-panel .content__container').addEventListener('mo
 // Handler for keydown event on the window
 window.addEventListener('keydown', event => {
     if (event.key === 'c' && event.ctrlKey) {
-        if (selectedElementId) {
+        if (selectedElement?.id) {
             // Send the request to copy the selected element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:copy',
                 payload: {
-                    id: selectedElementId,
+                    id: selectedElement?.id,
                 },
             }, '*');
         }
     }
 
     if (event.key === 'v' && event.ctrlKey) {
-        if (selectedElementId) {
+        if (selectedElement?.id) {
             // Send the request to paste the copied element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:paste',
                 payload: {
-                    id: selectedElementId,
+                    id: selectedElement?.id,
                 },
             }, '*');
         }
     }
 
     if (event.key === 'Delete') {
-        if (selectedElementId) {
+        if (selectedElement?.id) {
             // Send the request to remove the selected element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:delete',
                 payload: {
-                    id: selectedElementId,
+                    id: selectedElement?.id,
+                },
+            }, '*');
+        }
+    }
+
+    if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+        event.preventDefault();
+
+        if (selectedElement?.id) {
+            // Send the request to move the selected element up/left the tree to the main canvas
+            mainCanvas.contentWindow.postMessage({
+                type: 'element:move-up-or-left',
+                payload: {
+                    id: selectedElement?.id,
+                },
+            }, '*');
+        }
+    }
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+        event.preventDefault();
+
+        if (selectedElement?.id) {
+            // Send the request to move the selected element down/right the tree to the main canvas
+            mainCanvas.contentWindow.postMessage({
+                type: 'element:move-down-or-right',
+                payload: {
+                    id: selectedElement?.id,
                 },
             }, '*');
         }
     }
 });
+
+// Handler for the element selection
+const refreshAttributesPanel = () => {
+    if (! selectedElement) {
+        return;
+    }
+
+    // TODO: add support for custom element tag, custom attributes, and data-* attributes
+    const attributesPanel = document.getElementById('attributes-panel');
+    const listContainer = attributesPanel.querySelector('.content__container');
+    listContainer.querySelector('.placeholder')?.remove();
+    listContainer.innerHTML = '';
+    apiIndex.htmlAttributes
+        .filter(attribute =>
+            (
+                attribute.belongsTo === 'global' ||
+                // TODO: add support for format like "input|type=file"
+                attribute.belongsTo.includes(selectedElement.tagName.toLowerCase())
+            ) &&
+            ! [
+                // 'id',
+                // 'class',
+                'slot',
+                'style',
+            ].includes(attribute.name)
+        )
+        .forEach(attribute => {
+            if (listContainer.innerHTML !== '') {
+                listContainer.innerHTML += ', ';
+            }
+            listContainer.innerHTML += attribute.name;
+        });
+};
 
 // Handler for receiving messages from the main canvas
 window.addEventListener('message', event => {
@@ -223,7 +385,7 @@ window.addEventListener('message', event => {
             if (node.id === hoveredElementId) {
                 button.classList.add('hovered');
             }
-            if (node.id === selectedElementId) {
+            if (node.id === selectedElement?.id) {
                 button.classList.add('selected');
             }
 
@@ -253,34 +415,19 @@ window.addEventListener('message', event => {
 
     // Handle the element selection
     if (event.data.type === 'element:select') {
-        selectedElementId = event.data.payload.id;
+        selectedElement = event.data.payload;
+
         document.querySelectorAll('#layers-panel button').forEach(element => {
             // remove the selected class from all elements
             element.classList.remove('selected');
 
             // find the selected element
-            if (element.getAttribute('data-id') === selectedElementId) {
+            if (element.getAttribute('data-id') === selectedElement.id) {
                 // mark the selected element
                 element.classList.add('selected');
 
-                // and if it is not already visible on the viewport
-                // note that the condition above will less likely to be met
-                // since the target element will always be visible on the viewport
-                // after hovering it (see the 'element:hover' event handler)
-                const container = document.querySelector('.main-sidebar__left');
-                const containerRect = container.getBoundingClientRect();
-                const boundingRect = element.getBoundingClientRect();
-                if (
-                    boundingRect.top < containerRect.top ||
-                    boundingRect.top > containerRect.height - containerRect.top
-                ) {
-                    // scroll the selected element into view
-                    element.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center',
-                        inline: 'nearest'
-                    });
-                }
+                // refresh the attributes and properties panels
+                refreshAttributesPanel();
             }
         });
     }
@@ -303,7 +450,7 @@ window.addEventListener('message', event => {
                 const boundingRect = element.getBoundingClientRect();
                 if (
                     boundingRect.top < containerRect.top ||
-                    boundingRect.top > containerRect.height - containerRect.top
+                    boundingRect.top > containerRect.bottom
                 ) {
                     // scroll the hovered element into view
                     element.scrollIntoView({

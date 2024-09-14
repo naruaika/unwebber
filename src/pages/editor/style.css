@@ -98,13 +98,15 @@
         gap: 8px;
 
         .content-option {
+            box-sizing: border-box;
             height: auto;
-            width: calc(50% - 2px - 4px);
-            aspect-ratio: 1;
+            width: calc(50% - 4px);
+            aspect-ratio: 1.75 / 1;
+            padding: 10px;
 
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: start;
 
             color: var(--color-base);
             background: var(--color-secondary);

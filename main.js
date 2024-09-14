@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
 
 const pages = require('./src/pages')
+const apis = require('./src/libs/apis')
 const config = require('./src/libs/config')
 const project = require('./src/libs/project')
 
@@ -57,6 +58,7 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
     // Register IPC event handlers
+    ipcMain.handle('apis:load', apis.load);
     ipcMain.handle('config:load', config.load);
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);

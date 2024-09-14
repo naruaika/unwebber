@@ -40,12 +40,12 @@ const read = () => {
     try {
         // Read the app configuration file
         appConfig = JSON.parse(fs.readFileSync(configPath));
-        console.debug(`Configuration file loaded from ${configPath}`);
+        console.debug(`Application config file loaded from ${configPath}`);
     } catch (error) {
         if (error.code === 'ENOENT') {
             // Create the configuration file if it doesn't exist
             fs.writeFileSync(configPath, JSON.stringify(appConfig));
-            console.debug(`Configuration file created at ${configPath}`);
+            console.debug(`Application config file created at ${configPath}`);
         } else {
             console.error(error);
         }

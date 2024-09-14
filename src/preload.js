@@ -7,6 +7,10 @@ contextBridge.exposeInMainWorld('app', {
         electron: process.versions.electron,
     },
 
+    apis: {
+        load: () => ipcRenderer.invoke('apis:load'),
+    },
+
     config: {
         load: () => ipcRenderer.invoke('config:load'),
     },

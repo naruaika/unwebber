@@ -42,7 +42,7 @@ const create = () => {
 
     try {
         // Copy project templates into workspace
-        fs.cpSync(path.join(__dirname, '../../res/templates'), workDir, { recursive: true });
+        fs.cpSync(path.join(__dirname, '../../res/templates/project'), workDir, { recursive: true });
         console.debug(`Copied project templates into ${workDir}`);
     } catch (error) {
         console.error(error);
@@ -111,22 +111,22 @@ const open = (_, workDir) => {
         throw error;
     }
 
-    // Attach debug.js and debug.css to index.d.html
+    // Attach editor.js and editor.css to index.d.html
     try {
         const indexPath = path.join(workDir, 'src/index.d.html');
-        const debugJsPath = path.join(__dirname, '../remote/debug.js');
-        const debugCssPath = path.join(__dirname, '../remote/debug.css');
+        const editorJsPath = path.join(__dirname, '../debs/editor.js');
+        const editorCssPath = path.join(__dirname, '../debs/editor.css');
         const indexContent = fs.readFileSync(indexPath, 'utf-8');
 
-        const debugJsTag = `<script src="${debugJsPath}"></script>`;
-        const debugCssTag = `<link rel="stylesheet" href="${debugCssPath}">`;
+        const editorJsTag = `<script src="${editorJsPath}"></script>`;
+        const editorCssTag = `<link rel="stylesheet" href="${editorCssPath}">`;
 
         const indexContentUpdated = indexContent
-            .replace('</head>', `    ${debugCssTag}${os.EOL}</head>`)
-            .replace('</body>', `    ${debugJsTag}${os.EOL}</body>`);
+            .replace('</head>', `    ${editorCssTag}${os.EOL}</head>`)
+            .replace('</body>', `    ${editorJsTag}${os.EOL}</body>`);
 
         fs.writeFileSync(indexPath, indexContentUpdated);
-        console.debug(`Attached debug.js and debug.css to ${indexPath}`);
+        console.debug(`Attached editor.js and editor.css to ${indexPath}`);
     } catch (error) {
         console.error(error);
         throw error;

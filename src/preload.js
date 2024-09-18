@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-contextBridge.exposeInMainWorld('app', {
+contextBridge.exposeInMainWorld('unwebber', {
     version: {
         node: process.versions.node,
         chrome: process.versions.chrome,

@@ -4,6 +4,7 @@ var apiSchema = {};
 var isDocumentReady = false;
 
 var hoveredElement = null;
+// TODO: add support for multiple selection
 var selectedElement = null;
 
 var elementToPaste = null;
@@ -121,9 +122,9 @@ const selectElement = element => {
         deleteElementHighlights();
     }
 
-    // If the clicked element is html
-    if (element.tagName === 'HTML') {
-        // change the element to body
+    // If the clicked element is HTML
+    if (element.tagName.toLowerCase() === 'html') {
+        // replace the element to body
         element = document.body;
     }
 
@@ -196,20 +197,20 @@ const pasteElement = () => {
     // Delete the highlight elements
     deleteElementHighlights();
 
+    // Send the document tree to the parent window
+    sendDocumentTree();
+
     // Update the current selection
     selectElement(elementToPaste);
+
+    // Copy the selected element to the clipboard
+    copyElement();
 
     // Make the newly pasted element draggable
     makeElementDraggable(selectedElement);
 
     // Refresh the hover element
     refreshElementHover();
-
-    // Copy the selected element to the clipboard
-    copyElement();
-
-    // Send the document tree to the parent window
-    sendDocumentTree();
 }
 
 const deleteElement = () => {
@@ -235,6 +236,9 @@ const deleteElement = () => {
 
     // Send the document tree to the parent window
     sendDocumentTree();
+
+    // Send the selected element to the parent window
+    sendSelectedElement();
 }
 
 const insertElement = () => {
@@ -391,7 +395,7 @@ const refreshElementHover = (element = null) => {
         return;
     }
 
-    // Create element hover is not exist
+    // Create element hover if not exist
     if (! elementHover) {
         elementHover = document.createElement('div');
         elementHover.classList.add('uw-helper');
@@ -408,7 +412,7 @@ const refreshElementHover = (element = null) => {
     elementHover.style.left = `${boundingRect.left + window.scrollX}px`;
     elementHover.style.width = `${boundingRect.width}px`;
     elementHover.style.height = `${boundingRect.height}px`;
-    elementHover.classList.remove('hidden');
+    elementHover.classList.remove('uw-hidden');
 
     if (! isElementVoid(hoveredElement)) {
         // Add a container class to the hover element
@@ -420,9 +424,7 @@ const refreshElementHover = (element = null) => {
 
     // Add a title to the hover element
     elementHover.dataset.title = hoveredElement.tagName.toLowerCase();
-    if (hoveredElement.id) {
-        elementHover.dataset.title += ` #${hoveredElement.id}`;
-    }
+    elementHover.dataset.title += ` ${hoveredElement.id ? '#' + hoveredElement.id : '@' + hoveredElement.dataset.uwId}`;
 
     // Send the hovered element to the parent window
     sendHoveredElement(hoveredElement);
@@ -430,7 +432,7 @@ const refreshElementHover = (element = null) => {
 
 const hideElementHover = () => {
     // Hide the hover element
-    elementHover?.classList.add('hidden');
+    elementHover?.classList.add('uw-hidden');
 
     // Send the hovered element to the parent window
     sendHoveredElement(null);
@@ -440,6 +442,11 @@ const createElementHighlights = () => {
     if (! selectedElement) {
         return; // do nothing
     }
+
+    // Sometimes when resizing the window,
+    // the window:resize event is not triggered
+    // so the highlight elements are not removed
+    deleteElementHighlights();
 
     // Create a new element to highlight the selection
     const boundingRect = selectedElement.getBoundingClientRect();
@@ -492,12 +499,11 @@ const createElementHighlights = () => {
 };
 
 const deleteElementHighlights = () => {
-    // Remove highlight from the selected elements
-    elementHighlight?.remove();
+    // Remove highlights from the selected elements
+    document.querySelectorAll('.uw-element-highlight, .uw-element-parent-highlight')?.forEach(element => {
+        element.remove();
+    });
     elementHighlight = null;
-
-    // Remove highlight from the parent of the selected elements
-    elementParentHighlight?.remove();
     elementParentHighlight = null;
 };
 
@@ -569,6 +575,12 @@ const createElementSkeleton = (element) => {
 }
 
 const moveElementSkeleton = () => {
+    // If the element over the mouse is the HTML
+    if (hoveredElement.tagName.toLowerCase() === 'html') {
+        // return; // do nothing
+        hoveredElement = document.body;
+    }
+
     // If the element over the mouse is not a container
     if (
         isElementVoid(hoveredElement) &&
@@ -689,9 +701,9 @@ const moveElementSkeleton = () => {
             Array
                 .from(hoveredElement.children)
                 .filter(child =>
-                    ! child.classList.contains('hidden') &&
+                    ! child.classList.contains('uw-hidden') &&
                     ! child.classList.contains('uw-helper') &&
-                    child.tagName !== 'SCRIPT'
+                    child.tagName.toLowerCase() !== 'script'
                 )
                 .forEach(child => {
                     if (child.offsetLeft + child.offsetWidth / 2 < mousePosition.offsetX) {
@@ -717,9 +729,9 @@ const moveElementSkeleton = () => {
             Array
                 .from(hoveredElement.children)
                 .filter(child =>
-                    ! child.classList.contains('hidden') &&
+                    ! child.classList.contains('uw-hidden') &&
                     ! child.classList.contains('uw-helper') &&
-                    child.tagName !== 'SCRIPT'
+                    child.tagName.toLowerCase() !== 'script'
                 )
                 .forEach(child => {
                     if (child.offsetTop + child.offsetHeight / 2 < mousePosition.offsetY) {
@@ -762,6 +774,117 @@ const deleteElementSkeleton = () => {
     elementParentHover = null;
 }
 
+const createElementBoxModel = () => {
+    if (! selectedElement) {
+        return; // do nothing
+    }
+
+    const boundingRect = selectedElement.getBoundingClientRect();
+
+    // Create helper elements positioned at the selected element
+    // to visualize its top alignment on the body
+    const alignmentTopElement = document.createElement('div');
+    alignmentTopElement.style.top = `${boundingRect.top + window.scrollY}px`;
+    alignmentTopElement.style.left = '0';
+    alignmentTopElement.style.right = '0';
+    alignmentTopElement.style.border = 'revert-layer';
+    alignmentTopElement.classList.add('uw-helper');
+    alignmentTopElement.classList.add('uw-element-alignment');
+    alignmentTopElement.classList.add('uw-element-alignment-top');
+    document.body.appendChild(alignmentTopElement);
+    // and bottom alignment
+    const alignmentBottomElement = document.createElement('div');
+    alignmentBottomElement.style.top = `${boundingRect.height + boundingRect.top + window.scrollY - 2}px`;
+    alignmentBottomElement.style.left = '0';
+    alignmentBottomElement.style.right = '0';
+    alignmentBottomElement.style.border = 'revert-layer';
+    alignmentBottomElement.classList.add('uw-helper');
+    alignmentBottomElement.classList.add('uw-element-alignment');
+    alignmentBottomElement.classList.add('uw-element-alignment-bottom');
+    document.body.appendChild(alignmentBottomElement);
+    // and left alignment
+    const alignmentLeftElement = document.createElement('div');
+    alignmentLeftElement.style.top = '0';
+    alignmentLeftElement.style.bottom = '0';
+    alignmentLeftElement.style.left = `${boundingRect.left + window.scrollX}px`;
+    alignmentLeftElement.style.width = '2px';
+    alignmentLeftElement.style.border = 'revert-layer';
+    alignmentLeftElement.classList.add('uw-helper');
+    alignmentLeftElement.classList.add('uw-element-alignment');
+    alignmentLeftElement.classList.add('uw-element-alignment-left');
+    document.body.appendChild(alignmentLeftElement);
+    // and right alignment
+    const alignmentRightElement = document.createElement('div');
+    alignmentRightElement.style.top = '0';
+    alignmentRightElement.style.bottom = '0';
+    alignmentRightElement.style.left = `${boundingRect.left + boundingRect.width + window.scrollX - 2}px`;
+    alignmentRightElement.style.width = '2px';
+    alignmentRightElement.style.border = 'revert-layer';
+    alignmentRightElement.classList.add('uw-helper');
+    alignmentRightElement.classList.add('uw-element-alignment');
+    alignmentRightElement.classList.add('uw-element-alignment-right');
+    document.body.appendChild(alignmentRightElement);
+
+    // Create a helper element positioned at the selected element
+    // to visualize its paddings
+    const paddings = {
+        top: parseInt(window.getComputedStyle(selectedElement).paddingTop),
+        right: parseInt(window.getComputedStyle(selectedElement).paddingRight),
+        bottom: parseInt(window.getComputedStyle(selectedElement).paddingBottom),
+        left: parseInt(window.getComputedStyle(selectedElement).paddingLeft),
+    };
+    const paddingsElement = document.createElement('div');
+    paddingsElement.style.top = `${boundingRect.top + window.scrollY}px`;
+    paddingsElement.style.left = `${boundingRect.left + window.scrollX}px`;
+    paddingsElement.style.width = `${boundingRect.width}px`;
+    paddingsElement.style.height = `${boundingRect.height}px`;
+    paddingsElement.style.borderTop = `${paddings.top}px`;
+    paddingsElement.style.borderRight = `${paddings.right}px`;
+    paddingsElement.style.borderBottom = `${paddings.bottom}px`;
+    paddingsElement.style.borderLeft = `${paddings.left}px`;
+    paddingsElement.style.borderStyle = 'revert-layer';
+    paddingsElement.style.borderColor = 'revert-layer';
+    paddingsElement.classList.add('uw-helper');
+    paddingsElement.classList.add('uw-element-paddings');
+    document.body.appendChild(paddingsElement);
+    // and margins
+    const margins = {
+        top: parseInt(window.getComputedStyle(selectedElement).marginTop),
+        right: parseInt(window.getComputedStyle(selectedElement).marginRight),
+        bottom: parseInt(window.getComputedStyle(selectedElement).marginBottom),
+        left: parseInt(window.getComputedStyle(selectedElement).marginLeft),
+    };
+    if (
+        margins.top !== 0 ||
+        margins.right !== 0 ||
+        margins.bottom !== 0 ||
+        margins.left !== 0
+    ) {
+        // FIXME: handle the case when the element has a negative margin
+        const marginsElement = document.createElement('div');
+        marginsElement.style.top = `${boundingRect.top - margins.top + window.scrollY}px`;
+        marginsElement.style.left = `${boundingRect.left - margins.left+ window.scrollX}px`;
+        marginsElement.style.width = `${boundingRect.width + margins.left + margins.right}px`;
+        marginsElement.style.height = `${boundingRect.height + margins.top + margins.bottom}px`;
+        marginsElement.style.borderTop = `${margins.top}px`;
+        marginsElement.style.borderRight = `${margins.right}px`;
+        marginsElement.style.borderBottom = `${margins.bottom}px`;
+        marginsElement.style.borderLeft = `${margins.left}px`;
+        marginsElement.style.borderStyle = 'revert-layer';
+        marginsElement.style.borderColor = 'revert-layer';
+        marginsElement.classList.add('uw-helper');
+        marginsElement.classList.add('uw-element-margins');
+        document.body.appendChild(marginsElement);
+    }
+}
+
+const removeElementBoxModel = () => {
+    // Remove the box model helper elements
+    document.querySelectorAll('.uw-element-margins, .uw-element-paddings, .uw-element-alignment')?.forEach(element => {
+        element.remove();
+    });
+}
+
 const moveElementToUpTree = () => {
     // If the selected element has previous sibling
     if (selectedElement.previousElementSibling) {
@@ -782,6 +905,9 @@ const moveElementToUpTree = () => {
             // send the document tree to the parent window
             sendDocumentTree();
 
+            // send the selected element to the parent window
+            sendSelectedElement();
+
             return;
         }
 
@@ -800,7 +926,15 @@ const moveElementToUpTree = () => {
         // send the document tree to the parent window
         sendDocumentTree();
 
+        // send the selected element to the parent window
+        sendSelectedElement();
+
         return;
+    }
+
+    // If the parent element is the body
+    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
+        return; // do nothing
     }
 
     // If the parent element is inside a container
@@ -816,6 +950,9 @@ const moveElementToUpTree = () => {
 
         // send the document tree to the parent window
         sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
     }
 
     // Scroll the window to the selected element
@@ -850,6 +987,9 @@ const moveElementToDownTree = () => {
             // send the document tree to the parent window
             sendDocumentTree();
 
+            // send the selected element to the parent window
+            sendSelectedElement();
+
             return;
         }
 
@@ -868,7 +1008,15 @@ const moveElementToDownTree = () => {
         // send the document tree to the parent window
         sendDocumentTree();
 
+        // send the selected element to the parent window
+        sendSelectedElement();
+
         return;
+    }
+
+    // If the parent element is the body
+    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
+        return; // do nothing
     }
 
     // If the parent element is inside a container
@@ -884,6 +1032,9 @@ const moveElementToDownTree = () => {
 
         // send the document tree to the parent window
         sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
     }
 
     // Scroll the window to the selected element
@@ -905,6 +1056,16 @@ const scrollToElement = (element) => {
 }
 
 const sendSelectedElement = () => {
+    // If there is no selected element
+    if (! selectedElement) {
+        // send a null payload to the parent window
+        window.parent.postMessage({
+            type: 'element:select',
+            payload: null,
+        }, '*');
+        return;
+    }
+
     // Send the selected element to the parent window
     window.parent.postMessage({
         type: 'element:select',
@@ -918,19 +1079,29 @@ const sendSelectedElement = () => {
             outerHTML: selectedElement.outerHTML,
             style: selectedElement.style.cssText,
             boundingRect: selectedElement.getBoundingClientRect(),
-            paddings: {
-                top: parseInt(window.getComputedStyle(selectedElement).paddingTop),
-                right: parseInt(window.getComputedStyle(selectedElement).paddingRight),
-                bottom: parseInt(window.getComputedStyle(selectedElement).paddingBottom),
-                left: parseInt(window.getComputedStyle(selectedElement).paddingLeft),
-            },
             margins: {
-                top: parseInt(window.getComputedStyle(selectedElement).marginTop),
-                right: parseInt(window.getComputedStyle(selectedElement).marginRight),
-                bottom: parseInt(window.getComputedStyle(selectedElement).marginBottom),
-                left: parseInt(window.getComputedStyle(selectedElement).marginLeft),
+                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginTop).toFixed(3)),
+                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginRight).toFixed(3)),
+                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginBottom).toFixed(3)),
+                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginLeft).toFixed(3)),
+            },
+            paddings: {
+                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingTop).toFixed(3)),
+                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingRight).toFixed(3)),
+                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingBottom).toFixed(3)),
+                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingLeft).toFixed(3)),
+            },
+            borders: {
+                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderTopWidth).toFixed(3)),
+                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderRightWidth).toFixed(3)),
+                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderBottomWidth).toFixed(3)),
+                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderLeftWidth).toFixed(3)),
             },
             dataset: Object.assign({}, selectedElement.dataset),
+            attributes: Array.from(selectedElement.attributes).map(attribute => ({
+                name: attribute.name,
+                value: attribute.value,
+            })),
         },
     }, '*');
 }
@@ -1000,7 +1171,7 @@ const onElementDragEnd = (event) => {
     }
 
     // Show the target element
-    event.target.classList.remove('hidden');
+    event.target.classList.remove('uw-hidden');
 
     // Remove the skeleton element
     deleteElementSkeleton();
@@ -1020,12 +1191,12 @@ const onElementDrag = (event) => {
     event.stopImmediatePropagation();
 
     // If the target element is not hidden
-    if (! event.target.classList.contains('hidden')) {
+    if (! event.target.classList.contains('uw-hidden')) {
         // create a skeleton element to visualize the element being moved
         createElementSkeleton(event.target);
 
         // hide the target element
-        event.target.classList.add('hidden')
+        event.target.classList.add('uw-hidden')
 
         // delete the highlight elements
         deleteElementHighlights();
@@ -1057,8 +1228,8 @@ const onElementDrag = (event) => {
         return; // do nothing
     }
 
-    // If the element over the mouse is the skeleton element
-    if (hoveredElement.classList.contains('uw-element-skeleton')) {
+    // If the element over the mouse is a helper element
+    if (hoveredElement.classList.contains('uw-helper')) {
         return; // do nothing
     }
 
@@ -1271,7 +1442,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a').forEach(element => {
         element.setAttribute('onclick', 'return false;');
     });
+
+    // Send the ready message to the parent window
+    window.parent.postMessage({
+        type: 'window:ready',
+        payload: {},
+    }, '*');
 });
+
+// Handler for mouse down event on the main window
+window.addEventListener('mousedown', () => {
+    // Send the mouse down event to the parent window
+    window.parent.postMessage({
+        type: 'canvas:focus',
+        payload: {},
+    }, '*');
+}, { capture: true });
 
 // Handler for receiving messages from the main window
 window.addEventListener('message', event => {
@@ -1295,8 +1481,16 @@ window.addEventListener('message', event => {
                 return; // do nothing
             }
 
+            // Refresh the skeleton parent hover element
+            refreshSkeletonParentHoverElement();
+
+            // If the element over the mouse is a helper element
+            if (hoveredElement.classList.contains('uw-helper')) {
+                return;
+            }
+
             // Show the skeleton element
-            elementSkeleton.classList.remove('hidden');
+            elementSkeleton.classList.remove('uw-hidden');
 
             // Move the skeleton element relative to the element over the mouse
             moveElementSkeleton();
@@ -1321,7 +1515,7 @@ window.addEventListener('message', event => {
             createElementSkeleton(elementToInsert);
 
             // Hide the skeleton element
-            elementSkeleton.classList.add('hidden');
+            elementSkeleton.classList.add('uw-hidden');
 
             // Delete the template element
             elementToInsert?.remove();
@@ -1334,6 +1528,7 @@ window.addEventListener('message', event => {
     }
 
     if (event.data.type === 'element:insert') {
+        // Insert the newly element
         insertElement();
     }
 
@@ -1439,6 +1634,16 @@ window.addEventListener('message', event => {
         }
     }
 
+    if (event.data.type === 'element:show-box-model') {
+        // Create the box model element
+        createElementBoxModel();
+    }
+
+    if (event.data.type === 'element:hide-box-model') {
+        // Hide the box model element
+        removeElementBoxModel();
+    }
+
     if (event.data.type === 'document:init') {
         // Update global variables
         // TODO: find a better way to interact with the API
@@ -1455,11 +1660,21 @@ window.addEventListener('message', event => {
         // Send the document tree to the parent window
         sendDocumentTree();
 
+        // Update the document ready status
         isDocumentReady = true;
     }
-});
 
-window.parent.postMessage({
-    type: 'window:ready',
-    payload: {},
-}, '*');
+    if (event.data.type === 'window:resize') {
+        // Remove the highlight elements
+        deleteElementHighlights();
+
+        // Send the selected element to the parent window
+        // so that the parent window can update the navigation section
+        sendSelectedElement();
+    }
+
+    if (event.data.type === 'window:afterresize') {
+        // Re-create the element highlight
+        createElementHighlights();
+    }
+});

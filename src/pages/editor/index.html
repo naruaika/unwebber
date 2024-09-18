@@ -32,42 +32,51 @@
             <div class="left-toolbar">
 
                 <!-- Application Menu Button -->
-                <button class="button button-setting" id="application-menu-button" onclick="window.app.project.close()">
+                <button class="button button-setting" id="application-menu-button" onclick="window.unwebber.project.close()" tabindex="1">
                     <div class="icon icon-unwebber application-logo"></div>
                     <div class="icon icon-chevron-down"></div>
                 </button>
 
                 <!-- Visual Edit Button -->
-                <button class="button button-action" id="visual-edit-button" data-action-group="edit-mode">
-                    <div class="icon icon-mouse-pointer"></div>
-                </button>
+                <fieldset>
+                    <input type="radio" value="visual" id="visual-edit-button" name="editor-mode" tabindex="2" />
+                    <label for="visual-edit-button" class="button">
+                        <div class="icon icon-mouse-pointer"></div>
+                    </label>
+                </fieldset>
 
                 <!-- Code Edit Button -->
-                <button class="button button-action" id="code-edit-button" data-action-group="edit-mode">
-                    <div class="icon icon-code"></div>
-                </button>
+                <fieldset>
+                    <input type="radio" value="code" id="code-edit-button" name="editor-mode" tabindex="3" />
+                    <label for="code-edit-button" class="button">
+                        <div class="icon icon-code"></div>
+                    </label>
+                </fieldset>
             </div>
 
             <!-- Right Toolbar -->
             <div class="right-toolbar">
 
                 <!-- Website Preview Button -->
-                <button class="button button-action" id="website-preview-button">
-                    <div class="icon icon-play"></div>
-                </button>
+                <fieldset>
+                    <input type="radio" value="preview" id="website-preview-button" name="editor-mode" tabindex="4" />
+                    <label for="website-preview-button" class="button">
+                        <div class="icon icon-play"></div>
+                    </label>
+                </fieldset>
 
                 <!-- Document View Button -->
-                <button class="button button-setting" id="document-view-button">
+                <button class="button button-setting" id="document-view-button" tabindex="5">
                     <div class="icon icon-monitor"></div>
                 </button>
 
                 <!-- Document Version Button -->
-                <button class="button button-setting" id="document-version-button">
+                <button class="button button-setting" id="document-version-button" tabindex="6">
                     <div class="icon icon-git-branch"></div>
                 </button>
 
                 <!-- Document Setting Button -->
-                <button class="button button-setting" id="document-setting-button">
+                <button class="button button-setting" id="document-setting-button" tabindex="7">
                     <div class="icon icon-settings"></div>
                 </button>
             </div>
@@ -79,97 +88,204 @@
         <div class="main-content">
 
             <!-- Main Left Sidebar -->
-            <div class="main-sidebar__left scrollable">
+            <div class="main-sidebar__left">
 
                 <!-- Pages Panel -->
-                <div class="main-sidebar__panel" id="pages-panel">
+                <div class="main-sidebar__panel" id="pages-panel" tabindex="8">
                     <button class="header">
                         <div class="title">Pages</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
-                    <div class="content__container">
+                    <div class="content__container scrollable">
                         <span class="placeholder">No pages found.</span>
                     </div>
                 </div>
 
-                <!-- Layers Panel -->
-                <div class="main-sidebar__panel" id="layers-panel">
+                <!-- Outline Panel -->
+                <div class="main-sidebar__panel" id="outline-panel" tabindex="9">
                     <button class="header">
-                        <div class="title">Layers</div>
+                        <div class="title">Outline</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No layers found.</span>
+                        <span class="placeholder">No element found.</span>
                     </div>
+                    <div class="breadcrumb scrollable"></div>
                 </div>
 
                 <!-- Assets Panel -->
-                <div class="main-sidebar__panel" id="assets-panel">
+                <div class="main-sidebar__panel" id="assets-panel" tabindex="10">
                     <button class="header">
                         <div class="title">Assets</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
-                    <div class="content__container">
+                    <div class="content__container scrollable">
                         <span class="placeholder">No assets found.</span>
                     </div>
                 </div>
             </div>
 
             <!-- Main Panel -->
-            <div class="main-panel">
+            <div class="main-panel scrollable">
 
-                <!-- Main Canvas -->
-                <div class="main-canvas__container scrollable">
-                    <div class="main-canvas__overlay hidden"></div>
-                    <iframe
-                        src=""
-                        title=""
-                        class="main-canvas"
-                        id="main-canvas"
-                        loading="lazy"
-                        frameborder="0"
-                        seamless
-                    ></iframe>
+                <!-- Main Frame -->
+                <div class="main-frame">
+
+                    <!-- Main Canvas -->
+                    <div class="main-canvas__titlebar">
+                        <div class="icon icon-monitor"></div>
+                        <div class="title">index.html</div>
+                    </div>
+                    <div class="main-canvas__container">
+                        <div class="main-canvas__overlay hidden"></div>
+                        <iframe
+                            src=""
+                            title=""
+                            class="main-canvas"
+                            id="main-canvas"
+                            loading="lazy"
+                            frameborder="0"
+                            seamless
+                        ></iframe>
+                    </div>
                 </div>
-
-                <!-- Main Bottombar -->
-                <div class="main-bottombar scrollable hidden"></div>
             </div>
 
             <!-- Main Right Sidebar -->
-            <div class="main-sidebar__right scrollable">
+            <div class="main-sidebar__right">
 
                 <!-- Attributes Panel -->
-                <div class="main-sidebar__panel" id="attributes-panel">
+                <div class="main-sidebar__panel" id="attributes-panel" tabindex="11">
                     <button class="header">
                         <div class="title">Attributes</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
-                    <div class="content__container">
+                    <div class="content__container scrollable">
                         <span class="placeholder">No element selected.</span>
                     </div>
                 </div>
 
                 <!-- Properties Panel -->
-                <div class="main-sidebar__panel" id="properties-panel">
+                <div class="main-sidebar__panel" id="properties-panel" tabindex="12">
                     <button class="header">
                         <div class="title">Properties</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
-                    <div class="content__container">
+                    <div class="content__container scrollable">
                         <span class="placeholder">No element selected.</span>
+
+                        <!-- Layout -->
+                        <div class="panel__section hidden" id="layout-section">
+                            <div class="header">
+                                <div class="title">Layout</div>
+                            </div>
+                            <div class="section__container">
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Spacing -->
+                        <div class="panel__section hidden" id="spacing-section">
+                            <div class="header">
+                                <div class="title">Spacing</div>
+                            </div>
+                            <div class="section__container">
+                                <div class="box-model">
+                                    <div class="column margin">
+                                        <div class="input margin__top" contenteditable="true">0</div>
+                                        <div class="row">
+                                            <div class="input margin__left" contenteditable="true">0</div>
+                                            <div class="column border">
+                                                <div class="input border__top" contenteditable="true">0</div>
+                                                <div class="row">
+                                                    <div class="input border__left" contenteditable="true">0</div>
+                                                    <div class="column padding">
+                                                        <div class="input padding__top" contenteditable="true">0</div>
+                                                        <div class="row">
+                                                            <div class="input padding__left" contenteditable="true">0</div>
+                                                            <div class="element">
+                                                                <div class="input element__width" contenteditable="true">0</div>
+                                                                <span>&#10005;</span>
+                                                                <div class="input element__height" contenteditable="true">0</div>
+                                                            </div>
+                                                            <div class="input padding__right" contenteditable="true">0</div>
+                                                        </div>
+                                                        <div class="input padding__bottom" contenteditable="true">0</div>
+                                                    </div>
+                                                    <div class="input border__right" contenteditable="true">0</div>
+                                                </div>
+                                                <div class="input border__bottom" contenteditable="true">0</div>
+                                            </div>
+                                            <div class="input margin__right" contenteditable="true">0</div>
+                                        </div>
+                                        <div class="input margin__bottom" contenteditable="true">0</div>
+                                    </div>
+                                </div>
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Position & Scaling -->
+                        <div class="panel__section hidden" id="position-and-scaling-section">
+                            <div class="header">
+                                <div class="title">Position & Scaling</div>
+                            </div>
+                            <div class="section__container">
+                                <canvas class="navigator"></canvas>
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Typography -->
+                        <div class="panel__section hidden" id="typography-section">
+                            <div class="header">
+                                <div class="title">Typography</div>
+                            </div>
+                            <div class="section__container">
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Background & Border -->
+                        <div class="panel__section hidden" id="background-and-border-section">
+                            <div class="header">
+                                <div class="title">Background & Border</div>
+                            </div>
+                            <div class="section__container">
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Effect -->
+                        <div class="panel__section hidden" id="effect-section">
+                            <div class="header">
+                                <div class="title">Effect</div>
+                            </div>
+                            <div class="section__container">
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
+
+                        <!-- Custom -->
+                        <div class="panel__section hidden" id="custom-section">
+                            <div class="header">
+                                <div class="title">Custom</div>
+                            </div>
+                            <div class="section__container">
+                                Lorem ipsum dolor sit amet
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Templates Panel -->
-                <div class="main-sidebar__panel" id="templates-panel">
+                <div class="main-sidebar__panel" id="templates-panel" tabindex="13">
                     <div class="header">
                         <div class="title">Templates</div>
                         <div class="icon icon-chevron-down"></div>
                     </div>
-                    <div class="content__container">
+                    <div class="content__container scrollable">
                         <span class="placeholder">No template available.</span>
-                        <div class="content-list"></div>
                     </div>
                 </div>
             </div>

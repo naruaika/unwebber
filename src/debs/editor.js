@@ -42,7 +42,9 @@ const isElementTextable = (element) => {
     }
 
     // Check if the element has no text node
-    if (! Array.from(element.childNodes).some(child => child.nodeType === Node.TEXT_NODE)) {
+    if (! Array.from(element.childNodes).some(
+        child => child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== ''
+    )) {
         return false;
     }
 

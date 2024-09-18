@@ -1497,8 +1497,25 @@ window.addEventListener('message', event => {
         }
 
         if (event.data.payload.hasOwnProperty('template')) {
+            // When the user cancels the insertion by dropping the template element
+            // outside the main canvas
             if (! event.data.payload.template) {
-                return; // do nothing
+                // Remove the skeleton element
+                deleteElementSkeleton();
+
+                // Make the newly pasted element draggable
+                makeElementDraggable(elementToInsert);
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight elements
+                createElementHighlights();
+
+                // Clear the template element
+                elementToInsert = null;
+
+                return;
             }
 
             // Convert the HTML code of the template to an element

@@ -39,18 +39,17 @@ body {
 
 .scrollable {
     overflow: auto;
+    scroll-behavior: smooth;
 
     &::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
     }
     &::-webkit-scrollbar-corner {
         background: var(--color-primary);
     }
     &::-webkit-scrollbar-thumb {
         background-color: var(--color-light-gray);
-        border: 3px solid var(--color-primary);
-        border-radius: 6px;
     }
     &::-webkit-scrollbar-thumb:active {
         background-color: var(--color-lighter-gray);
@@ -600,5 +599,6 @@ body {
 .icon-mouse-pointer { mask: url('../../res/icons/mouse-pointer.svg'); }
 .icon-play { mask: url('../../res/icons/play.svg'); }
 .icon-settings { mask: url('../../res/icons/settings.svg'); }
+.icon-save { mask: url('../../res/icons/save.svg'); }
 .icon-square { mask: url('../../res/icons/square.svg'); }
 .icon-type { mask: url('../../res/icons/type.svg'); }

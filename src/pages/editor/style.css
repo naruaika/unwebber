@@ -216,6 +216,49 @@
 }
 
 #properties-panel {
+    #layout-section {
+        .section__container {
+            position: relative;
+
+            .simulator {
+                box-sizing: border-box;
+                overflow: auto;
+
+                width: 100%;
+                height: auto;
+                aspect-ratio: 4 / 3;
+                background-color: var(--color-secondary);
+                border: var(--border-size) solid var(--color-base);
+
+                &::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+            }
+
+            .parent-element {
+                flex: 1;
+                box-sizing: border-box;
+                padding: 5px;
+                gap: 5px;
+
+                .element {
+                    box-sizing: border-box;
+                    gap: 5px;
+                    border: var(--border-size) solid var(--color-base);
+                    background: var(--color-light-gray);
+                }
+
+                * {
+                    box-sizing: border-box;
+                    padding: 5px;
+                    background: var(--color-gray);
+                    border: var(--border-size) dashed var(--color-base);
+                }
+            }
+        }
+    }
+
     #spacing-section {
         .box-model {
             position: relative;
@@ -348,7 +391,6 @@
                 height: auto;
                 aspect-ratio: 4 / 3;
 
-                background-color: var(--color-light-gray);
                 outline: var(--border-size) solid var(--color-base);
                 outline-offset: calc(var(--border-size) * -1);
             }

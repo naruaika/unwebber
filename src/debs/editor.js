@@ -4,7 +4,6 @@ var apiSchema = {};
 var isDocumentReady = false;
 
 var hoveredElement = null;
-// TODO: add support for multiple selection
 var selectedElement = null;
 
 var elementToPaste = null;
@@ -26,7 +25,7 @@ const generateUniqueId = (type = 'element') => {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return `${type}-${result}`;
-};
+}
 
 const debounce = (func, timeout = 1000 / 60 / 2) => {
     let timer;
@@ -34,7 +33,7 @@ const debounce = (func, timeout = 1000 / 60 / 2) => {
         clearTimeout(timer);
         timer = setTimeout(() => func.apply(this, args), timeout);
     };
-};
+}
 
 const isElementTextable = (element) => {
     if (! element) {
@@ -80,7 +79,7 @@ const isElementVoid = (element) => {
     return false;
 }
 
-const enableWhitespaceInsertionOnButton = event => {
+const enableWhitespaceInsertionOnButton = (event) => {
     if (event.key === ' ') {
         event.preventDefault();
 
@@ -100,7 +99,7 @@ const enableWhitespaceInsertionOnButton = event => {
     }
 }
 
-const selectElement = element => {
+const selectElement = (element) => {
     // If there is a current selection
     if (selectedElement) {
         // clear current text selection
@@ -131,6 +130,7 @@ const selectElement = element => {
     }
 
     // Update the current selection
+    // TODO: add support for multiple selection
     selectedElement = element;
 
     // Create the highlight elements
@@ -152,7 +152,7 @@ const selectElement = element => {
 
     // Hide the hover element
     hideElementHover();
-};
+}
 
 const copyElement = () => {
     if (selectedElement.tagName === 'BODY') {
@@ -387,6 +387,12 @@ const refreshElementHover = (element = null) => {
         return;
     }
 
+    // If the hovered element is HTML
+    if (element.tagName.toLowerCase() === 'html') {
+        // replace the element to body
+        element = document.body;
+    }
+
     // Update the hovered element
     hoveredElement = element;
 
@@ -498,7 +504,7 @@ const createElementHighlights = () => {
 
     // Append the highlight element to the body
     document.body.appendChild(elementParentHighlight);
-};
+}
 
 const deleteElementHighlights = () => {
     // Remove highlights from the selected elements
@@ -507,7 +513,7 @@ const deleteElementHighlights = () => {
     });
     elementHighlight = null;
     elementParentHighlight = null;
-};
+}
 
 const refreshElementHighlight = () => {
     if (elementHighlight) {
@@ -887,6 +893,82 @@ const removeElementBoxModel = () => {
     });
 }
 
+const createElementLayoutIdentifiers = () => {
+    // Get the parent element of the selected element
+    const parentElement = selectedElement.parentElement;
+
+    // Loop through the parent element children
+    let elementIndex = 0;
+    Array.from(parentElement.children).forEach(child => {
+        // If the child is positioned absolute or fixed
+        if (
+            window.getComputedStyle(child).position === 'absolute' ||
+            window.getComputedStyle(child).position === 'fixed'
+        ) {
+            return; // skip the child
+        }
+
+        // Skip the unnecessary elements
+        if (
+            ['head', 'script'].includes(child.tagName.toLowerCase()) ||
+            child.classList.contains('uw-helper')
+        ) {
+            return; // skip the child
+        }
+
+        // Create a helper element positioned at the child element
+        const boundingRect = child.getBoundingClientRect();
+        const identifierElement = document.createElement('div');
+        identifierElement.style.top = `${boundingRect.top + window.scrollY}px`;
+        identifierElement.style.left = `${boundingRect.left + window.scrollX}px`;
+        identifierElement.style.width = `${boundingRect.width}px`;
+        identifierElement.style.height = `${boundingRect.height}px`;
+        identifierElement.dataset.title = child === selectedElement ? 'E' : `S${++elementIndex}`;
+        identifierElement.classList.add('uw-helper');
+        identifierElement.classList.add('uw-element-layout-identifier');
+        document.body.appendChild(identifierElement);
+    });
+
+    // Loop through the selected element children
+    elementIndex = 0;
+    Array.from(selectedElement.children).forEach(grandChild => {
+        // If the child is positioned absolute or fixed
+        if (
+            window.getComputedStyle(grandChild).position === 'absolute' ||
+            window.getComputedStyle(grandChild).position === 'fixed'
+        ) {
+            return; // skip the child
+        }
+
+        // Skip the unnecessary elements
+        if (
+            ['head', 'script'].includes(grandChild.tagName.toLowerCase()) ||
+            grandChild.classList.contains('uw-helper')
+        ) {
+            return; // skip the child
+        }
+
+        // Create a helper element positioned at the grandchild element
+        const boundingRect = grandChild.getBoundingClientRect();
+        const identifierElement = document.createElement('div');
+        identifierElement.style.top = `${boundingRect.top + window.scrollY}px`;
+        identifierElement.style.left = `${boundingRect.left + window.scrollX}px`;
+        identifierElement.style.width = `${boundingRect.width}px`;
+        identifierElement.style.height = `${boundingRect.height}px`;
+        identifierElement.dataset.title = grandChild === selectedElement ? 'E' : `C${++elementIndex}`;
+        identifierElement.classList.add('uw-helper');
+        identifierElement.classList.add('uw-element-layout-identifier');
+        document.body.appendChild(identifierElement);
+    });
+}
+
+const removeElementLayoutIdentifiers = () => {
+    // Remove the layout identifier helper elements
+    document.querySelectorAll('.uw-element-layout-identifier')?.forEach(element => {
+        element.remove();
+    });
+}
+
 const moveElementToUpTree = () => {
     // If the selected element has previous sibling
     if (selectedElement.previousElementSibling) {
@@ -1069,6 +1151,46 @@ const sendSelectedElement = () => {
     }
 
     // Send the selected element to the parent window
+    const layoutRelatedProperties = [
+        'position',
+        'display',
+        'float',
+        'columnCount',
+        'columnFill',
+        'columnSpan',
+        'columns',
+        'flex',
+        'flexBasis',
+        'flexDirection',
+        'flexFlow',
+        'flexGrow',
+        'flexShrink',
+        'flexWrap',
+        'gridArea',
+        'gridAutoColumns',
+        'gridAutoFlow',
+        'gridAutoRows',
+        'gridColumn',
+        'gridColumnEnd',
+        'gridColumnStart',
+        'gridRow',
+        'gridRowEnd',
+        'gridRowStart',
+        'gridTemplate',
+        'gridTemplateAreas',
+        'gridTemplateColumns',
+        'gridTemplateRows',
+        'order',
+        'alignItems',
+        'alignContent',
+        'alignSelf',
+        'justifyContent',
+        'justifyItems',
+        'justifySelf',
+        'placeContent',
+        'placeItems',
+        'placeSelf',
+    ];
     window.parent.postMessage({
         type: 'element:select',
         payload: {
@@ -1080,30 +1202,35 @@ const sendSelectedElement = () => {
             innerText: selectedElement.innerText,
             outerHTML: selectedElement.outerHTML,
             style: selectedElement.style.cssText,
+            computedStyle: Object
+                .fromEntries(Object.entries(window.getComputedStyle(selectedElement))
+                .filter(([key, _]) => isNaN(key))),
             boundingRect: selectedElement.getBoundingClientRect(),
-            margins: {
-                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginTop).toFixed(3)),
-                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginRight).toFixed(3)),
-                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginBottom).toFixed(3)),
-                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).marginLeft).toFixed(3)),
-            },
-            paddings: {
-                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingTop).toFixed(3)),
-                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingRight).toFixed(3)),
-                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingBottom).toFixed(3)),
-                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).paddingLeft).toFixed(3)),
-            },
-            borders: {
-                top: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderTopWidth).toFixed(3)),
-                right: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderRightWidth).toFixed(3)),
-                bottom: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderBottomWidth).toFixed(3)),
-                left: parseFloat(parseFloat(window.getComputedStyle(selectedElement).borderLeftWidth).toFixed(3)),
-            },
             dataset: Object.assign({}, selectedElement.dataset),
-            attributes: Array.from(selectedElement.attributes).map(attribute => ({
-                name: attribute.name,
-                value: attribute.value,
+            attributes: Array.from(selectedElement.attributes).map(attribute => ({ name: attribute.name, value: attribute.value })),
+            children: Array.from(selectedElement.children).map(child => ({
+                tagName: child.tagName,
+                id: child.dataset.uwId,
+                classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
+                computedStyle: Object
+                    .fromEntries(Object.entries(window.getComputedStyle(child))
+                    .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
             })),
+            parent: {
+                tagName: selectedElement.parentElement.tagName,
+                id: selectedElement.parentElement.dataset.uwId,
+                computedStyle: Object
+                    .fromEntries(Object.entries(window.getComputedStyle(selectedElement.parentElement))
+                    .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                children: Array.from(selectedElement.parentElement.children).map(child => ({
+                    tagName: child.tagName,
+                    id: child.dataset.uwId,
+                    classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
+                    computedStyle: Object
+                        .fromEntries(Object.entries(window.getComputedStyle(child))
+                        .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                })),
+            },
         },
     }, '*');
 }
@@ -1240,10 +1367,10 @@ const onElementDrag = (event) => {
 
     // Refresh the skeleton parent hover element
     refreshSkeletonParentHoverElement();
-};
+}
 
 // Handler for mouse move events
-document.addEventListener('mousemove', event => {
+document.addEventListener('mousemove', (event) => {
     // If the document is not ready
     // FIXME: sometimes the document is not ready when the mouse move event is triggered
     if (! isDocumentReady) {
@@ -1267,7 +1394,7 @@ document.addEventListener('mousemove', event => {
 });
 
 // Handler for click mouse events
-document.addEventListener('mousedown', event => {
+document.addEventListener('mousedown', (event) => {
     // If the current selection is editable
     if (
         selectedElement === event.target &&
@@ -1309,7 +1436,7 @@ document.addEventListener('mouseleave', () => {
 });
 
 // Handler for key press events
-document.addEventListener('keydown', event => {
+document.addEventListener('keydown', (event) => {
     if (selectedElement?.contentEditable === 'true') {
         if (event.key === 'Escape') {
             // Make the selected element not editable
@@ -1437,19 +1564,6 @@ document.addEventListener('dragenter', event => {
 // Handler for window scroll events
 window.addEventListener('scroll', () => {
     refreshElementHighlight();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Disable click events on hyperlinks
-    document.querySelectorAll('a').forEach(element => {
-        element.setAttribute('onclick', 'return false;');
-    });
-
-    // Send the ready message to the parent window
-    window.parent.postMessage({
-        type: 'window:ready',
-        payload: {},
-    }, '*');
 });
 
 // Handler for mouse down event on the main window
@@ -1653,7 +1767,21 @@ window.addEventListener('message', event => {
         }
     }
 
+    if (event.data.type === 'element:scroll-to') {
+        // Find the element by id
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
+
+        // If the element is found
+        if (element) {
+            // scroll the window to the selected element
+            scrollToElement(element);
+        }
+    }
+
     if (event.data.type === 'element:show-box-model') {
+        // Scroll the window to the selected element
+        scrollToElement(selectedElement);
+
         // Create the box model element
         createElementBoxModel();
     }
@@ -1661,6 +1789,19 @@ window.addEventListener('message', event => {
     if (event.data.type === 'element:hide-box-model') {
         // Hide the box model element
         removeElementBoxModel();
+    }
+
+    if (event.data.type === 'element:show-layout-identifiers') {
+        // Scroll the window to the selected element
+        scrollToElement(selectedElement);
+
+        // Create the layout identifier elements
+        createElementLayoutIdentifiers();
+    }
+
+    if (event.data.type === 'element:hide-layout-identifiers') {
+        // Hide the layout identifier elements
+        removeElementLayoutIdentifiers();
     }
 
     if (event.data.type === 'document:init') {
@@ -1696,4 +1837,18 @@ window.addEventListener('message', event => {
         // Re-create the element highlight
         createElementHighlights();
     }
+});
+
+//
+document.addEventListener('DOMContentLoaded', () => {
+    // Disable click events on hyperlinks
+    document.querySelectorAll('a').forEach(element => {
+        element.setAttribute('onclick', 'return false;');
+    });
+
+    // Send the ready message to the parent window
+    window.parent.postMessage({
+        type: 'window:ready',
+        payload: {},
+    }, '*');
 });

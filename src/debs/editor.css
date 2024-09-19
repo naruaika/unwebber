@@ -55,6 +55,10 @@ body {
         outline: none;
     }
 
+    .uw-helper {
+        z-index: 9999;
+    }
+
     .uw-element-highlight,
     .uw-element-hover,
     .uw-element-skeleton,
@@ -150,6 +154,23 @@ body {
     }
     .uw-element-margins {
         border-color: var(--uw-color-orange);
+    }
+
+    .uw-element-layout-identifier {
+        position: absolute;
+        box-sizing: border-box;
+        border: 2px solid var(--uw-color-purple);
+
+        &::after {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            content: attr(data-title);
+            padding: 5px;
+            font-size: 12px;
+            background-color: var(--uw-color-purple);
+            color: white;
+        }
     }
 
     .uw-hidden {

@@ -69,8 +69,8 @@ const create = () => {
     // Save the updated configuration
     config.write(appConfig);
 
-    // Go to editor page
-    BrowserWindow.getFocusedWindow().webContents.loadFile(pages.editor);
+    // Open the project
+    open(null, workDir);
 };
 
 const open = (_, workDir) => {

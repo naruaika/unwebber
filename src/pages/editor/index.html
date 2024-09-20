@@ -137,16 +137,22 @@
                         <div class="title">index.html</div>
                     </div>
                     <div class="main-canvas__container">
-                        <div class="main-canvas__overlay hidden"></div>
-                        <iframe
-                            src=""
-                            title=""
-                            class="main-canvas"
-                            id="main-canvas"
-                            loading="lazy"
-                            frameborder="0"
-                            seamless
-                        ></iframe>
+                        <canvas class="top-ruler"></canvas>
+                        <div class="row">
+                            <canvas class="left-ruler"></canvas>
+                            <div class="container">
+                                <div class="main-canvas__overlay hidden"></div>
+                                <iframe
+                                    src=""
+                                    title=""
+                                    class="main-canvas"
+                                    id="main-canvas"
+                                    loading="lazy"
+                                    frameborder="0"
+                                    seamless
+                                ></iframe>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -224,13 +230,15 @@
                             </div>
                         </div>
 
-                        <!-- Position & Scaling -->
-                        <div class="panel__section hidden" id="position-and-scaling-section">
+                        <!-- Position -->
+                        <div class="panel__section hidden" id="position">
                             <div class="header">
-                                <div class="title">Position & Scaling</div>
+                                <div class="title">Position</div>
                             </div>
                             <div class="section__container">
-                                <canvas class="navigator"></canvas>
+                                <div class="container">
+                                    <canvas class="navigator"></canvas>
+                                </div>
                             </div>
                         </div>
 
@@ -238,36 +246,6 @@
                         <div class="panel__section hidden" id="typography-section">
                             <div class="header">
                                 <div class="title">Typography</div>
-                            </div>
-                            <div class="section__container">
-                                Lorem ipsum dolor sit amet
-                            </div>
-                        </div>
-
-                        <!-- Background & Border -->
-                        <div class="panel__section hidden" id="background-and-border-section">
-                            <div class="header">
-                                <div class="title">Background & Border</div>
-                            </div>
-                            <div class="section__container">
-                                Lorem ipsum dolor sit amet
-                            </div>
-                        </div>
-
-                        <!-- Effect -->
-                        <div class="panel__section hidden" id="effect-section">
-                            <div class="header">
-                                <div class="title">Effect</div>
-                            </div>
-                            <div class="section__container">
-                                Lorem ipsum dolor sit amet
-                            </div>
-                        </div>
-
-                        <!-- Custom -->
-                        <div class="panel__section hidden" id="custom-section">
-                            <div class="header">
-                                <div class="title">Custom</div>
                             </div>
                             <div class="section__container">
                                 Lorem ipsum dolor sit amet

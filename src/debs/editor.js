@@ -15,6 +15,9 @@ var elementParentHover = null;
 var elementHighlight = null;
 var elementParentHighlight = null;
 
+var horizontalRulerLine = null;
+var verticalRulerLine = null;
+
 var mousePosition = { x: 0, y: 0, offsetX: 0, offsetY: 0 };
 
 const generateUniqueId = (type = 'element') => {
@@ -969,6 +972,43 @@ const removeElementLayoutIdentifiers = () => {
     });
 }
 
+const refreshRulerLines = (x = null, y = null) => {
+    if (x) {
+        if (! verticalRulerLine) {
+            verticalRulerLine = document.createElement('div');
+            verticalRulerLine.style.top = '0';
+            verticalRulerLine.style.bottom = '0';
+            verticalRulerLine.style.width = '2px';
+            verticalRulerLine.style.height = '100%';
+            verticalRulerLine.classList.add('uw-helper');
+            verticalRulerLine.classList.add('uw-ruler-line');
+            document.body.appendChild(verticalRulerLine);
+        }
+        verticalRulerLine.style.left = `${x - 1}px`;
+        verticalRulerLine.classList.remove('uw-hidden');
+    }
+
+    if (y) {
+        if (! horizontalRulerLine) {
+            horizontalRulerLine = document.createElement('div');
+            horizontalRulerLine.style.left = '0';
+            horizontalRulerLine.style.right = '0';
+            horizontalRulerLine.style.height = '2px';
+            horizontalRulerLine.style.width = '100%';
+            horizontalRulerLine.classList.add('uw-helper');
+            horizontalRulerLine.classList.add('uw-ruler-line');
+            document.body.appendChild(horizontalRulerLine);
+        }
+        horizontalRulerLine.style.top = `${y - 1}px`;
+        horizontalRulerLine.classList.remove('uw-hidden');
+    }
+}
+
+const hideRulerLines = () => {
+    horizontalRulerLine?.classList.add('uw-hidden');
+    verticalRulerLine?.classList.add('uw-hidden');
+};
+
 const moveElementToUpTree = () => {
     // If the selected element has previous sibling
     if (selectedElement.previousElementSibling) {
@@ -1575,6 +1615,23 @@ window.addEventListener('mousedown', () => {
     }, '*');
 }, { capture: true });
 
+// Handler for document scroll events
+document.addEventListener('scroll', () => {
+    // Send the document scroll position to the parent window
+    window.parent.postMessage({
+        type: 'document:scroll',
+        payload: {
+            // scrollPosition: {
+            //     x: window.scrollX,
+            //     y: window.scrollY,
+            // },
+            selectedElement: {
+                boundingRect: selectedElement?.getBoundingClientRect(),
+            }
+        },
+    }, '*');
+});
+
 // Handler for receiving messages from the main window
 window.addEventListener('message', event => {
     if (event.origin !== window.location.origin) {
@@ -1822,6 +1879,19 @@ window.addEventListener('message', event => {
 
         // Update the document ready status
         isDocumentReady = true;
+    }
+
+    if (event.data.type === 'document:show-ruler-lines') {
+        const x = event.data.payload.x;
+        const y = event.data.payload.y;
+
+        // Refresh the ruler lines
+        refreshRulerLines(x, y);
+    }
+
+    if (event.data.type === 'document:hide-ruler-lines') {
+        // Hide the ruler lines
+        hideRulerLines();
     }
 
     if (event.data.type === 'window:resize') {

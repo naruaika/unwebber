@@ -16,7 +16,7 @@
 html {
     height: 100%;
 
-    overflow: scroll;
+    overflow: auto;
 
     &::-webkit-scrollbar {
         width: 20px;
@@ -171,6 +171,11 @@ body {
             background-color: var(--uw-color-purple);
             color: white;
         }
+    }
+
+    .uw-ruler-line {
+        position: fixed;
+        background-color: var(--uw-color-purple);
     }
 
     .uw-hidden {

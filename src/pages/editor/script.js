@@ -6,12 +6,159 @@ var hoveredElementId = null;
 var selectedElement = null;
 var templateElementId = null;
 
-let canvasResizeTimeout;
-let windowResizeTimeout;
+var canvasResizeTimeout;
+var windowResizeTimeout;
+
+var isViewportResizing = false;
 
 const mainCanvas = document.getElementById('main-canvas');
 
+const hexToRgba = (hex) => {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const a = parseInt(hex.substring(6, 8) || 'ff', 16) / 255;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+const unsetCanvasSizes = () => {
+    // Set the "actual" size of the navigator
+    const navigator = document.querySelector('#position .navigator');
+    navigator.width = 0;
+    navigator.height = 0;
+    navigator.style.visibility = 'hidden';
+
+    // Set the "actual" size of the canvas top ruler
+    const topRuler = document.querySelector('.main-canvas__container .top-ruler');
+    topRuler.width = 0;
+    topRuler.height = 0;
+    topRuler.style.visibility = 'hidden';
+
+    // Set the "actual" size of the canvas left ruler
+    const leftRuler = document.querySelector('.main-canvas__container .left-ruler');
+    leftRuler.width = 0;
+    leftRuler.height = 0;
+    leftRuler.style.visibility = 'hidden';
+}
+
 // Handler for panel content updates
+const refreshCanvasRulers = () => {
+    if (isViewportResizing) {
+        return; // do nothing
+    }
+
+    const canvasContainer = document.querySelector('.main-canvas__container');
+    const topRuler = canvasContainer.querySelector('.top-ruler');
+    const leftRuler = canvasContainer.querySelector('.left-ruler');
+
+    const devicePixelRatio = window.devicePixelRatio;
+    const topRulerBoundingRect = topRuler.getBoundingClientRect();
+    const leftRulerBoundingRect = leftRuler.getBoundingClientRect();
+
+    // Set the "actual" size of the top ruler
+    if (topRuler.width === 0 || topRuler.height === 0) {
+        topRuler.width = topRulerBoundingRect.width * devicePixelRatio;
+        topRuler.height = 20 * devicePixelRatio;
+    }
+
+    // Get the 2D context of the top ruler
+    let ctx = topRuler.getContext('2d', { alpha: false });
+
+    // Scale the context to ensure correct drawing operations
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, topRuler.width, topRuler.height);
+
+    // Draw the ruler
+    ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-primary'));
+    ctx.fillRect(0, 0, topRuler.width, topRuler.height);
+
+    // Draw the ruler ticks
+    ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-base'));
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+
+    // Draw the ruler ticks for the top ruler
+    const rulerTickSmallHeight = 5;
+    const rulerTickMediumHeight = 10;
+    const rulerTickLargeHeight = 15;
+    const rulerSmallStep = 5;
+    const rulerStepMedium = 25;
+    const rulerStepLarge = 50;
+    const mainCanvasScrollLeft = mainCanvas.contentWindow.pageXOffset || mainCanvas.contentDocument.documentElement.scrollLeft || mainCanvas.contentDocument.body.scrollLeft || 0;
+    for (let i = 0; i < topRulerBoundingRect.width; i += rulerSmallStep) {
+        const tickHeight = i % rulerStepLarge === 0
+            ? rulerTickLargeHeight
+            : i % rulerStepMedium === 0
+                ? rulerTickMediumHeight
+                : rulerTickSmallHeight;
+        ctx.fillRect(i * devicePixelRatio, 0, 1, tickHeight);
+        if (i % rulerStepLarge === 0) {
+            ctx.fillText(i + mainCanvasScrollLeft, i * devicePixelRatio + 4, 16);
+        }
+    }
+
+    // Set the "actual" size of the left ruler
+    if (leftRuler.width === 0 || leftRuler.height === 0) {
+        leftRuler.width = 20 * devicePixelRatio;
+        leftRuler.height = leftRulerBoundingRect.height * devicePixelRatio;
+    }
+
+    // Get the 2D context of the left ruler
+    ctx = leftRuler.getContext('2d', { alpha: false });
+
+    // Scale the context to ensure correct drawing operations
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    // Clear the canvas
+    ctx.clearRect(0, 0, leftRuler.width, leftRuler.height);
+
+    // Draw the ruler
+    ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-primary'));
+    ctx.fillRect(0, 0, leftRuler.width, leftRuler.height);
+
+    // Draw the ruler ticks
+    ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-base'));
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+
+    // Draw the ruler ticks for the left ruler
+    // const bodyBoudingRect = mainCanvas.contentDocument.body.getBoundingClientRect();
+    const mainCanvasScrollTop = mainCanvas.contentWindow.pageYOffset || mainCanvas.contentDocument.documentElement.scrollTop || mainCanvas.contentDocument.body.scrollTop || 0;
+    for (let i = 0; i < leftRulerBoundingRect.height; i += rulerSmallStep) {
+        const tickHeight = i % rulerStepLarge === 0
+            ? rulerTickLargeHeight
+            : i % rulerStepMedium === 0
+                ? rulerTickMediumHeight
+                : rulerTickSmallHeight;
+        ctx.fillRect(0, i * devicePixelRatio, tickHeight, 1);
+        if (i % rulerStepLarge === 0) {
+            ctx.save();
+            ctx.translate(16, i * devicePixelRatio + 4);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(i + mainCanvasScrollTop, 0, 0);
+            ctx.restore();
+        }
+    }
+
+    // Show the rulers
+    topRuler.style.visibility = 'visible';
+    leftRuler.style.visibility = 'visible';
+
+    if (selectedElement) {
+        // Fill the area to show the selected element position on the canvas
+        ctx = topRuler.getContext('2d', { alpha: false });
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+        ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-blue') + '55');
+        ctx.fillRect(selectedElement.boundingRect.left, 0, selectedElement.boundingRect.width * devicePixelRatio, topRuler.height);
+        ctx = leftRuler.getContext('2d', { alpha: false });
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+        ctx.fillStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-blue') + '55');
+        ctx.fillRect(0, selectedElement.boundingRect.top, leftRuler.width, selectedElement.boundingRect.height * devicePixelRatio);
+    }
+}
 const refreshOutlinePanel = (tree) => {
     const listContainer = document.querySelector('#outline-panel .content__container');
 
@@ -300,7 +447,7 @@ const refreshPropertiesPanel = () => {
     // Refresh the panel sections
     refreshLayoutSection();
     refreshSpacingSection();
-    refreshPositionAndScalingSection();
+    refreshPositionSection();
 }
 const refreshLayoutSection = () => {
     const listContainer = document.querySelector('#properties-panel .content__container');
@@ -308,6 +455,7 @@ const refreshLayoutSection = () => {
 
     // Simulate the layout of the selected parent element and its children
     // and the selected element itself and its children
+    // TODO: if it has grid layout, draw the grid lines
     simulator.innerHTML = '';
     const parentElement = document.createElement('div');
     Object.keys(selectedElement.parent.computedStyle).forEach(style => {
@@ -377,18 +525,22 @@ const refreshSpacingSection = () => {
     boxModel.querySelector('.padding__right').innerText = parseFloat(parseFloat(selectedElement.computedStyle.paddingRight).toFixed(3));
     boxModel.querySelector('.padding__bottom').innerText = parseFloat(parseFloat(selectedElement.computedStyle.paddingBottom).toFixed(3));
 }
-const refreshPositionAndScalingSection = () => {
+const refreshPositionSection = () => {
+    if (isViewportResizing) {
+        return; // do nothing
+    }
+
     const listContainer = document.querySelector('#properties-panel .content__container');
-    const navigator = listContainer.querySelector('#position-and-scaling-section .navigator');
+    const navigator = listContainer.querySelector('#position .navigator');
 
     const devicePixelRatio = window.devicePixelRatio;
-    const navigatorBoundingRect = navigator.getBoundingClientRect();
 
     // Set the "actual" size of the canvas
-    // FIXME: when there is no scroll bar at the property panel,
-    // the navigator sizing makes the scroll bar flicker
-    navigator.width = navigatorBoundingRect.width * devicePixelRatio;
-    navigator.height = navigatorBoundingRect.height * devicePixelRatio;
+    if (navigator.width === 0 || navigator.height === 0) {
+        const navigatorBoundingRect = navigator.getBoundingClientRect();
+        navigator.width = navigatorBoundingRect.width * devicePixelRatio;
+        navigator.height = navigatorBoundingRect.height * devicePixelRatio;
+    }
 
     // Get the 2D context of the canvas
     // FIXME: cannot draw when the canvas is not visible
@@ -396,14 +548,6 @@ const refreshPositionAndScalingSection = () => {
 
     // Scale the context to ensure correct drawing operations
     ctx.scale(devicePixelRatio, devicePixelRatio);
-
-    function hexToRgba(hex) {
-        hex = hex.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        return `rgba(${r}, ${g}, ${b}, 1.0)`;
-    }
 
     // Clear the canvas
     ctx.clearRect(0, 0, navigator.width, navigator.height);
@@ -454,7 +598,7 @@ const refreshPositionAndScalingSection = () => {
 
     // Add border to the body
     ctx.strokeStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-base'));
-    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
     ctx.strokeRect(mBody.left, mBody.top, mBody.width, mBody.height);
 
     if (! selectedElement) {
@@ -476,7 +620,7 @@ const refreshPositionAndScalingSection = () => {
     ctx.fillRect(mBody.left + mElement.left, mBody.top + mElement.top, mElement.width, mElement.height);
 
     // Add border to the element
-    ctx.strokeStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-base'));
+    ctx.strokeStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-blue'));
     ctx.setLineDash([]);
     ctx.strokeRect(mBody.left + mElement.left, mBody.top + mElement.top, mElement.width, mElement.height);
 
@@ -493,9 +637,13 @@ const refreshPositionAndScalingSection = () => {
 
     // Draw the viewport if it meets the condition
     if (mViewport.height < mBody.height || mViewport.width < mBody.width) {
+        ctx.strokeStyle = hexToRgba(getComputedStyle(document.documentElement).getPropertyValue('--color-base'));
         ctx.setLineDash([3, 3]);
         ctx.strokeRect(mBody.left + mViewport.left, mBody.top + mViewport.top, mViewport.width, mViewport.height);
     }
+
+    // Show the navigator
+    navigator.style.visibility = 'visible';
 }
 const populateTemplatesPanel = () => {
     const listContainer = document.querySelector('#templates-panel .content__container');
@@ -598,7 +746,26 @@ const regainPanelElementFocus = () => {
     }
 }
 
-// Handler for drag/drop events on the main canvas
+// Handler for the events on the main canvas
+document.querySelectorAll('.top-ruler, .left-ruler').forEach(element => {
+    element.addEventListener('mousemove', (event) => {
+        // Send the request to show the ruler lines to the main canvas
+        mainCanvas.contentWindow.postMessage({
+            type: 'document:show-ruler-lines',
+            payload: {
+                x: event.target.classList.contains('top-ruler') ? event.clientX - element.getBoundingClientRect().left : null,
+                y: event.target.classList.contains('left-ruler') ? event.clientY - element.getBoundingClientRect().top : null,
+            },
+        }, '*');
+    });
+    element.addEventListener('mouseleave', () => {
+        // Send the request to hide the ruler lines to the main canvas
+        mainCanvas.contentWindow.postMessage({
+            type: 'document:hide-ruler-lines',
+            payload: {},
+        }, '*');
+    });
+});
 document.querySelector('.main-canvas__overlay').addEventListener('dragover', (event) => {
     event.preventDefault();
 
@@ -784,7 +951,7 @@ document.getElementById('spacing-section').addEventListener('mouseleave', () => 
         payload: {},
     }, '*');
 });
-document.getElementById('position-and-scaling-section').addEventListener('mouseenter', () => {
+document.getElementById('position').addEventListener('mouseenter', () => {
     // Make the selected element visible on the outline panel
     scrollOutlinePanelToElement(selectedElement.id);
 
@@ -799,6 +966,11 @@ document.getElementById('position-and-scaling-section').addEventListener('mousee
 
 // Handler for resizing the main canvas
 (new ResizeObserver(() => {
+    isViewportResizing = true;
+
+    // Unset the canvas sizes
+    unsetCanvasSizes();
+
     // Send the resize event to the main canvas
     mainCanvas.contentWindow.postMessage({
         type: 'window:resize',
@@ -807,17 +979,27 @@ document.getElementById('position-and-scaling-section').addEventListener('mousee
 
     clearTimeout(canvasResizeTimeout);
     canvasResizeTimeout = setTimeout(() => {
+        isViewportResizing = false;
+
+        // Refresh the canvas rulers
+        refreshCanvasRulers();
+
+        // Refresh the navigator
+        refreshPositionSection();
+
         // Send the resize event to the main canvas
         mainCanvas.contentWindow.postMessage({
             type: 'window:afterresize',
             payload: {},
         }, '*');
-
-        // Refresh the navigation section
-        refreshPositionAndScalingSection();
     }, 250);
 })).observe(document.querySelector('.main-canvas__container'));
 window.addEventListener('resize', () => {
+    isViewportResizing = true;
+
+    // Unset the canvas sizes
+    unsetCanvasSizes();
+
     // Send the resize event to the main canvas
     mainCanvas.contentWindow.postMessage({
         type: 'window:resize',
@@ -826,14 +1008,19 @@ window.addEventListener('resize', () => {
 
     clearTimeout(windowResizeTimeout);
     windowResizeTimeout = setTimeout(() => {
+        isViewportResizing = false;
+
+        // Refresh the canvas rulers
+        refreshCanvasRulers();
+
+        // Refresh the navigator
+        refreshPositionSection();
+
         // Send the resize event to the main canvas
         mainCanvas.contentWindow.postMessage({
             type: 'window:afterresize',
             payload: {},
         }, '*');
-
-        // Refresh the navigation section
-        refreshPositionAndScalingSection();
     }, 250);
 });
 
@@ -861,9 +1048,23 @@ window.addEventListener('message', event => {
         regainPanelElementFocus();
     }
 
+    // Handle the document scroll
+    if (event.data.type === 'document:scroll') {
+        if (selectedElement) {
+            selectedElement.boundingRect = event.data.payload.selectedElement.boundingRect;
+        }
+
+        // Refresh the canvas rulers and the navigator
+        refreshCanvasRulers();
+        refreshPositionSection();
+    }
+
     // Handle the element selection
     if (event.data.type === 'element:select') {
         selectedElement = event.data.payload;
+
+        // Refresh the canvas rulers
+        refreshCanvasRulers();
 
         // Refresh the panels
         refreshSelectedElementOnOutlinePanel();
@@ -918,6 +1119,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Automatically select default edit mode
     document.querySelector('#visual-edit-button').click();
+
+    // Set the initial canvas sizes
+    unsetCanvasSizes();
+
+    // Refresh the canvas rulers
+    refreshCanvasRulers();
 });
 (() => {
     // Load app configuration

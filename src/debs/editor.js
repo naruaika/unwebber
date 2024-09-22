@@ -6,7 +6,8 @@ var isDocumentReady = false;
 var hoveredElement = null;
 var selectedElement = null;
 
-var elementToPaste = null;
+var elementOnCopy = null;
+var elementOnCut = null;
 var elementSkeleton = null;
 var elementToInsert = null;
 
@@ -169,28 +170,64 @@ const copyElement = () => {
     }
 
     // Copy the selected element to the clipboard
-    elementToPaste = selectedElement.cloneNode(true);
+    elementOnCopy = selectedElement.cloneNode(true);
 }
 
-const pasteElement = () => {
+const cutElement = () => {
     if (selectedElement.tagName === 'BODY') {
         return; // do nothing
     }
 
-    // Generate a new id for the copied element
-    elementToPaste.dataset.uwId = generateUniqueId(elementToPaste.dataset.uwId.split('-').slice(0, -1).join('-'));
-    if (elementToPaste.id) {
-        elementToPaste.id = generateUniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
+    // Cut the selected element to the clipboard
+    elementOnCut = selectedElement;
+
+    // Remove the selected element from the document
+    selectedElement.remove();
+
+    // Clear the current selection
+    selectedElement = null;
+
+    // Delete the highlight elements
+    deleteElementHighlights();
+
+    // Send the document tree to the parent window
+    sendDocumentTree();
+
+    // Send the selected element to the parent window
+    sendSelectedElement();
+
+    // Refresh the hover element
+    refreshElementHover();
+}
+
+const pasteElement = () => {
+    if (
+        ! selectedElement ||
+        (! elementOnCut && ! elementOnCopy) ||
+        selectedElement.tagName === 'BODY'
+    ) {
+        return; // do nothing
     }
 
-    // Loop through the copied element children recursively
-    elementToPaste.querySelectorAll('*[data-uw-id]').forEach(child => {
-        // generate a new id for the copied element
-        child.dataset.uwId = generateUniqueId(child.dataset.uwId.split('-').slice(0, -1).join('-'));
-        if (child.id) {
-            child.id = generateUniqueId(child.id.split('-').slice(0, -1).join('-'));
+    const mode = elementOnCut ? 'cut' : 'copy';
+    const elementToPaste = elementOnCut || elementOnCopy;
+
+    if (mode === 'copy') {
+        // Generate a new id for the copied element
+        elementToPaste.dataset.uwId = generateUniqueId(elementToPaste.dataset.uwId.split('-').slice(0, -1).join('-'));
+        if (elementToPaste.id) {
+            elementToPaste.id = generateUniqueId(elementToPaste.id.split('-').slice(0, -1).join('-'));
         }
-    });
+
+        // Loop through the copied element children recursively
+        elementToPaste.querySelectorAll('*[data-uw-id]').forEach(child => {
+            // generate a new id for the copied element
+            child.dataset.uwId = generateUniqueId(child.dataset.uwId.split('-').slice(0, -1).join('-'));
+            if (child.id) {
+                child.id = generateUniqueId(child.id.split('-').slice(0, -1).join('-'));
+            }
+        });
+    }
 
     // Paste the copied element from the clipboard
     selectedElement.parentNode.insertBefore(elementToPaste, selectedElement.nextSibling);
@@ -214,8 +251,13 @@ const pasteElement = () => {
     // Update the current selection
     selectElement(elementToPaste);
 
-    // Copy the selected element to the clipboard
-    copyElement();
+    if (mode === 'cut') {
+        elementOnCopy = null;
+        elementOnCut = null;
+    } else {
+        // Re-copy the selected element to the clipboard
+        copyElement();
+    }
 
     // Make the newly pasted element draggable
     makeElementDraggable(selectedElement);
@@ -1492,6 +1534,13 @@ document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             // Make the selected element not editable
             makeElementNotEditable(selectedElement);
+
+            // Refresh the element highlight
+            refreshElementHighlight();
+
+            // Refresh the hover element
+            refreshElementHover();
+
             return;
         }
     }
@@ -1516,6 +1565,18 @@ document.addEventListener('keydown', (event) => {
         ) {
             // Copy the selected element
             copyElement();
+            return;
+        }
+    }
+
+    if (event.key === 'x' && event.ctrlKey) {
+        if (
+            selectedElement &&
+            selectedElement.tagName !== 'HTML' &&
+            selectedElement.tagName !== 'BODY'
+        ) {
+            // Cut the selected element
+            cutElement();
             return;
         }
     }
@@ -1579,17 +1640,6 @@ document.addEventListener('keydown', (event) => {
 
             return;
         }
-    }
-});
-document.addEventListener('keydown', () => {
-    if (selectedElement?.contentEditable === 'true') {
-        // Refresh the element highlight
-        refreshElementHighlight();
-
-        // Refresh the hover element
-        refreshElementHover();
-
-        return;
     }
 });
 document.addEventListener('keyup', () => {
@@ -1741,6 +1791,18 @@ window.addEventListener('message', event => {
         if (element) {
             // copy the selected element
             copyElement();
+        }
+        return;
+    }
+
+    if (event.data.type === 'element:cut') {
+        // Find the element by id
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
+
+        // If the element is found
+        if (element) {
+            // cut the selected element
+            cutElement();
         }
         return;
     }

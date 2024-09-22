@@ -1088,6 +1088,18 @@ document.querySelector('#outline-panel .content__container').addEventListener('k
         }
     }
 
+    if (event.key === 'x' && event.ctrlKey) {
+        if (selectedElement?.dataset.uwId) {
+            // Send the request to cut the selected element to the main canvas
+            mainCanvas.contentWindow.postMessage({
+                type: 'element:cut',
+                payload: {
+                    id: selectedElement?.dataset.uwId,
+                },
+            }, '*');
+        }
+    }
+
     if (event.key === 'v' && event.ctrlKey) {
         if (selectedElement?.dataset.uwId) {
             // Send the request to paste the copied element to the main canvas

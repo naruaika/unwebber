@@ -82,6 +82,12 @@ const isElementVoid = (element) => {
     return false;
 }
 
+const isStyleValid = (property, value) => {
+    const dummyElement = document.createElement('div');
+    dummyElement.style[property] = value;
+    return dummyElement.style[property] !== '';
+}
+
 const enableWhitespaceInsertionOnButton = (event) => {
     if (event.key === ' ') {
         event.preventDefault();
@@ -295,6 +301,19 @@ const insertElement = () => {
 
     // Clear the template element
     elementToInsert = null;
+}
+
+const styleElement = (element, propertyName, propertyValue = null) => {
+    const stylesheet = document.styleSheets[0];
+    const selector = `[data-uw-id="${element.dataset.uwId}"]`;
+    let rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
+    if (! rules) {
+        stylesheet.insertRule(selector + "{}", stylesheet.cssRules.length);
+        rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
+    }
+    propertyValue
+        ? rules.style.setProperty(propertyName, propertyValue, 'important')
+        : rules.style.removeProperty(propertyName);
 }
 
 const makeElementDraggable = (element) => {
@@ -1242,9 +1261,7 @@ const sendSelectedElement = () => {
             innerText: selectedElement.innerText,
             outerHTML: selectedElement.outerHTML,
             style: selectedElement.style.cssText,
-            computedStyle: Object
-                .fromEntries(Object.entries(window.getComputedStyle(selectedElement))
-                .filter(([key, _]) => isNaN(key))),
+            computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(selectedElement)).filter(([key, _]) => isNaN(key))),
             boundingRect: selectedElement.getBoundingClientRect(),
             dataset: Object.assign({}, selectedElement.dataset),
             attributes: Array.from(selectedElement.attributes).map(attribute => ({ name: attribute.name, value: attribute.value })),
@@ -1252,23 +1269,17 @@ const sendSelectedElement = () => {
                 tagName: child.tagName,
                 id: child.dataset.uwId,
                 classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
-                computedStyle: Object
-                    .fromEntries(Object.entries(window.getComputedStyle(child))
-                    .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(child)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
             })),
             parent: {
                 tagName: selectedElement.parentElement.tagName,
                 id: selectedElement.parentElement.dataset.uwId,
-                computedStyle: Object
-                    .fromEntries(Object.entries(window.getComputedStyle(selectedElement.parentElement))
-                    .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(selectedElement.parentElement)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
                 children: Array.from(selectedElement.parentElement.children).map(child => ({
                     tagName: child.tagName,
                     id: child.dataset.uwId,
                     classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
-                    computedStyle: Object
-                        .fromEntries(Object.entries(window.getComputedStyle(child))
-                        .filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                    computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(child)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
                 })),
             },
         },
@@ -1800,6 +1811,36 @@ window.addEventListener('message', event => {
     if (event.data.type === 'element:unhover') {
         // Hide the hover element
         hideElementHover();
+    }
+
+    if (event.data.type === 'element:style') {
+        // Find the element by id
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
+
+        // If the element is found
+        if (element) {
+            const property = event.data.payload.property;
+            const value = event.data.payload.value;
+
+            // Check if the CSS property value is valid
+            if (isStyleValid(property, value)) {
+                const checked = event.data.payload.checked === 'true';
+
+                const properties = element.dataset.uwProperties ? JSON.parse(element.dataset.uwProperties) : {};
+                properties[property] = { value, checked };
+                element.dataset.uwProperties = JSON.stringify(properties);
+                styleElement(element, property, checked ? value : null);
+
+                // refresh the element highlight
+                refreshElementHighlight();
+
+                // send the selected element to the parent window
+                sendSelectedElement();
+
+                // send the document tree to the parent window
+                sendDocumentTree();
+            }
+        }
     }
 
     if (event.data.type === 'element:move-up-or-left') {

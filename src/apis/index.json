@@ -5291,6 +5291,35 @@
                     "value": "center | start | end | self-start | self-end | flex-start | flex-end"
                 }
             ],
+            "specifiedValues": [
+                "normal",
+                "stretch",
+                "first baseline",
+                "last baseline",
+                "baseline",
+                "unsafe center",
+                "unsafe start",
+                "unsafe end",
+                "unsafe self-start",
+                "unsafe self-end",
+                "unsafe flex-start",
+                "unsafe flex-end",
+                "safe center",
+                "safe start",
+                "safe end",
+                "safe self-start",
+                "safe self-end",
+                "safe flex-start",
+                "safe flex-end",
+                "center",
+                "start",
+                "end",
+                "self-start",
+                "self-end",
+                "flex-start",
+                "flex-end",
+                "anchor-center"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/align-items"
         },
         {
@@ -5314,6 +5343,36 @@
                     "value": "center | start | end | self-start | self-end | flex-start | flex-end"
                 }
             ],
+            "specifiedValues": [
+                "auto",
+                "normal",
+                "stretch",
+                "first baseline",
+                "last baseline",
+                "baseline",
+                "unsafe center",
+                "unsafe start",
+                "unsafe end",
+                "unsafe self-start",
+                "unsafe self-end",
+                "unsafe flex-start",
+                "unsafe flex-end",
+                "safe center",
+                "safe start",
+                "safe end",
+                "safe self-start",
+                "safe self-end",
+                "safe flex-start",
+                "safe flex-end",
+                "center",
+                "start",
+                "end",
+                "self-start",
+                "self-end",
+                "flex-start",
+                "flex-end",
+                "anchor-center"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/align-self"
         },
         {
@@ -5323,6 +5382,13 @@
             "inherited": false,
             "initialValue": null,
             "syntax": "initial | inherit | unset | revert | revert-layer",
+            "specifiedValues": [
+                "initial",
+                "inherit",
+                "unset",
+                "revert",
+                "revert-layer"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/all"
         },
         {
@@ -5519,6 +5585,10 @@
             "inherited": false,
             "initialValue": "visible",
             "syntax": "visible | hidden",
+            "specifiedValues": [
+                "visible",
+                "hidden"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility"
         },
         {
@@ -6346,7 +6416,11 @@
             "belongsTo": [],
             "inherited": false,
             "initialValue": "balance",
-            "syntax": "auto | balance | balance-all",
+            "syntax": "auto | balance",
+            "specifiedValues": [
+                "auto",
+                "balance"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/column-fill"
         },
         {
@@ -6625,6 +6699,42 @@
                     "value": "inline-block | inline-table | inline-flex | inline-grid"
                 }
             ],
+            "specifiedValues": [
+                "block",
+                "inline",
+                "run-in",
+                "flow",
+                "flow-root",
+                "table",
+                "flex",
+                "grid",
+                "ruby",
+                "block flow list-item",
+                "inline flow list-item",
+                "run-in flow list-item",
+                "block flow-root list-item",
+                "inline flow-root list-item",
+                "run-in flow-root list-item",
+                "list-item",
+                "table-row-group",
+                "table-header-group",
+                "table-footer-group",
+                "table-row",
+                "table-cell",
+                "table-column-group",
+                "table-column",
+                "table-caption",
+                "ruby-base",
+                "ruby-text",
+                "ruby-base-container",
+                "ruby-text-container",
+                "contents",
+                "none",
+                "inline-block",
+                "inline-table",
+                "inline-flex",
+                "inline-grid"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/display"
         },
         {
@@ -6688,6 +6798,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "none | [ <'flex-grow'> <'flex-shrink'>? || <'flex-basis'> ]",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex"
         },
         {
@@ -6697,6 +6808,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "content | <'width'>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-basis"
         },
         {
@@ -6706,6 +6818,13 @@
             "inherited": false,
             "initialValue": "row",
             "syntax": "row | row-reverse | column | column-reverse",
+            "specifiedValues": [
+                "row",
+                "row-reverse",
+                "column",
+                "column-reverse"
+            ],
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-direction"
         },
         {
@@ -6715,6 +6834,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<'flex-direction'> || <'flex-wrap'>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-flow"
         },
         {
@@ -6724,6 +6844,7 @@
             "inherited": false,
             "initialValue": "0",
             "syntax": "<number>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-grow"
         },
         {
@@ -6733,6 +6854,7 @@
             "inherited": false,
             "initialValue": "1",
             "syntax": "<number>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-shrink"
         },
         {
@@ -6742,6 +6864,12 @@
             "inherited": false,
             "initialValue": "nowrap",
             "syntax": "nowrap | wrap | wrap-reverse",
+            "specifiedValues": [
+                "nowrap",
+                "wrap",
+                "wrap-reverse"
+            ],
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/flex-wrap"
         },
         {
@@ -6751,6 +6879,13 @@
             "inherited": false,
             "initialValue": "none",
             "syntax": "left | right | none | inline-start | inline-end",
+            "specifiedValues": [
+                "left",
+                "right",
+                "none",
+                "inline-start",
+                "inline-end"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/float"
         },
         {
@@ -6767,7 +6902,7 @@
             "categories": [],
             "belongsTo": [],
             "inherited": true,
-            "initialValue": "dependsOnUserAgent",
+            "initialValue": "",
             "syntax": "[ <family-name> | <generic-family> ]#",
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/font-family"
         },
@@ -7003,6 +7138,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<'row-gap'> <'column-gap'>?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["flex", "grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/gap"
         },
         {
@@ -7012,6 +7148,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<'grid-template'> | <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>? | [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid"
         },
         {
@@ -7021,6 +7158,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<grid-line> [ / <grid-line> ]{0,3}",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-area"
         },
         {
@@ -7030,6 +7168,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<track-size>+",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-columns"
         },
         {
@@ -7039,6 +7178,7 @@
             "inherited": false,
             "initialValue": "row",
             "syntax": "[ row | column ] || dense",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-flow"
         },
         {
@@ -7048,6 +7188,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<track-size>+",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-rows"
         },
         {
@@ -7057,6 +7198,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<grid-line> [ / <grid-line> ]?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column"
         },
         {
@@ -7066,6 +7208,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<grid-line>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column-end"
         },
         {
@@ -7075,6 +7218,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<grid-line>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column-start"
         },
         {
@@ -7084,6 +7228,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "<grid-line> [ / <grid-line> ]?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row"
         },
         {
@@ -7093,6 +7238,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<grid-line>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row-end"
         },
         {
@@ -7102,6 +7248,7 @@
             "inherited": false,
             "initialValue": "auto",
             "syntax": "<grid-line>",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row-start"
         },
         {
@@ -7111,6 +7258,7 @@
             "inherited": false,
             "initialValue": "",
             "syntax": "none | [ <'grid-template-rows'> / <'grid-template-columns'> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template"
         },
         {
@@ -7120,6 +7268,7 @@
             "inherited": false,
             "initialValue": "none",
             "syntax": "none | <string>+",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-areas"
         },
         {
@@ -7129,6 +7278,7 @@
             "inherited": false,
             "initialValue": "none",
             "syntax": "none | <track-list> | <auto-track-list> | subgrid <line-name-list>?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-columns"
         },
         {
@@ -7138,6 +7288,7 @@
             "inherited": false,
             "initialValue": "none",
             "syntax": "none | <track-list> | <auto-track-list> | subgrid <line-name-list>?",
+            "visibilityRules": [ { "property": "display", "operator": "in", "values": ["grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-rows"
         },
         {
@@ -7300,6 +7451,39 @@
             "inherited": false,
             "initialValue": "normal",
             "syntax": "normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ]",
+            "syntaxDescriptors": [
+                {
+                    "name": "<content-distribution>",
+                    "syntax": "space-between | space-around | space-evenly | stretch"
+                },
+                {
+                    "name": "<overflow-position>",
+                    "syntax": "safe | unsafe"
+                },
+                {
+                    "name": "<content-position>",
+                    "syntax": "center | start | end | flex-start | flex-end"
+                }
+            ],
+            "specifiedValues": [
+                "normal",
+                "space-between",
+                "space-around",
+                "space-evenly",
+                "stretch",
+                "safe center",
+                "safe start",
+                "safe end",
+                "safe flex-start",
+                "safe flex-end",
+                "unsafe center",
+                "unsafe start",
+                "unsafe end",
+                "unsafe flex-start",
+                "unsafe flex-end",
+                "left",
+                "right"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/justify-content"
         },
         {
@@ -7308,7 +7492,60 @@
             "belongsTo": [],
             "inherited": false,
             "initialValue": "legacy",
-            "syntax": "normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ]",
+            "syntax": "normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ] | anchor-center",
+            "syntaxDescriptors": [
+                {
+                    "name": "<baseline-position>",
+                    "syntax": "[ first | last ]? && baseline"
+                },
+                {
+                    "name": "<overflow-position>",
+                    "syntax": "safe | unsafe"
+                },
+                {
+                    "name": "<self-position>",
+                    "syntax": "center | start | end | self-start | self-end | flex-start | flex-end"
+                }
+            ],
+            "specifiedValues": [
+                "normal",
+                "stretch",
+                "first baseline",
+                "last baseline",
+                "baseline",
+                "safe center",
+                "safe start",
+                "safe end",
+                "safe self-start",
+                "safe self-end",
+                "safe flex-start",
+                "safe flex-end",
+                "safe left",
+                "safe right",
+                "unsafe center",
+                "unsafe start",
+                "unsafe end",
+                "unsafe self-start",
+                "unsafe self-end",
+                "unsafe flex-start",
+                "unsafe flex-end",
+                "unsafe left",
+                "unsafe right",
+                "center",
+                "start",
+                "end",
+                "self-start",
+                "self-end",
+                "flex-start",
+                "flex-end",
+                "left",
+                "right",
+                "legacy",
+                "legacy left",
+                "legacy right",
+                "legacy center",
+                "anchor-center"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/justify-items"
         },
         {
@@ -7317,7 +7554,57 @@
             "belongsTo": [],
             "inherited": false,
             "initialValue": "auto",
-            "syntax": "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ]",
+            "syntax": "auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | anchor-center",
+            "syntaxDescriptors": [
+                {
+                    "name": "<baseline-position>",
+                    "syntax": "[ first | last ]? && baseline"
+                },
+                {
+                    "name": "<overflow-position>",
+                    "syntax": "safe | unsafe"
+                },
+                {
+                    "name": "<self-position>",
+                    "syntax": "center | start | end | self-start | self-end | flex-start | flex-end"
+                }
+            ],
+            "specifiedValues": [
+                "auto",
+                "normal",
+                "stretch",
+                "first baseline",
+                "last baseline",
+                "baseline",
+                "safe center",
+                "safe start",
+                "safe end",
+                "safe self-start",
+                "safe self-end",
+                "safe flex-start",
+                "safe flex-end",
+                "safe left",
+                "safe right",
+                "unsafe center",
+                "unsafe start",
+                "unsafe end",
+                "unsafe self-start",
+                "unsafe self-end",
+                "unsafe flex-start",
+                "unsafe flex-end",
+                "unsafe left",
+                "unsafe right",
+                "center",
+                "start",
+                "end",
+                "self-start",
+                "self-end",
+                "flex-start",
+                "flex-end",
+                "left",
+                "right",
+                "anchor-center"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/justify-self"
         },
         {
@@ -7867,6 +8154,7 @@
             "inherited": false,
             "initialValue": "0",
             "syntax": "<integer>",
+            "visibilityRules": [ { "property": "display", "operator": "inside in", "values": ["flex", "grid"] } ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/order"
         },
         {
@@ -8245,6 +8533,13 @@
             "inherited": false,
             "initialValue": "static",
             "syntax": "static | relative | absolute | sticky | fixed",
+            "specifiedValues": [
+                "static",
+                "relative",
+                "absolute",
+                "sticky",
+                "fixed"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/position"
         },
         {
@@ -8738,8 +9033,17 @@
             "categories": [],
             "belongsTo": [],
             "inherited": true,
-            "initialValue": "startOrNamelessValueIfLTRRightIfRTL",
+            "initialValue": "start",
             "syntax": "start | end | left | right | center | justify | match-parent",
+            "specifiedValues": [
+                "start",
+                "end",
+                "left",
+                "right",
+                "center",
+                "justify",
+                "match-parent"
+            ],
             "documentation": "https://developer.mozilla.org/en-US/docs/Web/CSS/text-align"
         },
         {

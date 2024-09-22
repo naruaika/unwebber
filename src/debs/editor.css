@@ -81,7 +81,7 @@ body {
     }
     .uw-element-hover {
         border: 2px solid var(--uw-color-light-blue);
-        z-index: 2;
+        z-index: 10000;
 
         &::before {
             display: none;

@@ -41,8 +41,6 @@
                 border: var(--border-size) solid var(--color-ternary);
                 border-radius: 200px;
 
-                font-size: 14px;
-
                 overflow: hidden;
 
                 -webkit-user-select: none;
@@ -96,12 +94,16 @@
                 button {
                     padding: 0;
 
-                    font-size: inherit;
+                    font-size: 13px;
                     text-align: left;
 
                     color: var(--color-blue);
                     background-color: transparent;
                     border: 0;
+
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
 
                     cursor: pointer;
 

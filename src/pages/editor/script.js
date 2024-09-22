@@ -22,9 +22,13 @@ const hexToRgba = (hex) => {
     return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
+const kebabToCamel = (kebab) => {
+    return kebab.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+}
+
 const unsetCanvasSizes = () => {
     // Set the "actual" size of the navigator
-    const navigator = document.querySelector('#position .navigator');
+    const navigator = document.querySelector('#position-section .navigator');
     navigator.width = 0;
     navigator.height = 0;
     navigator.style.visibility = 'hidden';
@@ -308,7 +312,7 @@ const refreshAttributesPanel = () => {
     //
     const listContainer = document.querySelector('#attributes-panel .content__container');
 
-    listContainer.querySelectorAll('.attribute-container').forEach(element => element.remove());
+    listContainer.querySelectorAll('.field-container').forEach(element => element.remove());
 
     // If no element is selected
     if (! selectedElement) {
@@ -332,22 +336,23 @@ const refreshAttributesPanel = () => {
             ].includes(attribute.name)
         )
         .forEach(attribute => {
-            const attributeContainer = document.createElement('div');
-            attributeContainer.classList.add('attribute-container');
+            const attributeContainer = document.createElement('fieldset');
+            attributeContainer.classList.add('field-container');
 
             // Create the checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = `attribute-${attribute.name}`;
-            checkbox.classList.add('attribute-checkbox');
+            checkbox.classList.add('field-checkbox');
             attributeContainer.appendChild(checkbox);
 
-            // Create the attribute name
-            const attributeName = document.createElement('label');
-            attributeName.innerText = attribute.name;
-            attributeName.htmlFor = `attribute-${attribute.name}`;
-            attributeName.classList.add('attribute-name');
-            attributeContainer.appendChild(attributeName);
+            // Create the label
+            const label = document.createElement('label');
+            label.innerText = attribute.name;
+            label.title = attribute.name;
+            label.htmlFor = `attribute-${attribute.name}`;
+            label.classList.add('field-name');
+            attributeContainer.appendChild(label);
 
             // If the attribute type is char
             if (attribute.type === 'char') {
@@ -355,7 +360,7 @@ const refreshAttributesPanel = () => {
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
                 inputBox.maxLength = 1;
-                inputBox.classList.add('attribute-value');
+                inputBox.classList.add('field-value');
                 attributeContainer.appendChild(inputBox);
             }
 
@@ -364,7 +369,7 @@ const refreshAttributesPanel = () => {
                 // create the input box
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
-                inputBox.classList.add('attribute-value');
+                inputBox.classList.add('field-value');
                 attributeContainer.appendChild(inputBox);
             }
 
@@ -373,44 +378,76 @@ const refreshAttributesPanel = () => {
                 // create the input box
                 const inputBox = document.createElement('input');
                 inputBox.type = 'number';
-                inputBox.classList.add('attribute-value');
+                inputBox.classList.add('field-value');
                 attributeContainer.appendChild(inputBox);
             }
 
             // If the attribute type is enum
             if (attribute.type === 'enum') {
+                const createDropdownItems = (values) => {
+                    dropdownList.innerHTML = '';
+                    values.forEach(value => {
+                        const item = document.createElement('div');
+                        item.classList.add('dropdown-item');
+                        item.textContent = value;
+                        item.addEventListener('click', () => {
+                            inputBox.value = value;
+                            dropdownList.classList.add('hidden');
+                            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+                        });
+                        dropdownList.appendChild(item);
+                    });
+                }
+
+                const filterDropdownItems = () => {
+                    const query = inputBox.value.toLowerCase();
+                    const filteredValues = [];
+                    attribute.options.forEach(option => {
+                        if (
+                            ! option.value.toLowerCase().includes(query) ||
+                            (
+                                option.belongsTo !== 'global' &&
+                                ! option.belongsTo.includes(selectedElement.tagName.toLowerCase())
+                            )
+                        ) {
+                            return;
+                        }
+                        filteredValues.push(option.value || '[empty]');
+                    });
+                    createDropdownItems(filteredValues);
+                    if (filteredValues.length > 0) {
+                        dropdownList.classList.remove('hidden');
+                    } else {
+                        dropdownList.classList.add('hidden');
+                    }
+                }
+
                 // create the input box
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
-                inputBox.classList.add('attribute-value');
+                inputBox.classList.add('field-value');
                 attributeContainer.appendChild(inputBox);
 
-                // create the datalist
-                const dataList = document.createElement('datalist');
-                dataList.id = `datalist-${attribute.name}`;
-                attribute.options.forEach(option => {
-                    if (
-                        option.belongsTo !== 'global' &&
-                        ! option.belongsTo.includes(selectedElement.tagName.toLowerCase())
-                    ) {
-                        return;
-                    }
-                    const optionBox = document.createElement('option');
-                    optionBox.value = option.value || '[empty]';
-                    optionBox.innerText = option.value || '[empty]';
-                    dataList.appendChild(optionBox);
-                });
-                attributeContainer.appendChild(dataList);
+                // create the dropdown list
+                const dropdownList = document.createElement('div');
+                dropdownList.setAttribute('popover', 'auto');
+                dropdownList.id = `attribute-${attribute.name}-dropdown`;
+                dropdownList.classList.add('field-options');
+                dropdownList.classList.add('scrollable');
+                dropdownList.classList.add('hidden');
+                inputBox.setAttribute('popovertarget', dropdownList.id);
+                attributeContainer.appendChild(dropdownList);
 
-                // associate the input box with the datalist
-                inputBox.setAttribute('list', `datalist-${attribute.name}`);
+                //
+                inputBox.addEventListener('input', filterDropdownItems);
+                inputBox.addEventListener('focus', filterDropdownItems);
             }
 
             // If the attribute type is boolean
             if (attribute.type === 'boolean') {
                 const divisionBox = document.createElement('div');
                 divisionBox.innerText = '[true]';
-                divisionBox.classList.add('attribute-value');
+                divisionBox.classList.add('field-value');
                 attributeContainer.appendChild(divisionBox);
             }
 
@@ -420,7 +457,7 @@ const refreshAttributesPanel = () => {
                 // FIXME: should be a dynamic list of key-value pairs
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
-                inputBox.classList.add('attribute-value');
+                inputBox.classList.add('field-value');
                 attributeContainer.appendChild(inputBox);
             }
 
@@ -448,6 +485,192 @@ const refreshPropertiesPanel = () => {
     refreshLayoutSection();
     refreshSpacingSection();
     refreshPositionSection();
+
+    const formSchema = [
+        {
+            name: 'layout',
+            fields: [
+                'display', 'flex-basis', 'flex-direction', 'flex-grow', 'flex-shrink', 'flex-wrap', 'grid-area', 'grid-auto-columns',
+                'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-row', 'grid-row-end',
+                'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'align-content',
+                'align-items', 'align-self', 'justify-content', 'justify-items', 'justify-self', 'gap', 'order',
+            ],
+        },
+        {
+            name: 'spacing',
+            fields: [
+                'width', 'height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding-top', 'padding-right',
+                'padding-bottom', 'padding-left', 'border-left-width', 'border-right-width', 'border-top-width', 'border-bottom-width',
+            ],
+        },
+        {
+            name: 'position',
+            fields: [
+                'position', 'top', 'right', 'bottom', 'left', 'z-index',
+            ],
+        },
+        {
+            name: 'typography',
+            fields: [
+                'font-family', 'font-size', 'font-style', 'font-weight', 'line-height', 'letter-spacing', 'text-align',
+                'text-indent', 'text-transform', 'color', 'text-decoration', 'text-shadow',
+            ],
+        }
+    ];
+
+    const styleGlobalValueOptions = [
+        'inherit',
+        'initial',
+        'revert',
+        'revert-layer',
+        'unset',
+    ];
+
+    // Populate the panel sections
+    formSchema.forEach(sectionSchema => {
+        // Find the form container
+        const formContainer = listContainer.querySelector(`#${sectionSchema.name}-section .form`);
+
+        // Clear the form container
+        formContainer.innerHTML = '';
+
+        // Populate the form fields
+        sectionSchema.fields.forEach(fieldName => {
+            //
+            const propertySpecification = apiSchema.cssProperties.find(property => property.name === fieldName);
+
+            // Check the field visibility rules
+            const visibilityRules = propertySpecification?.visibilityRules || [];
+            const compliedVisibilityRule = rule => {
+                const appliedValue = selectedElement.computedStyle[kebabToCamel(rule.property)];
+                switch (rule.operator) {
+                    case 'inside in':
+                        return rule.values.includes(selectedElement.parent?.computedStyle[rule.property] || '');
+                    case 'in':
+                        return rule.values.includes(appliedValue);
+                    case 'equals':
+                    default:
+                        return appliedValue === rule.value;
+                }
+            };
+            if (! visibilityRules.every(compliedVisibilityRule)) {
+                return; // skip the field
+            }
+
+            //
+            const cachedProperty = JSON.parse(selectedElement.dataset.uwProperties || '{}')[fieldName];
+            const computedValue = selectedElement.computedStyle[kebabToCamel(fieldName)];
+
+            //
+            const propertyContainer = document.createElement('fieldset');
+            propertyContainer.classList.add('field-container');
+
+            // create the checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.dataset.key = fieldName;
+            checkbox.checked = cachedProperty?.checked || false;
+            checkbox.id = `property-${fieldName}`;
+            checkbox.classList.add('field-checkbox');
+            checkbox.addEventListener('change', event => {
+                // send the property value to the main canvas
+                const inputBox = event.target.parentElement.querySelector('.field-value');
+                mainCanvas.contentWindow.postMessage({
+                    type: 'element:style',
+                    payload: {
+                        id: selectedElement.id,
+                        property: event.target.dataset.key,
+                        value: inputBox.value || inputBox.placeholder,
+                        checked: event.target.checked ? 'true' : 'false',
+                    },
+                }, '*');
+            });
+            propertyContainer.appendChild(checkbox);
+
+            // Create the label
+            const label = document.createElement('label');
+            label.innerText = fieldName;
+            label.title = fieldName;
+            label.htmlFor = `property-${fieldName}`;
+            label.classList.add('field-name');
+            if (cachedProperty) {
+                label.classList.add('field-modified');
+            }
+            propertyContainer.appendChild(label);
+
+            // create the input box
+            const inputBox = document.createElement('input');
+            inputBox.type = 'text';
+            inputBox.dataset.key = fieldName;
+            inputBox.classList.add('field-value');
+            inputBox.value = cachedProperty?.value || propertySpecification.initialValue;
+            inputBox.placeholder = propertySpecification.initialValue || computedValue;
+            inputBox.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    // Send the property value to the main canvas
+                    const checkBox = event.target.parentElement.querySelector('.field-checkbox');
+                    mainCanvas.contentWindow.postMessage({
+                        type: 'element:style',
+                        payload: {
+                            id: selectedElement.id,
+                            property: event.target.dataset.key,
+                            value: event.target.value || event.target.placeholder,
+                            checked: checkBox.checked ? 'true' : 'false',
+                        },
+                    }, '*');
+                }
+            });
+            propertyContainer.appendChild(inputBox);
+
+            // create the datalist
+            if (propertySpecification.specifiedValues) {
+                const createDropdownItems = (values) => {
+                    dropdownList.innerHTML = '';
+                    values.forEach(value => {
+                        const item = document.createElement('div');
+                        item.classList.add('dropdown-item');
+                        item.textContent = value;
+                        item.addEventListener('click', () => {
+                            inputBox.value = value;
+                            dropdownList.classList.add('hidden');
+                            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+                        });
+                        dropdownList.appendChild(item);
+                    });
+                }
+
+                const filterDropdownItems = () => {
+                    const query = inputBox.value.toLowerCase();
+                    const filteredValues = [
+                        ...propertySpecification.specifiedValues,
+                        ...styleGlobalValueOptions,
+                    ].filter(value => value.toLowerCase().includes(query));
+                    createDropdownItems(filteredValues);
+                    if (filteredValues.length > 0) {
+                        dropdownList.classList.remove('hidden');
+                    } else {
+                        dropdownList.classList.add('hidden');
+                    }
+                }
+
+                // create the dropdown list
+                const dropdownList = document.createElement('div');
+                dropdownList.setAttribute('popover', 'auto');
+                dropdownList.id = `property-${fieldName}-dropdown`;
+                dropdownList.classList.add('field-options');
+                dropdownList.classList.add('scrollable');
+                inputBox.setAttribute('popovertarget', dropdownList.id);
+                propertyContainer.appendChild(dropdownList);
+
+                //
+                inputBox.addEventListener('input', filterDropdownItems);
+                inputBox.addEventListener('focus', filterDropdownItems);
+            }
+
+            //
+            formContainer.appendChild(propertyContainer);
+        });
+    });
 }
 const refreshLayoutSection = () => {
     const listContainer = document.querySelector('#properties-panel .content__container');
@@ -531,7 +754,7 @@ const refreshPositionSection = () => {
     }
 
     const listContainer = document.querySelector('#properties-panel .content__container');
-    const navigator = listContainer.querySelector('#position .navigator');
+    const navigator = listContainer.querySelector('#position-section .navigator');
 
     const devicePixelRatio = window.devicePixelRatio;
 
@@ -917,7 +1140,7 @@ document.querySelector('#outline-panel .content__container').addEventListener('k
         }
     }
 });
-document.getElementById('layout-section').addEventListener('mouseenter', () => {
+document.querySelector('#layout-section .simulator').addEventListener('mouseenter', () => {
     // Make the selected element visible on the outline panel
     scrollOutlinePanelToElement(selectedElement.id);
 
@@ -927,14 +1150,14 @@ document.getElementById('layout-section').addEventListener('mouseenter', () => {
         payload: {},
     }, '*');
 });
-document.getElementById('layout-section').addEventListener('mouseleave', () => {
+document.querySelector('#layout-section .simulator').addEventListener('mouseleave', () => {
     // Send a request to hide the layout identifiers to the main canvas
     mainCanvas.contentWindow.postMessage({
         type: 'element:hide-layout-identifiers',
         payload: {},
     }, '*');
 });
-document.getElementById('spacing-section').addEventListener('mouseenter', () => {
+document.querySelector('#spacing-section .box-model').addEventListener('mouseenter', () => {
     // Make the selected element visible on the outline panel
     scrollOutlinePanelToElement(selectedElement.id);
 
@@ -944,14 +1167,14 @@ document.getElementById('spacing-section').addEventListener('mouseenter', () => 
         payload: {},
     }, '*');
 });
-document.getElementById('spacing-section').addEventListener('mouseleave', () => {
+document.querySelector('#spacing-section .box-model').addEventListener('mouseleave', () => {
     // Send a request to hide the box model to the main canvas
     mainCanvas.contentWindow.postMessage({
         type: 'element:hide-box-model',
         payload: {},
     }, '*');
 });
-document.getElementById('position').addEventListener('mouseenter', () => {
+document.querySelector('#position-section .navigator').addEventListener('mouseenter', () => {
     // Make the selected element visible on the outline panel
     scrollOutlinePanelToElement(selectedElement.id);
 
@@ -1024,7 +1247,16 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-// Handler for mouse down event on the main window
+// Handler for events on the main window
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        if (event.target.classList.contains('field-value')) {
+            // Hide the popover element
+            event.target.parentElement?.querySelector('.field-options')?.classList.add('hidden');
+        }
+        return;
+    }
+});
 window.addEventListener('mousedown', (event) => {
     // Update the focused element
     focusedPanelElement = event.target;

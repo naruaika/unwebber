@@ -63,7 +63,7 @@ const create = () => {
     // Append to the recent project list
     appConfig.project.recent.paths = [
         workDir,
-        ...appConfig.project.recent.paths,
+        ...appConfig.project.recent.paths.slice(0, 2),
     ];
 
     // Save the updated configuration
@@ -157,6 +157,7 @@ const close = () => {
         ...(
             appConfig.project.recent.paths
                 .filter(path => path !== appConfig.project.current.path)
+                .slice(0, 2)
         ),
     ];
 

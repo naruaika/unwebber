@@ -49,7 +49,10 @@ const createWindow = () => {
         mainWindow.focus();
     });
 
-    // Open the DevTools
+    // Enable pinch zoom (for development purposes only)
+    // mainWindow.webContents.setVisualZoomLevelLimits(1, 3);
+
+    // Open the DevTools (for development purposes only)
     mainWindow.webContents.openDevTools()
 }
 

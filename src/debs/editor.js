@@ -235,7 +235,7 @@ const selectElement = (element) => {
     }
 
     // Save the current action state
-    const previousState = { id: selectedElement?.dataset.uwId };
+    // const previousState = { id: selectedElement?.dataset.uwId };
 
     // Update the current selection
     // TODO: add support for multiple selection
@@ -262,8 +262,8 @@ const selectElement = (element) => {
     hideElementHover();
 
     // Push to the action history (for proof of concept purposes only)
-    const upcomingState = { id: selectedElement.dataset.uwId };
-    pushActionHistory('element:select', previousState, upcomingState);
+    // const upcomingState = { id: selectedElement.dataset.uwId };
+    // pushActionHistory('element:select', previousState, upcomingState);
 }
 
 const copyElement = () => {
@@ -1476,16 +1476,19 @@ const onElementDragStart = (event) => {
 const onElementDragEnd = (event) => {
     event.preventDefault();
 
-    // Find the element over the mouse
-    hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+    // If the element drag action is not interrupted
+    if (event.dataTransfer.dropEffect !== 'none') {
+        // find the element over the mouse
+        hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
 
-    // If the element over the mouse is not the target element
-    if (hoveredElement !== event.target) {
-        // move the target element before the skeleton element
-        elementSkeleton.parentElement.insertBefore(event.target, elementSkeleton);
+        // and if the element over the mouse is not the target element
+        if (hoveredElement !== event.target) {
+            // move the target element before the skeleton element
+            elementSkeleton.parentElement.insertBefore(event.target, elementSkeleton);
 
-        // send the document tree to the parent window
-        sendDocumentTree();
+            // send the document tree to the parent window
+            sendDocumentTree();
+        }
     }
 
     // Show the target element
@@ -1626,8 +1629,8 @@ document.addEventListener('mouseleave', () => {
 
 // Handler for key press events
 document.addEventListener('keydown', (event) => {
-    if (selectedElement?.contentEditable === 'true') {
-        if (event.key === 'Escape') {
+    if (event.key === 'Escape') {
+        if (selectedElement?.contentEditable === 'true') {
             // Make the selected element not editable
             makeElementNotEditable(selectedElement);
 

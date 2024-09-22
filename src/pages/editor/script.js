@@ -47,7 +47,7 @@ const unsetCanvasSizes = () => {
 }
 
 // Handler for panel content updates
-const refreshCanvasRulers = () => {
+const refreshCanvasRulers = (drawSelectedElement = true) => {
     if (isViewportResizing) {
         return; // do nothing
     }
@@ -150,6 +150,10 @@ const refreshCanvasRulers = () => {
     // Show the rulers
     topRuler.style.visibility = 'visible';
     leftRuler.style.visibility = 'visible';
+
+    if (! drawSelectedElement) {
+        return;
+    }
 
     if (selectedElement) {
         // Fill the area to show the selected element position on the canvas
@@ -384,24 +388,10 @@ const refreshAttributesPanel = () => {
 
             // If the attribute type is enum
             if (attribute.type === 'enum') {
-                const createDropdownItems = (values) => {
-                    dropdownList.innerHTML = '';
-                    values.forEach(value => {
-                        const item = document.createElement('div');
-                        item.classList.add('dropdown-item');
-                        item.textContent = value;
-                        item.addEventListener('click', () => {
-                            inputBox.value = value;
-                            dropdownList.classList.add('hidden');
-                            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-                        });
-                        dropdownList.appendChild(item);
-                    });
-                }
-
                 const filterDropdownItems = () => {
                     const query = inputBox.value.toLowerCase();
                     const filteredValues = [];
+                    // filter the values based on the query
                     attribute.options.forEach(option => {
                         if (
                             ! option.value.toLowerCase().includes(query) ||
@@ -414,10 +404,34 @@ const refreshAttributesPanel = () => {
                         }
                         filteredValues.push(option.value || '[empty]');
                     });
-                    createDropdownItems(filteredValues);
+                    // create the dropdown items
+                    dropdownList.innerHTML = '';
+                    filteredValues.forEach(value => {
+                        const item = document.createElement('div');
+                        item.classList.add('dropdown-item');
+                        item.textContent = value;
+                        item.addEventListener('click', () => {
+                            inputBox.value = value;
+                            dropdownList.classList.add('hidden');
+                            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+                        });
+                        dropdownList.appendChild(item);
+                    });
                     if (filteredValues.length > 0) {
+                        // show the dropdown list
                         dropdownList.classList.remove('hidden');
+                        // calculate the best position for the dropdown list
+                        const attributeContainerRect = attributeContainer.getBoundingClientRect();
+                        if (attributeContainerRect.bottom + dropdownList.offsetHeight > listContainer.offsetHeight) {
+                            dropdownList.style.top = 'unset';
+                            dropdownList.style.bottom = '100%';
+                        } else {
+                            dropdownList.style.bottom = 'unset';
+                            dropdownList.style.top = '100%';
+                        }
+                        dropdownList.style.right = '8px';
                     } else {
+                        // hide the dropdown list
                         dropdownList.classList.add('hidden');
                     }
                 }
@@ -624,9 +638,16 @@ const refreshPropertiesPanel = () => {
 
             // create the datalist
             if (propertySpecification.specifiedValues) {
-                const createDropdownItems = (values) => {
+                const filterDropdownItems = () => {
+                    const query = inputBox.value.toLowerCase();
+                    // filter the values based on the query
+                    const filteredValues = [
+                        ...propertySpecification.specifiedValues,
+                        ...styleGlobalValueOptions,
+                    ].filter(value => value.toLowerCase().includes(query));
+                    // create the dropdown items
                     dropdownList.innerHTML = '';
-                    values.forEach(value => {
+                    filteredValues.forEach(value => {
                         const item = document.createElement('div');
                         item.classList.add('dropdown-item');
                         item.textContent = value;
@@ -637,18 +658,21 @@ const refreshPropertiesPanel = () => {
                         });
                         dropdownList.appendChild(item);
                     });
-                }
-
-                const filterDropdownItems = () => {
-                    const query = inputBox.value.toLowerCase();
-                    const filteredValues = [
-                        ...propertySpecification.specifiedValues,
-                        ...styleGlobalValueOptions,
-                    ].filter(value => value.toLowerCase().includes(query));
-                    createDropdownItems(filteredValues);
                     if (filteredValues.length > 0) {
+                        // show the dropdown list
                         dropdownList.classList.remove('hidden');
+                        // calculate the best position for the dropdown list
+                        const propertyContainerRect = propertyContainer.getBoundingClientRect();
+                        if (propertyContainerRect.bottom + dropdownList.offsetHeight > listContainer.offsetHeight) {
+                            dropdownList.style.top = 'unset';
+                            dropdownList.style.bottom = '100%';
+                        } else {
+                            dropdownList.style.bottom = 'unset';
+                            dropdownList.style.top = '100%';
+                        }
+                        dropdownList.style.right = '8px';
                     } else {
+                        // hide the dropdown list
                         dropdownList.classList.add('hidden');
                     }
                 }
@@ -924,6 +948,9 @@ const makeTemplateElementsDraggable = () => {
             // Show the drop space
             document.querySelector('.main-canvas__overlay').classList.toggle('hidden');
 
+            // Refresh the canvas rulers
+            refreshCanvasRulers(drawSelectedElement = false);
+
             // Send the template element to the main canvas
             mainCanvas.contentWindow.postMessage({
                 type: 'element:beforeinsert',
@@ -951,6 +978,9 @@ const makeTemplateElementsDraggable = () => {
 
             // Clear the template element ID
             templateElementId = null;
+
+            // Refresh the canvas rulers
+            refreshCanvasRulers();
         });
 
         element.addEventListener('dragover', event => {

@@ -1,6 +1,10 @@
 var appConfig = {};
 var apiSchema = {};
 
+var actionHistory = [];
+var actionHistoryIndex = -1;
+var isActionHistoryUpdating = false;
+
 var isDocumentReady = false;
 
 var hoveredElement = null;
@@ -109,6 +113,97 @@ const enableWhitespaceInsertionOnButton = (event) => {
     }
 }
 
+const pushActionHistory = (name, previousState, upcomingState) => {
+    if (isActionHistoryUpdating) {
+        return;
+    }
+
+    // Prevent the "same" action state from being pushed to the action history
+    if (JSON.stringify(actionHistory[actionHistoryIndex]?.upcoming || {}) === JSON.stringify(upcomingState)) {
+        return; // do nothing
+    }
+
+    // Delete the action history after the current index
+    if (actionHistoryIndex < actionHistory.length - 1) {
+        actionHistory = actionHistory.slice(0, actionHistoryIndex + 1);
+    }
+
+    // // Calculate the memory usage of the action history
+    // const memoryUsage = JSON.stringify(actionHistory).length;
+
+    // // Delete the action history until the memory usage less than 512MB
+    // while (memoryUsage > 512 * 1024 * 1024) {
+    //     actionHistory.shift();
+    //     memoryUsage = JSON.stringify(actionHistory).length;
+    // }
+
+    // Push the action state to the action history
+    actionHistory.push({
+        name,
+        previous: previousState,
+        upcoming: upcomingState,
+    });
+
+    // Update the action history index
+    actionHistoryIndex = actionHistory.length - 1;
+}
+
+const undoAction = () => {
+    if (actionHistoryIndex < 1) {
+        return; // do nothing
+    }
+
+    isActionHistoryUpdating = true;
+
+    const actionState = actionHistory[actionHistoryIndex];
+
+    switch (actionState.name) {
+        case 'element:select':
+            // Find the element by the id
+            const element = document.querySelector(`[data-uw-id="${actionState.previous.id}"]`);
+
+            // If the element is found
+            if (element) {
+                // Update the current selection
+                selectElement(element);
+            }
+
+            break;
+    }
+
+    actionHistoryIndex -= 1;
+
+    isActionHistoryUpdating = false;
+}
+
+const redoAction = () => {
+    if (actionHistoryIndex >= actionHistory.length - 1) {
+        return; // do nothing
+    }
+
+    isActionHistoryUpdating = true;
+
+    actionHistoryIndex += 1;
+
+    const actionState = actionHistory[actionHistoryIndex];
+
+    switch (actionState.name) {
+        case 'element:select':
+            // Find the element by the id
+            const element = document.querySelector(`[data-uw-id="${actionState.upcoming.id}"]`);
+
+            // If the element is found
+            if (element) {
+                // Update the current selection
+                selectElement(element);
+            }
+
+            break;
+    }
+
+    isActionHistoryUpdating = false;
+}
+
 const selectElement = (element) => {
     // If there is a current selection
     if (selectedElement) {
@@ -139,11 +234,14 @@ const selectElement = (element) => {
         element = document.body;
     }
 
+    // Save the current action state
+    const previousState = { id: selectedElement?.dataset.uwId };
+
     // Update the current selection
     // TODO: add support for multiple selection
     selectedElement = element;
 
-    // Create the highlight elements
+    // Ceate the highlight elements
     createElementHighlights();
 
     // If the element inside a container
@@ -162,6 +260,10 @@ const selectElement = (element) => {
 
     // Hide the hover element
     hideElementHover();
+
+    // Push to the action history (for proof of concept purposes only)
+    const upcomingState = { id: selectedElement.dataset.uwId };
+    pushActionHistory('element:select', previousState, upcomingState);
 }
 
 const copyElement = () => {
@@ -241,9 +343,6 @@ const pasteElement = () => {
 
     // Make the previously selected element not draggable
     makeElementNotDraggable(selectedElement);
-
-    // Delete the highlight elements
-    deleteElementHighlights();
 
     // Send the document tree to the parent window
     sendDocumentTree();
@@ -325,9 +424,6 @@ const insertElement = () => {
 
     // Remove the skeleton element
     deleteElementSkeleton();
-
-    // Delete the highlight elements
-    deleteElementHighlights();
 
     // Make the newly pasted element draggable
     makeElementDraggable(elementToInsert);
@@ -1596,6 +1692,21 @@ document.addEventListener('keydown', (event) => {
         return;
     }
 
+    if (event.key === 'z' && event.ctrlKey) {
+        // Undo the last action
+        undoAction();
+        return;
+    }
+
+    if (
+        (event.key === 'y' && event.ctrlKey) ||
+        (event.key === 'z' && event.ctrlKey && event.shiftKey)
+    ) {
+        // Redo the last action
+        redoAction();
+        return;
+    }
+
     if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
         // If there is an element with contentEditable="true"
         if (selectedElement?.contentEditable === 'true') {
@@ -1736,9 +1847,6 @@ window.addEventListener('message', event => {
             if (! event.data.payload.template) {
                 // Remove the skeleton element
                 deleteElementSkeleton();
-
-                // Make the newly pasted element draggable
-                makeElementDraggable(elementToInsert);
 
                 // Refresh the hover element
                 refreshElementHover();

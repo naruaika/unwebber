@@ -45,9 +45,17 @@
                     </label>
                 </fieldset>
 
+                <!-- Transform Edit Button -->
+                <fieldset>
+                    <input type="radio" value="transform" id="transform-edit-button" name="editor-mode" tabindex="3" />
+                    <label for="transform-edit-button" class="button">
+                        <div class="icon icon-pen-tool"></div>
+                    </label>
+                </fieldset>
+
                 <!-- Code Edit Button -->
                 <fieldset>
-                    <input type="radio" value="code" id="code-edit-button" name="editor-mode" tabindex="3" />
+                    <input type="radio" value="code" id="code-edit-button" name="editor-mode" tabindex="4" />
                     <label for="code-edit-button" class="button">
                         <div class="icon icon-code"></div>
                     </label>
@@ -59,24 +67,24 @@
 
                 <!-- Website Preview Button -->
                 <fieldset>
-                    <input type="radio" value="preview" id="website-preview-button" name="editor-mode" tabindex="4" />
+                    <input type="radio" value="preview" id="website-preview-button" name="editor-mode" tabindex="5" />
                     <label for="website-preview-button" class="button">
                         <div class="icon icon-play"></div>
                     </label>
                 </fieldset>
 
                 <!-- Document View Button -->
-                <button class="button button-setting" id="document-view-button" tabindex="5">
+                <button class="button button-setting" id="document-view-button" tabindex="6">
                     <div class="icon icon-monitor"></div>
                 </button>
 
                 <!-- Document Version Button -->
-                <button class="button button-setting" id="document-version-button" tabindex="6">
+                <button class="button button-setting" id="document-version-button" tabindex="7">
                     <div class="icon icon-git-branch"></div>
                 </button>
 
                 <!-- Document Setting Button -->
-                <button class="button button-setting" id="document-setting-button" tabindex="7">
+                <button class="button button-setting" id="document-setting-button" tabindex="8">
                     <div class="icon icon-settings"></div>
                 </button>
             </div>
@@ -91,7 +99,7 @@
             <div class="main-sidebar__left">
 
                 <!-- Pages Panel -->
-                <div class="main-sidebar__panel" id="pages-panel" tabindex="8">
+                <div class="main-sidebar__panel" id="pages-panel" tabindex="9">
                     <button class="header">
                         <div class="title">Pages</div>
                         <div class="icon icon-chevron-down"></div>
@@ -102,7 +110,7 @@
                 </div>
 
                 <!-- Outline Panel -->
-                <div class="main-sidebar__panel" id="outline-panel" tabindex="9">
+                <div class="main-sidebar__panel" id="outline-panel" tabindex="10">
                     <button class="header">
                         <div class="title">Outline</div>
                         <div class="icon icon-chevron-down"></div>
@@ -114,7 +122,7 @@
                 </div>
 
                 <!-- Assets Panel -->
-                <div class="main-sidebar__panel" id="assets-panel" tabindex="10">
+                <div class="main-sidebar__panel" id="assets-panel" tabindex="11">
                     <button class="header">
                         <div class="title">Assets</div>
                         <div class="icon icon-chevron-down"></div>
@@ -161,7 +169,7 @@
             <div class="main-sidebar__right">
 
                 <!-- Attributes Panel -->
-                <div class="main-sidebar__panel" id="attributes-panel" tabindex="11">
+                <div class="main-sidebar__panel" id="attributes-panel" tabindex="12">
                     <button class="header">
                         <div class="title">Attributes</div>
                         <div class="icon icon-chevron-down"></div>
@@ -172,24 +180,13 @@
                 </div>
 
                 <!-- Properties Panel -->
-                <div class="main-sidebar__panel" id="properties-panel" tabindex="12">
+                <div class="main-sidebar__panel" id="properties-panel" tabindex="13">
                     <button class="header">
                         <div class="title">Properties</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
                         <span class="placeholder">No element selected.</span>
-
-                        <!-- Layout -->
-                        <div class="panel__section hidden" id="layout-section">
-                            <div class="header">
-                                <div class="title">Layout</div>
-                            </div>
-                            <div class="section__container">
-                                <div class="simulator scrollable"></div>
-                                <form class="form"></form>
-                            </div>
-                        </div>
 
                         <!-- Spacing -->
                         <div class="panel__section hidden" id="spacing-section">
@@ -232,6 +229,17 @@
                             </div>
                         </div>
 
+                        <!-- Layout -->
+                        <div class="panel__section hidden" id="layout-section">
+                            <div class="header">
+                                <div class="title">Layout</div>
+                            </div>
+                            <div class="section__container">
+                                <div class="simulator scrollable"></div>
+                                <form class="form"></form>
+                            </div>
+                        </div>
+
                         <!-- Position -->
                         <div class="panel__section hidden" id="position-section">
                             <div class="header">
@@ -258,7 +266,7 @@
                 </div>
 
                 <!-- Templates Panel -->
-                <div class="main-sidebar__panel" id="templates-panel" tabindex="13">
+                <div class="main-sidebar__panel" id="templates-panel" tabindex="14">
                     <div class="header">
                         <div class="title">Templates</div>
                         <div class="icon icon-chevron-down"></div>

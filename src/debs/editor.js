@@ -3,12 +3,18 @@ var apiSchema = {};
 
 var actionHistory = [];
 var actionHistoryIndex = -1;
-var isActionHistoryUpdating = false;
+var isActionBeingWatched = false;
+var isActionInterrupted = false;
 
 var isDocumentReady = false;
 
 var hoveredElement = null;
 var selectedElement = null;
+
+var elementUnderMouse = null;
+var elementIndexUnderMouse = 0;
+var isElementSelectedWithAltKey = false;
+var isElementMoving = false;
 
 var elementOnCopy = null;
 var elementOnCut = null;
@@ -77,6 +83,11 @@ const isElementVoid = (element) => {
         return false;
     }
 
+    // Check if the element is a text node
+    if (element.nodeType === Node.TEXT_NODE) {
+        return false;
+    }
+
     const tagName = element.tagName.toLowerCase();
     const tagSpecs = apiSchema.htmlElements?.find(htmlElement => htmlElement.tag === tagName);
 
@@ -113,59 +124,167 @@ const enableWhitespaceInsertionOnButton = (event) => {
     }
 }
 
-const pushActionHistory = (name, previousState, upcomingState) => {
-    if (isActionHistoryUpdating) {
+const rememberAction = (name, previousState, upcomingState, objectReference = null) => {
+    if (isActionBeingWatched) {
         return;
     }
 
-    // Prevent the "same" action state from being pushed to the action history
-    if (JSON.stringify(actionHistory[actionHistoryIndex]?.upcoming || {}) === JSON.stringify(upcomingState)) {
-        return; // do nothing
-    }
+    // TODO: Prevent the "same" action state from being pushed to the action history
 
     // Delete the action history after the current index
     if (actionHistoryIndex < actionHistory.length - 1) {
         actionHistory = actionHistory.slice(0, actionHistoryIndex + 1);
     }
 
-    // // Calculate the memory usage of the action history
-    // const memoryUsage = JSON.stringify(actionHistory).length;
+    // Calculate the memory usage of the action history
+    const memoryUsage = JSON.stringify(actionHistory).length;
 
-    // // Delete the action history until the memory usage less than 512MB
-    // while (memoryUsage > 512 * 1024 * 1024) {
-    //     actionHistory.shift();
-    //     memoryUsage = JSON.stringify(actionHistory).length;
-    // }
+    // Delete the action history until the memory usage less than 2048MB
+    while (memoryUsage > 2048 * 1024 * 1024) {
+        actionHistory.shift();
+        memoryUsage = JSON.stringify(actionHistory).length;
+    }
 
     // Push the action state to the action history
     actionHistory.push({
         name,
         previous: previousState,
         upcoming: upcomingState,
+        reference: objectReference,
     });
 
     // Update the action history index
     actionHistoryIndex = actionHistory.length - 1;
+
 }
 
 const undoAction = () => {
-    if (actionHistoryIndex < 1) {
+    if (actionHistoryIndex <= -1) {
         return; // do nothing
     }
 
-    isActionHistoryUpdating = true;
+    isActionBeingWatched = true;
 
     const actionState = actionHistory[actionHistoryIndex];
 
     switch (actionState.name) {
-        case 'element:select':
+        // case 'element:select':
+        //     // Find the element by the id
+        //     const reselectedElement = document.querySelector(`[data-uw-id="${actionState.previous.id}"]`);
+
+        //     // If the element is found
+        //     if (reselectedElement) {
+        //         // Update the current selection
+        //         selectElement(reselectedElement);
+        //     }
+
+        //     break;
+
+        case 'element:move':
             // Find the element by the id
-            const element = document.querySelector(`[data-uw-id="${actionState.previous.id}"]`);
+            const movedElement = document.querySelector(`[data-uw-id="${actionState.previous.elementId}"]`);
 
             // If the element is found
-            if (element) {
-                // Update the current selection
-                selectElement(element);
+            if (movedElement) {
+                // Remove the moved element from the document
+                movedElement.remove();
+
+                // Move the element to the previous position
+                const movedParentElement = document.querySelector(`[data-uw-id="${actionState.previous.containerId}"]`);
+                movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[actionState.previous.positionIndex]);
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:insert':
+            // Retrieve the inserted element
+            const insertedElement = document.querySelector(`[data-uw-id="${actionState.upcoming.elementId}"]`);
+
+            // If the element is found
+            if (insertedElement) {
+                // Remove the inserted element from the document
+                insertedElement.remove();
+                selectedElement = null;
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Delete the highlight element
+                deleteElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:delete':
+            // Retrieve the deleted element
+            const deletedElement = actionState.reference.cloneNode(true);
+            const deletedParentElement = document.querySelector(`[data-uw-id="${actionState.previous.containerId}"]`);
+            const deletedPositionIndex = actionState.previous.positionIndex;
+
+            // If the element is found
+            if (deletedElement && deletedParentElement) {
+                // Insert the deleted element to the previous position
+                deletedParentElement.insertBefore(deletedElement, deletedParentElement.childNodes[deletedPositionIndex]);
+
+                //
+                selectElement(deletedElement);
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:style':
+            // Find the element by the id
+            const styledElement = document.querySelector(`[data-uw-id="${actionState.previous.elementId}"]`);
+
+            // If the element is found
+            if (styledElement) {
+                // Style the element with the previous property
+                const styledElementProperties = JSON.parse(actionState.previous.propertyList || '{}');
+                const styledElementPropertyChecked = styledElementProperties[actionState.previous.propertyName]?.checked;
+                styleElement(styledElement, actionState.previous.propertyName, styledElementPropertyChecked ? actionState.previous.propertyValue : false);
+                styledElement.dataset.uwProperties = actionState.previous.propertyList || '{}';
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
             }
 
             break;
@@ -173,7 +292,7 @@ const undoAction = () => {
 
     actionHistoryIndex -= 1;
 
-    isActionHistoryUpdating = false;
+    isActionBeingWatched = false;
 }
 
 const redoAction = () => {
@@ -181,27 +300,136 @@ const redoAction = () => {
         return; // do nothing
     }
 
-    isActionHistoryUpdating = true;
+    isActionBeingWatched = true;
 
     actionHistoryIndex += 1;
 
     const actionState = actionHistory[actionHistoryIndex];
 
     switch (actionState.name) {
-        case 'element:select':
+        // case 'element:select':
+        //     // Find the element by the id
+        //     const reselectedElement = document.querySelector(`[data-uw-id="${actionState.upcoming.id}"]`);
+
+        //     // If the element is found
+        //     if (reselectedElement) {
+        //         // Update the current selection
+        //         selectElement(reselectedElement);
+        //     }
+
+        //     break;
+
+        case 'element:move':
             // Find the element by the id
-            const element = document.querySelector(`[data-uw-id="${actionState.upcoming.id}"]`);
+            const movedElement = document.querySelector(`[data-uw-id="${actionState.upcoming.elementId}"]`);
 
             // If the element is found
-            if (element) {
-                // Update the current selection
-                selectElement(element);
+            if (movedElement) {
+                // Remove the moved element from the document
+                movedElement.remove();
+
+                // Move the element to the upcoming position
+                const movedParentElement = document.querySelector(`[data-uw-id="${actionState.upcoming.containerId}"]`);
+                movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[actionState.upcoming.positionIndex]);
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:insert':
+            // Retrieve the inserted element
+            const insertedElement = actionState.reference.cloneNode(true);
+            const insertedParentElement = document.querySelector(`[data-uw-id="${actionState.upcoming.containerId}"]`);
+            const insertedPositionIndex = actionState.upcoming.positionIndex;
+
+            // If the element is found
+            if (insertedElement && insertedParentElement) {
+                // Insert the inserted element to the upcoming position
+                insertedParentElement.insertBefore(insertedElement, insertedParentElement.childNodes[insertedPositionIndex]);
+
+                //
+                selectElement(insertedElement);
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:delete':
+            // Retrieve the deleted element
+            const deletedElement = document.querySelector(`[data-uw-id="${actionState.previous.elementId}"]`);
+
+            // If the element is found
+            if (deletedElement) {
+                // Remove the deleted element from the document
+                deletedElement.remove();
+                selectedElement = null;
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Delete the highlight element
+                deleteElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
+            }
+
+            break;
+
+        case 'element:style':
+            // Find the element by the id
+            const styledElement = document.querySelector(`[data-uw-id="${actionState.upcoming.elementId}"]`);
+
+            // If the element is found
+            if (styledElement) {
+                // Style the element with the upcoming property
+                const styledElementProperties = JSON.parse(actionState.upcoming.propertyList || '{}');
+                const styledElementPropertyChecked = styledElementProperties[actionState.upcoming.propertyName]?.checked;
+                styleElement(styledElement, actionState.upcoming.propertyName, styledElementPropertyChecked ? actionState.upcoming.propertyValue : false);
+                styledElement.dataset.uwProperties = actionState.upcoming.propertyList || '{}';
+
+                // Refresh the hover element
+                refreshElementHover();
+
+                // Create the highlight element
+                createElementHighlights();
+
+                // Send the document tree to the parent window
+                sendDocumentTree();
+
+                // Send the selected element to the parent window
+                sendSelectedElement();
             }
 
             break;
     }
 
-    isActionHistoryUpdating = false;
+    isActionBeingWatched = false;
 }
 
 const selectElement = (element) => {
@@ -245,12 +473,7 @@ const selectElement = (element) => {
     createElementHighlights();
 
     // If the element inside a container
-    if (
-        ! isElementVoid(element.parentElement) &&
-        // TODO: add support for absolute and fixed position
-        element.style.position !== 'absolute' &&
-        element.style.position !== 'fixed'
-    ) {
+    if (! isElementVoid(element.parentElement)) {
         // make the clicked element draggable
         makeElementDraggable(element);
     }
@@ -267,7 +490,7 @@ const selectElement = (element) => {
 }
 
 const copyElement = () => {
-    if (selectedElement.tagName === 'BODY') {
+    if (selectedElement.tagName.toLowerCase() === 'body') {
         return; // do nothing
     }
 
@@ -276,18 +499,28 @@ const copyElement = () => {
 }
 
 const cutElement = () => {
-    if (selectedElement.tagName === 'BODY') {
+    if (selectedElement.tagName.toLowerCase() === 'body') {
         return; // do nothing
     }
 
     // Cut the selected element to the clipboard
     elementOnCut = selectedElement;
 
+    // Save the current action state
+    const previousState = {
+        elementId: selectedElement.dataset.uwId,
+        containerId: selectedElement.parentElement.dataset.uwId,
+        positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+    };
+    const objectReference = selectedElement.cloneNode(true);
+
     // Remove the selected element from the document
     selectedElement.remove();
-
-    // Clear the current selection
     selectedElement = null;
+
+    // Push to the action history
+    const upcomingState = {};
+    rememberAction('element:delete', previousState, upcomingState, objectReference);
 
     // Delete the highlight elements
     deleteElementHighlights();
@@ -306,7 +539,7 @@ const pasteElement = () => {
     if (
         ! selectedElement ||
         (! elementOnCut && ! elementOnCopy) ||
-        selectedElement.tagName === 'BODY'
+        selectedElement.tagName.toLowerCase() === 'body'
     ) {
         return; // do nothing
     }
@@ -331,8 +564,20 @@ const pasteElement = () => {
         });
     }
 
+    // Save the current action state
+    const previousState = {};
+
     // Paste the copied element from the clipboard
     selectedElement.parentNode.insertBefore(elementToPaste, selectedElement.nextSibling);
+
+    // Push to the action history
+    const upcomingState = {
+        elementId: elementToPaste.dataset.uwId,
+        containerId: elementToPaste.parentElement.dataset.uwId,
+        positionIndex: Array.prototype.indexOf.call(elementToPaste.parentElement.childNodes, elementToPaste),
+    };
+    const objectReference = elementToPaste.cloneNode(true);
+    rememberAction('element:insert', previousState, upcomingState, objectReference);
 
     // Clear current text selection
     window.getSelection().removeAllRanges();
@@ -350,13 +595,11 @@ const pasteElement = () => {
     // Update the current selection
     selectElement(elementToPaste);
 
-    if (mode === 'cut') {
-        elementOnCopy = null;
-        elementOnCut = null;
-    } else {
-        // Re-copy the selected element to the clipboard
-        copyElement();
-    }
+    // Clear the cut element from the clipboard
+    elementOnCut = null;
+
+    // Re-copy the selected element to the clipboard
+    copyElement();
 
     // Make the newly pasted element draggable
     makeElementDraggable(selectedElement);
@@ -366,7 +609,7 @@ const pasteElement = () => {
 }
 
 const deleteElement = () => {
-    if (selectedElement.tagName === 'BODY') {
+    if (selectedElement.tagName.toLowerCase() === 'body') {
         return; // do nothing
     }
 
@@ -379,9 +622,21 @@ const deleteElement = () => {
         hideElementHover();
     }
 
-    // Remove the selected element
+    // Save the current action state
+    const previousState = {
+        elementId: selectedElement.dataset.uwId,
+        containerId: selectedElement.parentElement.dataset.uwId,
+        positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+    };
+    const objectReference = selectedElement.cloneNode(true);
+
+    // Remove the selected element from the document
     selectedElement.remove();
     selectedElement = null;
+
+    // Push to the action history
+    const upcomingState = {};
+    rememberAction('element:delete', previousState, upcomingState, objectReference);
 
     // Refresh the hover element
     refreshElementHover();
@@ -419,8 +674,20 @@ const insertElement = () => {
         );
     });
 
+    // Save the current action state
+    const previousState = {};
+
     // Insert the template element before the skeleton element
     elementSkeleton.parentElement.insertBefore(elementToInsert, elementSkeleton);
+
+    // Push to the action history
+    const upcomingState = {
+        elementId: elementToInsert.dataset.uwId,
+        containerId: elementToInsert.parentElement.dataset.uwId,
+        positionIndex: Array.prototype.indexOf.call(elementToInsert.parentElement.childNodes, elementToInsert),
+    };
+    const objectReference = elementToInsert.cloneNode(true);
+    rememberAction('element:insert', previousState, upcomingState, objectReference);
 
     // Remove the skeleton element
     deleteElementSkeleton();
@@ -441,6 +708,289 @@ const insertElement = () => {
     elementToInsert = null;
 }
 
+const moveElement = (event) => {
+    // Find the element over the mouse
+    hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+
+    // If the element over the mouse is not the target element
+    if (hoveredElement !== selectedElement) {
+        // save the current action state
+        const previousState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+
+        // move the target element before the skeleton element
+        elementSkeleton.parentElement.insertBefore(selectedElement, elementSkeleton);
+
+        // push to the action history
+        const upcomingState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+        rememberAction('element:move', previousState, upcomingState);
+
+        // send the document tree to the parent window
+        sendDocumentTree();
+
+        // wait for the element bounding rect to be updated
+        window.setTimeout(() => {
+            // then send the selected element to the parent window
+            sendSelectedElement();
+        }, 50);
+    }
+}
+
+const moveElementToUpTree = () => {
+    // If the selected element has previous sibling
+    // TODO: should we add support for insertion before text nodes?
+    if (selectedElement.previousElementSibling) {
+        // and if the previous sibling is a container
+        if (! isElementVoid(selectedElement.previousElementSibling)) {
+            // save the current action state
+            const previousState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+
+            // move the selected element to the bottom of the container
+            selectedElement.previousElementSibling.appendChild(selectedElement);
+
+            // push to the action history
+            const upcomingState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+            rememberAction('element:move', previousState, upcomingState);
+
+            // refresh the hover element
+            refreshElementHover();
+
+            // refresh the highlight element
+            refreshElementHighlight();
+
+            // scroll the window to the selected element
+            scrollToElement(selectedElement);
+
+            // send the document tree to the parent window
+            sendDocumentTree();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+
+            return;
+        }
+
+        // save the current action state
+        const previousState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+
+        // move the selected element up the tree
+        selectedElement.parentElement.insertBefore(selectedElement, selectedElement.previousElementSibling);
+
+        // push to the action history
+        const upcomingState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+        rememberAction('element:move', previousState, upcomingState);
+
+        // refresh the hover element
+        refreshElementHover();
+
+        // refresh the highlight element
+        refreshElementHighlight();
+
+        // scroll the window to the selected element
+        scrollToElement(selectedElement);
+
+        // send the document tree to the parent window
+        sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
+
+        return;
+    }
+
+    // If the parent element is the body
+    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
+        return; // do nothing
+    }
+
+    // If the parent element is inside a container
+    if (selectedElement.parentElement.parentElement) {
+        // save the current action state
+        const previousState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+
+        // move the selected element up the tree
+        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement);
+
+        // push to the action history
+        const upcomingState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+        rememberAction('element:move', previousState, upcomingState);
+
+        // refresh the hover element
+        refreshElementHover();
+
+        // refresh the highlight element
+        refreshElementHighlight();
+
+        // send the document tree to the parent window
+        sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
+    }
+
+    // Scroll the window to the selected element
+    scrollToElement(selectedElement);
+}
+
+const moveElementToDownTree = () => {
+    // If the selected element has next sibling
+    // TODO: should we add support for insertion before text nodes?
+    if (selectedElement.nextElementSibling) {
+        // and if the next sibling is the helper/script element
+        if (
+            selectedElement.nextElementSibling.classList?.contains('uw-helper') ||
+            selectedElement.nextElementSibling.tagName?.toLowerCase() === 'script'
+        ) {
+            return; // do nothing
+        }
+
+        // and if the next sibling is a container
+        if (! isElementVoid(selectedElement.nextElementSibling)) {
+            // save the current action state
+            const previousState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+
+            // move the selected element to the top of the container
+            selectedElement.nextElementSibling.insertBefore(selectedElement, selectedElement.nextElementSibling.firstChild);
+
+            // push to the action history
+            const upcomingState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+            rememberAction('element:move', previousState, upcomingState);
+
+            // refresh the hover element
+            refreshElementHover();
+
+            // refresh the highlight element
+            refreshElementHighlight();
+
+            // scroll the window to the selected element
+            scrollToElement(selectedElement);
+
+            // send the document tree to the parent window
+            sendDocumentTree();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+
+            return;
+        }
+
+        // save the current action state
+        const previousState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+
+        // move the selected element down the tree
+        selectedElement.parentElement.insertBefore(selectedElement.nextElementSibling, selectedElement);
+
+        // push to the action history
+        const upcomingState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+        rememberAction('element:move', previousState, upcomingState);
+
+        // refresh the hover element
+        refreshElementHover();
+
+        // refresh the highlight element
+        refreshElementHighlight();
+
+        // scroll the window to the selected element
+        scrollToElement(selectedElement);
+
+        // send the document tree to the parent window
+        sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
+
+        return;
+    }
+
+    // If the parent element is the body
+    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
+        return; // do nothing
+    }
+
+    // If the parent element is inside a container
+    if (selectedElement.parentElement.parentElement) {
+        // save the current action state
+        const previousState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+
+        // move the selected element down the tree
+        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextElementSibling);
+
+        // push to the action history
+        const upcomingState = {
+            elementId: selectedElement.dataset.uwId,
+            containerId: selectedElement.parentElement.dataset.uwId,
+            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+        };
+        rememberAction('element:move', previousState, upcomingState);
+
+        // refresh the hover element
+        refreshElementHover();
+
+        // refresh the highlight element
+        refreshElementHighlight();
+
+        // send the document tree to the parent window
+        sendDocumentTree();
+
+        // send the selected element to the parent window
+        sendSelectedElement();
+    }
+
+    // Scroll the window to the selected element
+    scrollToElement(selectedElement);
+}
+
 const styleElement = (element, propertyName, propertyValue = null) => {
     const stylesheet = document.styleSheets[0];
     const selector = `[data-uw-id="${element.dataset.uwId}"]`;
@@ -449,9 +999,26 @@ const styleElement = (element, propertyName, propertyValue = null) => {
         stylesheet.insertRule(selector + "{}", stylesheet.cssRules.length);
         rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
     }
-    propertyValue
-        ? rules.style.setProperty(propertyName, propertyValue, 'important')
-        : rules.style.removeProperty(propertyName);
+    if (propertyValue) {
+        // TODO: do not use !important
+        rules.style.setProperty(propertyName, propertyValue, 'important');
+    } else {
+        rules.style.removeProperty(propertyName);
+    }
+}
+
+const scrollToElement = (element) => {
+    // If it is not already visible on the viewport
+    if (
+        element.offsetTop < window.scrollY
+        || element.offsetTop + element.offsetHeight > window.scrollY + window.innerHeight
+    ) {
+        // scroll the window to the selected element
+        window.scrollTo({
+            top: element.offsetTop - window.innerHeight / 2,
+            behavior: 'smooth'
+        });
+    }
 }
 
 const makeElementDraggable = (element) => {
@@ -464,7 +1031,7 @@ const makeElementDraggable = (element) => {
 }
 
 const makeElementNotDraggable = (element) => {
-    selectedElement.draggable = false;
+    element.draggable = false;
 
     element.removeEventListener('dragstart', onElementDragStart);
     element.removeEventListener('dragend', onElementDragEnd);
@@ -493,6 +1060,11 @@ const makeElementEditable = (element) => {
     if (element === selectedElement) {
         // Add a class to highlight the editable element
         elementHighlight?.classList.add('uw-element-highlight-editable');
+
+        // Hide drag area points from the selected elements
+        document.querySelectorAll('.uw-element-drag-area')?.forEach(element => {
+            element.classList.add('uw-hidden');
+        });
     }
 }
 
@@ -523,6 +1095,11 @@ const makeElementNotEditable = (element) => {
     if (element === selectedElement) {
         // Remove the class to highlight the editable element
         elementHighlight?.classList.remove('uw-element-highlight-editable');
+
+        // Show back drag area points from the selected elements
+        document.querySelectorAll('.uw-element-drag-area')?.forEach(element => {
+            element.classList.remove('uw-hidden');
+        });
     }
 }
 
@@ -617,12 +1194,7 @@ const createElementHighlights = () => {
     deleteElementHighlights();
 
     // Create a new element to highlight the selection
-    const boundingRect = selectedElement.getBoundingClientRect();
     elementHighlight = document.createElement('div');
-    elementHighlight.style.top = `${boundingRect.top + window.scrollY}px`;
-    elementHighlight.style.left = `${boundingRect.left + window.scrollX}px`;
-    elementHighlight.style.width = `${boundingRect.width}px`;
-    elementHighlight.style.height = `${boundingRect.height}px`;
     elementHighlight.classList.add('uw-helper');
     elementHighlight.classList.add('uw-element-highlight');
 
@@ -631,44 +1203,39 @@ const createElementHighlights = () => {
         elementHighlight.classList.add('uw-element-container-highlight');
     }
 
-    // Add a title to the highlight element
-    elementHighlight.dataset.title = selectedElement.tagName.toLowerCase();
-    if (selectedElement.id) {
-        elementHighlight.dataset.title += ` #${selectedElement.id}`;
-    }
-
     // Append the highlight element to the body
     document.body.appendChild(elementHighlight);
 
+    // Create drag area points on each corner and center of the selected element
+    for (let index = 0; index < 8; index++) {
+        const dragAreaElement = document.createElement('div');
+        dragAreaElement.classList.add('uw-helper');
+        dragAreaElement.classList.add('uw-element-drag-area');
+        document.body.appendChild(dragAreaElement);
+    }
+
     // If the selected element has no parent
     if (! selectedElement.parentElement) {
-        return; // do nothing
+        // refresh the highlight elements
+        refreshElementHighlight();
+        return;
     }
 
     // Create a new element to highlight the parent of the selection
-    const selectedElementParent = selectedElement.parentElement;
-    const parentBoundingRect = selectedElementParent.getBoundingClientRect();
     elementParentHighlight = document.createElement('div');
-    elementParentHighlight.style.top = `${parentBoundingRect.top + window.scrollY}px`;
-    elementParentHighlight.style.left = `${parentBoundingRect.left + window.scrollX}px`;
-    elementParentHighlight.style.width = `${parentBoundingRect.width}px`;
-    elementParentHighlight.style.height = `${parentBoundingRect.height}px`;
     elementParentHighlight.classList.add('uw-helper');
     elementParentHighlight.classList.add('uw-element-parent-highlight');
 
-    // Add a title to the highlight element
-    elementParentHighlight.dataset.title = selectedElementParent.tagName.toLowerCase();
-    if (selectedElementParent.id) {
-        elementParentHighlight.dataset.title += ` #${selectedElementParent.id}`;
-    }
-
     // Append the highlight element to the body
     document.body.appendChild(elementParentHighlight);
+
+    // Refresh the highlight elements
+    refreshElementHighlight();
 }
 
 const deleteElementHighlights = () => {
     // Remove highlights from the selected elements
-    document.querySelectorAll('.uw-element-highlight, .uw-element-parent-highlight')?.forEach(element => {
+    document.querySelectorAll('.uw-element-highlight, .uw-element-parent-highlight, .uw-element-drag-area')?.forEach(element => {
         element.remove();
     });
     elementHighlight = null;
@@ -682,6 +1249,75 @@ const refreshElementHighlight = () => {
         elementHighlight.style.left = `${selectedElement.offsetLeft}px`;
         elementHighlight.style.width = `${selectedElement.offsetWidth}px`;
         elementHighlight.style.height = `${selectedElement.offsetHeight}px`;
+
+        // Add a title to the highlight element
+        elementHighlight.dataset.title = selectedElement.tagName.toLowerCase();
+        if (selectedElement.id) {
+            elementHighlight.dataset.title += ` #${selectedElement.id}`;
+        }
+
+        // Update the position of the drag area points
+        const boundingRect = selectedElement.getBoundingClientRect();
+        const dragAreaPoints = document.querySelectorAll('.uw-element-drag-area');
+        const dragAreaPointsPosition = [
+            { x: boundingRect.left, y: boundingRect.top - 1, title: 'top-left', },
+            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top - 1, title: 'top-center', },
+            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top - 1, title: 'top-right', },
+            { x: boundingRect.left, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-left', },
+            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-right', },
+            { x: boundingRect.left, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-left', },
+            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-center', },
+            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-right', },
+        ]
+        dragAreaPoints.forEach((dragAreaPoint, index) => {
+            dragAreaPoint.style.top = `${dragAreaPointsPosition[index].y + window.scrollY - 3}px`;
+            dragAreaPoint.style.left = `${dragAreaPointsPosition[index].x + window.scrollX - 3}px`;
+            dragAreaPoint.dataset.title = dragAreaPointsPosition[index].title;
+
+            // Set the cursor style for the drag area points
+            switch (dragAreaPointsPosition[index].title) {
+                case 'top-left':
+                case 'bottom-right':
+                    dragAreaPoint.style.cursor = 'nwse-resize';
+                    break;
+                case 'top-right':
+                case 'bottom-left':
+                    dragAreaPoint.style.cursor = 'nesw-resize';
+                    break;
+                case 'top-center':
+                case 'bottom-center':
+                    dragAreaPoint.style.cursor = 'ns-resize';
+                    break;
+                case 'middle-left':
+                case 'middle-right':
+                    dragAreaPoint.style.cursor = 'ew-resize';
+                    break;
+            }
+
+            // Hide some drag area points if the selected element is too small
+            if (selectedElement.offsetHeight < 10) {
+                if (['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(dragAreaPointsPosition[index].title)) {
+                    dragAreaPoint.style.display = 'none';
+                }
+            } else if (selectedElement.offsetHeight < 20) {
+                if (['middle-left', 'middle-right'].includes(dragAreaPointsPosition[index].title)) {
+                    dragAreaPoint.style.display = 'none';
+                }
+            }
+            if (selectedElement.offsetWidth < 10) {
+                if (['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(dragAreaPointsPosition[index].title)) {
+                    dragAreaPoint.style.display = 'none';
+                }
+            } else if (selectedElement.offsetWidth < 20) {
+                if (['top-center', 'bottom-center'].includes(dragAreaPointsPosition[index].title)) {
+                    dragAreaPoint.style.display = 'none';
+                }
+            }
+
+            if (isElementMoving) {
+                dragAreaPoint.classList.add('uw-hidden');
+            }
+        });
     }
 
     if (elementParentHighlight) {
@@ -691,6 +1327,13 @@ const refreshElementHighlight = () => {
         elementParentHighlight.style.left = `${boundingRect.left + window.scrollX}px`;
         elementParentHighlight.style.width = `${boundingRect.width}px`;
         elementParentHighlight.style.height = `${boundingRect.height}px`;
+
+        // Add a title to the highlight element
+        const selectedElementParent = selectedElement.parentElement;
+        elementParentHighlight.dataset.title = selectedElementParent.tagName.toLowerCase();
+        if (selectedElementParent.id) {
+            elementParentHighlight.dataset.title += ` #${selectedElementParent.id}`;
+        }
     }
 }
 
@@ -962,7 +1605,7 @@ const createElementBoxModel = () => {
     document.body.appendChild(alignmentTopElement);
     // and bottom alignment
     const alignmentBottomElement = document.createElement('div');
-    alignmentBottomElement.style.top = `${boundingRect.height + boundingRect.top + window.scrollY - 2}px`;
+    alignmentBottomElement.style.top = `${boundingRect.height + boundingRect.top + window.scrollY - 1}px`;
     alignmentBottomElement.style.left = '0';
     alignmentBottomElement.style.right = '0';
     alignmentBottomElement.style.border = 'revert-layer';
@@ -975,7 +1618,6 @@ const createElementBoxModel = () => {
     alignmentLeftElement.style.top = '0';
     alignmentLeftElement.style.bottom = '0';
     alignmentLeftElement.style.left = `${boundingRect.left + window.scrollX}px`;
-    alignmentLeftElement.style.width = '2px';
     alignmentLeftElement.style.border = 'revert-layer';
     alignmentLeftElement.classList.add('uw-helper');
     alignmentLeftElement.classList.add('uw-element-alignment');
@@ -985,8 +1627,7 @@ const createElementBoxModel = () => {
     const alignmentRightElement = document.createElement('div');
     alignmentRightElement.style.top = '0';
     alignmentRightElement.style.bottom = '0';
-    alignmentRightElement.style.left = `${boundingRect.left + boundingRect.width + window.scrollX - 2}px`;
-    alignmentRightElement.style.width = '2px';
+    alignmentRightElement.style.left = `${boundingRect.left + boundingRect.width + window.scrollX - 1}px`;
     alignmentRightElement.style.border = 'revert-layer';
     alignmentRightElement.classList.add('uw-helper');
     alignmentRightElement.classList.add('uw-element-alignment');
@@ -1135,7 +1776,7 @@ const refreshRulerLines = (x = null, y = null) => {
             verticalRulerLine = document.createElement('div');
             verticalRulerLine.style.top = '0';
             verticalRulerLine.style.bottom = '0';
-            verticalRulerLine.style.width = '2px';
+            verticalRulerLine.style.width = '1px';
             verticalRulerLine.style.height = '100%';
             verticalRulerLine.classList.add('uw-helper');
             verticalRulerLine.classList.add('uw-ruler-line');
@@ -1150,7 +1791,7 @@ const refreshRulerLines = (x = null, y = null) => {
             horizontalRulerLine = document.createElement('div');
             horizontalRulerLine.style.left = '0';
             horizontalRulerLine.style.right = '0';
-            horizontalRulerLine.style.height = '2px';
+            horizontalRulerLine.style.height = '1px';
             horizontalRulerLine.style.width = '100%';
             horizontalRulerLine.classList.add('uw-helper');
             horizontalRulerLine.classList.add('uw-ruler-line');
@@ -1165,176 +1806,6 @@ const hideRulerLines = () => {
     horizontalRulerLine?.classList.add('uw-hidden');
     verticalRulerLine?.classList.add('uw-hidden');
 };
-
-const moveElementToUpTree = () => {
-    // If the selected element has previous sibling
-    if (selectedElement.previousElementSibling) {
-        // and if the previous sibling is a container
-        if (! isElementVoid(selectedElement.previousElementSibling)) {
-            // move the selected element to the bottom of the container
-            selectedElement.previousElementSibling.appendChild(selectedElement);
-
-            // refresh the hover element
-            refreshElementHover();
-
-            // refresh the highlight element
-            refreshElementHighlight();
-
-            // scroll the window to the selected element
-            scrollToElement(selectedElement);
-
-            // send the document tree to the parent window
-            sendDocumentTree();
-
-            // send the selected element to the parent window
-            sendSelectedElement();
-
-            return;
-        }
-
-        // move the selected element up the tree
-        selectedElement.parentElement.insertBefore(selectedElement, selectedElement.previousElementSibling);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // scroll the window to the selected element
-        scrollToElement(selectedElement);
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-
-        return;
-    }
-
-    // If the parent element is the body
-    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
-        return; // do nothing
-    }
-
-    // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement) {
-        // move the selected element up the tree
-        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-    }
-
-    // Scroll the window to the selected element
-    scrollToElement(selectedElement);
-}
-
-const moveElementToDownTree = () => {
-    // If the selected element has next sibling
-    if (selectedElement.nextElementSibling) {
-        // and if the next sibling is the helper/script element
-        if (
-            selectedElement.nextElementSibling.classList.contains('uw-helper') ||
-            selectedElement.nextElementSibling.tagName === 'SCRIPT'
-        ) {
-            return; // do nothing
-        }
-
-        // and if the next sibling is a container
-        if (! isElementVoid(selectedElement.nextElementSibling)) {
-            // move the selected element to the top of the container
-            selectedElement.nextElementSibling.insertBefore(selectedElement, selectedElement.nextElementSibling.firstChild);
-
-            // refresh the hover element
-            refreshElementHover();
-
-            // refresh the highlight element
-            refreshElementHighlight();
-
-            // scroll the window to the selected element
-            scrollToElement(selectedElement);
-
-            // send the document tree to the parent window
-            sendDocumentTree();
-
-            // send the selected element to the parent window
-            sendSelectedElement();
-
-            return;
-        }
-
-        // move the selected element down the tree
-        selectedElement.parentElement.insertBefore(selectedElement.nextElementSibling, selectedElement);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // scroll the window to the selected element
-        scrollToElement(selectedElement);
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-
-        return;
-    }
-
-    // If the parent element is the body
-    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
-        return; // do nothing
-    }
-
-    // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement) {
-        // move the selected element down the tree
-        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextSibling);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-    }
-
-    // Scroll the window to the selected element
-    scrollToElement(selectedElement);
-}
-
-const scrollToElement = (element) => {
-    // If it is not already visible on the viewport
-    if (
-        element.offsetTop < window.scrollY
-        || element.offsetTop + element.offsetHeight > window.scrollY + window.innerHeight
-    ) {
-        // scroll the window to the selected element
-        window.scrollTo({
-            top: element.offsetTop - window.innerHeight / 2,
-            behavior: 'smooth'
-        });
-    }
-}
 
 const sendSelectedElement = () => {
     // If there is no selected element
@@ -1471,24 +1942,31 @@ const onElementDragStart = (event) => {
     const transparentCanvas = document.createElement('canvas');
     event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
     transparentCanvas.remove();
+
+    // Check if the selected element is under the mouse
+    const elements = document.elementsFromPoint(event.clientX, event.clientY).filter(element => ! element.classList.contains('uw-helper') && element.tagName.toLowerCase() !== 'html');
+    if (elements.includes(selectedElement)) {
+        return; // do nothing
+    }
+
+    isElementMoving = true;
+
+    // Otherwise, select the element under the mouse
+    selectElement(elementUnderMouse);
 }
 
 const onElementDragEnd = (event) => {
     event.preventDefault();
 
+    isElementMoving = false;
+
     // If the element drag action is not interrupted
     if (event.dataTransfer.dropEffect !== 'none') {
-        // find the element over the mouse
-        hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
-
-        // and if the element over the mouse is not the target element
-        if (hoveredElement !== event.target) {
-            // move the target element before the skeleton element
-            elementSkeleton.parentElement.insertBefore(event.target, elementSkeleton);
-
-            // send the document tree to the parent window
-            sendDocumentTree();
-        }
+        moveElement(event);
+    }
+    // Otherwise, set the interrupted flag
+    else {
+        isActionInterrupted = true;
     }
 
     // Show the target element
@@ -1513,6 +1991,7 @@ const onElementDrag = (event) => {
 
     // If the target element is not hidden
     if (! event.target.classList.contains('uw-hidden')) {
+        // TODO: add support for dragging an element positioned absolute or fixed
         // create a skeleton element to visualize the element being moved
         createElementSkeleton(event.target);
 
@@ -1561,7 +2040,7 @@ const onElementDrag = (event) => {
     refreshSkeletonParentHoverElement();
 }
 
-// Handler for mouse move events
+// Handler for mouse events on the document
 document.addEventListener('mousemove', (event) => {
     // If the document is not ready
     // FIXME: sometimes the document is not ready when the mouse move event is triggered
@@ -1584,9 +2063,31 @@ document.addEventListener('mousemove', (event) => {
         }
     }
 });
-
-// Handler for click mouse events
 document.addEventListener('mousedown', (event) => {
+    if (event.altKey) {
+        return; // do nothing
+    }
+    if (elementUnderMouse) {
+        makeElementNotDraggable(elementUnderMouse);
+    }
+    if (event.target.classList.contains('uw-helper')) {
+        return; // do nothing
+    }
+    elementUnderMouse = event.target;
+    makeElementDraggable(elementUnderMouse);
+});
+document.addEventListener('mouseup', (event) => {
+    // If the previous action was interrupted
+    if (isActionInterrupted) {
+        isActionInterrupted = false;
+        return;
+    }
+
+    // If the clicked element is a helper element
+    if (event.target.classList.contains('uw-helper')) {
+        return; // do nothing
+    }
+
     // If the current selection is editable
     if (
         selectedElement === event.target &&
@@ -1595,14 +2096,51 @@ document.addEventListener('mousedown', (event) => {
         return; // do nothing
     }
 
+    let element = event.target;
+
+    // If the alt key is being pressed
+    if (event.altKey) {
+        isElementSelectedWithAltKey = true;
+        // get the elements under the mouse
+        // TODO: sort the child elements so that the child elements appear before its parent element
+        const elements = document.elementsFromPoint(event.clientX, event.clientY).filter(element => ! element.classList.contains('uw-helper') && element.tagName.toLowerCase() !== 'html');
+        if (! elements.includes(selectedElement)) {
+            elementIndexUnderMouse = 0;
+        }
+        element = elements[elementIndexUnderMouse];
+        // if the selected element is the same as the element under the mouse
+        // and there are more than one elements
+        if (element === selectedElement && elements.length > 1) {
+            // get the next element under the mouse
+            if (event.shiftKey) {
+                elementIndexUnderMouse -= 1;
+                if (elementIndexUnderMouse < 0) {
+                    elementIndexUnderMouse = elements.length - 1;
+                }
+            } else {
+                elementIndexUnderMouse += 1;
+                if (elementIndexUnderMouse >= elements.length) {
+                    elementIndexUnderMouse = 0;
+                }
+            }
+            // select the next element under the mouse
+            element = elements[elementIndexUnderMouse];
+        }
+    }
+    // Otherwise, reset the alt key flag
+    else {
+        isElementSelectedWithAltKey = false;
+        elementIndexUnderMouse = 0;
+    }
+
     // If double click is detected
     if (event.detail == 2) {
         // and if the clicked element is the current selection
         // and is not html/body and is not a container
         if (
-            selectedElement === event.target &&
-            selectedElement.tagName.toLowerCase() !== 'html' &&
+            selectedElement === element &&
             selectedElement.tagName.toLowerCase() !== 'body' &&
+            selectedElement.tagName.toLowerCase() !== 'html' &&
             isElementTextable(selectedElement)
         ) {
             // make the clicked element editable
@@ -1612,7 +2150,7 @@ document.addEventListener('mousedown', (event) => {
     }
 
     // Select the clicked element
-    selectElement(event.target);
+    selectElement(element);
 });
 
 // Handler for mouse enter events
@@ -1998,11 +2536,28 @@ window.addEventListener('message', event => {
             // Check if the CSS property value is valid
             if (isStyleValid(property, value)) {
                 const checked = event.data.payload.checked === 'true';
-
                 const properties = element.dataset.uwProperties ? JSON.parse(element.dataset.uwProperties) : {};
+
+                // Save the current action state
+                const previousState = {
+                    elementId: element.dataset.uwId,
+                    propertyName: property,
+                    propertyValue: properties[property]?.value,
+                    propertyList: element.dataset.uwProperties,
+                };
+
                 properties[property] = { value, checked };
                 element.dataset.uwProperties = JSON.stringify(properties);
                 styleElement(element, property, checked ? value : null);
+
+                // Push to the action history
+                const upcomingState = {
+                    elementId: element.dataset.uwId,
+                    propertyName: property,
+                    propertyValue: value,
+                    propertyList: element.dataset.uwProperties,
+                };
+                rememberAction('element:style', previousState, upcomingState);
 
                 // refresh the element highlight
                 refreshElementHighlight();
@@ -2093,6 +2648,16 @@ window.addEventListener('message', event => {
 
         // Update the document ready status
         isDocumentReady = true;
+    }
+
+    if (event.data.type === 'document:undo') {
+        // Undo the last action
+        undoAction();
+    }
+
+    if (event.data.type === 'document:redo') {
+        // Redo the last action
+        redoAction();
     }
 
     if (event.data.type === 'document:show-ruler-lines') {

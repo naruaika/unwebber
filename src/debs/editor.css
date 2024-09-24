@@ -66,12 +66,12 @@ body {
     .uw-element-parent-hover {
         position: absolute;
         box-sizing: border-box;
-        border: 2px solid var(--uw-color-blue);
+        border: 1px solid var(--uw-color-blue);
         pointer-events: none;
     }
     .uw-element-highlight {
         &.uw-element-highlight-editable {
-            border: 2px solid var(--uw-color-orange) !important;
+            border: 1px solid var(--uw-color-orange) !important;
             cursor: initial;
 
             &::before {
@@ -80,7 +80,7 @@ body {
         }
     }
     .uw-element-hover {
-        border: 2px solid var(--uw-color-light-blue);
+        border: 1px solid var(--uw-color-light-blue);
         z-index: 10000;
 
         &::before {
@@ -88,8 +88,8 @@ body {
 
             position: absolute;
             box-sizing: border-box;
-            top: calc(-12px - 4px);
-            left: -2px;
+            top: calc(-11px - 4px);
+            left: -1px;
             width: fit-content;
             padding: 0 4px;
             z-index: 1;
@@ -109,9 +109,24 @@ body {
             pointer-events: none;
         }
     }
+    .uw-element-drag-area {
+        position: absolute;
+        box-sizing: border-box;
+        width: 8px;
+        height: 8px;
+        box-sizing: border-box;
+        background-color: var(--uw-color-base);
+        border: 1px solid var(--uw-color-blue);
+        border-radius: 50%;
+        z-index: 10001;
+
+        &:hover {
+            background-color: var(--uw-color-blue);
+        }
+    }
     .uw-element-parent-highlight,
     .uw-element-parent-hover {
-        border: 2px dashed var(--uw-color-blue);
+        border: 1px dashed var(--uw-color-blue);
     }
     .uw-element-skeleton {
         pointer-events: all;
@@ -124,20 +139,20 @@ body {
         opacity: 1;
     }
     .uw-element-alignment-top {
-        height: 2px;
-        border-top: 2px solid var(--uw-color-purple);
+        height: 1px;
+        border-top: 1px solid var(--uw-color-purple);
     }
     .uw-element-alignment-bottom {
-        height: 2px;
-        border-bottom: 2px solid var(--uw-color-purple);
+        height: 1px;
+        border-bottom: 1px solid var(--uw-color-purple);
     }
     .uw-element-alignment-left {
-        width: 2px;
-        border-left: 2px solid var(--uw-color-purple);
+        width: 1px;
+        border-left: 1px solid var(--uw-color-purple);
     }
     .uw-element-alignment-right {
-        width: 2px;
-        border-right: 2px solid var(--uw-color-purple);
+        width: 1px;
+        border-right: 1px solid var(--uw-color-purple);
     }
 
     .uw-element-paddings,
@@ -159,12 +174,12 @@ body {
     .uw-element-layout-identifier {
         position: absolute;
         box-sizing: border-box;
-        border: 2px solid var(--uw-color-purple);
+        border: 1px solid var(--uw-color-purple);
 
         &::after {
             position: absolute;
-            top: -2px;
-            left: -2px;
+            top: -1px;
+            left: -1px;
             content: attr(data-title);
             padding: 5px;
             font-size: 12px;

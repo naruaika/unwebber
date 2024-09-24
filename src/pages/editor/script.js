@@ -475,6 +475,7 @@ const refreshAttributesPanel = () => {
                 attributeContainer.appendChild(inputBox);
             }
 
+            // TODO: implement attribute change apply function
             // TODO: add support for custom attribute option indicated by the "etc" key
 
             listContainer.appendChild(attributeContainer);
@@ -620,7 +621,7 @@ const refreshPropertiesPanel = () => {
             inputBox.value = cachedProperty?.value || propertySpecification.initialValue;
             inputBox.placeholder = propertySpecification.initialValue || computedValue;
             inputBox.addEventListener('keydown', event => {
-                if (event.key === 'Enter') {
+                if (event.key === 'Enter' || event.key === 'Tab') {
                     // Send the property value to the main canvas
                     const checkBox = event.target.parentElement.querySelector('.field-checkbox');
                     mainCanvas.contentWindow.postMessage({
@@ -632,6 +633,12 @@ const refreshPropertiesPanel = () => {
                             checked: checkBox.checked ? 'true' : 'false',
                         },
                     }, '*');
+                    return;
+                }
+                if (event.key === 'Escape') {
+                    // Restore the property value
+                    event.target.value = cachedProperty?.value || propertySpecification.initialValue;
+                    return;
                 }
             });
             propertyContainer.appendChild(inputBox);
@@ -1048,6 +1055,9 @@ document.querySelector('.main-canvas__overlay').addEventListener('drop', (event)
             },
         },
     }, '*');
+
+    // Give the focus back to the main canvas
+    mainCanvas.focus();
 });
 document.addEventListener('dragover', (event) => event.preventDefault());
 document.addEventListener('dragenter', (event) => event.preventDefault());
@@ -1295,6 +1305,38 @@ window.addEventListener('keydown', (event) => {
         if (event.target.classList.contains('field-value')) {
             // Hide the popover element
             event.target.parentElement?.querySelector('.field-options')?.classList.add('hidden');
+        }
+        return;
+    }
+
+    if (event.ctrlKey && event.key === 'z') {
+        // Send the undo request to the main canvas if the focus is within the outline panel
+        if (
+            document.activeElement?.tagName.toLowerCase() === 'body' ||
+            document.activeElement.closest('#outline-panel')
+        ) {
+            mainCanvas.contentWindow.postMessage({
+                type: 'document:undo',
+                payload: {},
+            }, '*');
+        } else {
+            // TODO: Implement the undo feature for the other panels
+        }
+        return;
+    }
+
+    if (event.ctrlKey && event.key === 'y') {
+        // Send the redo request to the main canvas if the focus is within the outline panel
+        if (
+            document.activeElement?.tagName.toLowerCase() === 'body' ||
+            document.activeElement.closest('#outline-panel')
+        ) {
+                mainCanvas.contentWindow.postMessage({
+                type: 'document:redo',
+                payload: {},
+            }, '*');
+        } else {
+            // TODO: Implement the undo feature for the other panels
         }
         return;
     }

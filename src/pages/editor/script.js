@@ -204,7 +204,7 @@ const refreshOutlinePanel = (tree) => {
             const labelSpan = document.createElement('span');
             labelSpan.innerHTML = `<span class="element-label">${node.label || node.tagName.toLowerCase()}</span>`;
             labelSpan.innerHTML += ` <span class="element-tagname">${node.tagName.toLowerCase()}</span>`;
-            labelSpan.innerHTML += ` <span class="element-id">${node.elementId ? '#' + node.elementId : '@' + node.id}</span>`;
+            labelSpan.innerHTML += ` <span class="element-id">${node.elementId ? '#' + node.elementId : node.id ? '@' + node.id : ''}</span>`;
             button.appendChild(labelSpan);
 
             // Add the hover and selected classes

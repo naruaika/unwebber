@@ -85,7 +85,7 @@ const isElementVoid = (element) => {
 
     // Check if the element is a text node
     if (element.nodeType === Node.TEXT_NODE) {
-        return false;
+        return true;
     }
 
     const tagName = element.tagName.toLowerCase();
@@ -745,10 +745,34 @@ const moveElement = (event) => {
 
 const moveElementToUpTree = () => {
     // If the selected element has previous sibling
-    // TODO: should we add support for insertion before text nodes?
-    if (selectedElement.previousElementSibling) {
+    let previousSibling = selectedElement.previousSibling;
+
+    // If the previous sibling is an empty text node
+    if (
+        previousSibling &&
+        previousSibling.nodeType === Node.TEXT_NODE &&
+        previousSibling.textContent.trim() === ''
+    ) {
+        // find the closest previous sibling
+        while (
+            previousSibling &&
+            previousSibling.nodeType === Node.TEXT_NODE &&
+            previousSibling.textContent.trim() === '' &&
+            previousSibling.previousSibling
+        ) {
+            previousSibling = previousSibling.previousSibling;
+        }
+        if (
+            previousSibling.nodeType === Node.TEXT_NODE &&
+            previousSibling.textContent.trim() === ''
+        ) {
+            previousSibling = null;
+        }
+    }
+
+    if (previousSibling) {
         // and if the previous sibling is a container
-        if (! isElementVoid(selectedElement.previousElementSibling)) {
+        if (! isElementVoid(previousSibling)) {
             // save the current action state
             const previousState = {
                 elementId: selectedElement.dataset.uwId,
@@ -757,7 +781,7 @@ const moveElementToUpTree = () => {
             };
 
             // move the selected element to the bottom of the container
-            selectedElement.previousElementSibling.appendChild(selectedElement);
+            previousSibling.appendChild(selectedElement);
 
             // push to the action history
             const upcomingState = {
@@ -793,7 +817,7 @@ const moveElementToUpTree = () => {
         };
 
         // move the selected element up the tree
-        selectedElement.parentElement.insertBefore(selectedElement, selectedElement.previousElementSibling);
+        selectedElement.parentElement.insertBefore(selectedElement, previousSibling);
 
         // push to the action history
         const upcomingState = {
@@ -865,18 +889,41 @@ const moveElementToUpTree = () => {
 
 const moveElementToDownTree = () => {
     // If the selected element has next sibling
-    // TODO: should we add support for insertion before text nodes?
-    if (selectedElement.nextElementSibling) {
+    let nextSibling = selectedElement.nextSibling;
+
+    // If the previous sibling is an empty text node
+    if (
+        nextSibling &&
+        nextSibling.nodeType === Node.TEXT_NODE &&
+        nextSibling.textContent.trim() === ''
+    ) {
+        // find the closest previous sibling
+        while (
+            nextSibling &&
+            nextSibling.nodeType === Node.TEXT_NODE &&
+            nextSibling.textContent.trim() === '' &&
+            nextSibling.nextSibling
+        ) {
+            nextSibling = nextSibling.nextSibling;
+        }
+        if (
+            nextSibling.nodeType === Node.TEXT_NODE &&
+            nextSibling.textContent.trim() === ''
+        ) {
+            nextSibling = null;
+        }
+    }
+    if (nextSibling) {
         // and if the next sibling is the helper/script element
         if (
-            selectedElement.nextElementSibling.classList?.contains('uw-helper') ||
-            selectedElement.nextElementSibling.tagName?.toLowerCase() === 'script'
+            nextSibling.classList?.contains('uw-helper') ||
+            nextSibling.tagName?.toLowerCase() === 'script'
         ) {
             return; // do nothing
         }
 
         // and if the next sibling is a container
-        if (! isElementVoid(selectedElement.nextElementSibling)) {
+        if (! isElementVoid(nextSibling)) {
             // save the current action state
             const previousState = {
                 elementId: selectedElement.dataset.uwId,
@@ -885,7 +932,7 @@ const moveElementToDownTree = () => {
             };
 
             // move the selected element to the top of the container
-            selectedElement.nextElementSibling.insertBefore(selectedElement, selectedElement.nextElementSibling.firstChild);
+            nextSibling.insertBefore(selectedElement, nextSibling.firstChild);
 
             // push to the action history
             const upcomingState = {
@@ -921,7 +968,7 @@ const moveElementToDownTree = () => {
         };
 
         // move the selected element down the tree
-        selectedElement.parentElement.insertBefore(selectedElement.nextElementSibling, selectedElement);
+        selectedElement.parentElement.insertBefore(nextSibling, selectedElement);
 
         // push to the action history
         const upcomingState = {
@@ -964,7 +1011,7 @@ const moveElementToDownTree = () => {
         };
 
         // move the selected element down the tree
-        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextElementSibling);
+        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextSibling);
 
         // push to the action history
         const upcomingState = {
@@ -1169,7 +1216,7 @@ const refreshElementHover = (element = null) => {
 
     // Add a title to the hover element
     elementHover.dataset.title = hoveredElement.tagName.toLowerCase();
-    elementHover.dataset.title += ` ${hoveredElement.id ? '#' + hoveredElement.id : '@' + hoveredElement.dataset.uwId}`;
+    elementHover.dataset.title += ` ${hoveredElement.id ? '#' + hoveredElement.id : hoveredElement.dataset.uwId ? '@' + hoveredElement.dataset.uwId : ''}`;
 
     // Send the hovered element to the parent window
     sendHoveredElement(hoveredElement);

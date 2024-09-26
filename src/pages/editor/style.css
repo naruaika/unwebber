@@ -57,6 +57,9 @@
             box-sizing: border-box;
             padding: 3px 6px;
 
+            display: flex;
+            align-items: center;
+
             background: var(--color-primary);
             border: var(--border-size) solid var(--color-gray);
             border-radius: 4px;
@@ -223,6 +226,7 @@
 
         &.expanded {
             display: flex;
+            flex-shrink: 0;
         }
 
         > span {

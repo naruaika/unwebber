@@ -31,6 +31,10 @@ var verticalRulerLine = null;
 
 var mousePosition = { x: 0, y: 0, offsetX: 0, offsetY: 0 };
 
+const camelToKebab = (camel) => {
+    return camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
 const generateUniqueId = (type = 'element') => {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -96,12 +100,6 @@ const isElementVoid = (element) => {
     }
 
     return false;
-}
-
-const isStyleValid = (property, value) => {
-    const dummyElement = document.createElement('div');
-    dummyElement.style[property] = value;
-    return dummyElement.style[property] !== '';
 }
 
 const enableWhitespaceInsertionOnButton = (event) => {
@@ -1038,7 +1036,16 @@ const moveElementToDownTree = () => {
     scrollToElement(selectedElement);
 }
 
+const attributeElement = (element, attributeName, attributeValue = null) => {
+    if (attributeValue) {
+        element.setAttribute(attributeName, attributeValue);
+    } else {
+        element.removeAttribute(attributeName);
+    }
+}
+
 const styleElement = (element, propertyName, propertyValue = null) => {
+    // FIXME: what if the document has no or more than one stylesheet?
     const stylesheet = document.styleSheets[0];
     const selector = `[data-uw-id="${element.dataset.uwId}"]`;
     let rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
@@ -2124,6 +2131,12 @@ document.addEventListener('mousedown', (event) => {
     makeElementDraggable(elementUnderMouse);
 });
 document.addEventListener('mouseup', (event) => {
+    // If the event target of the mouseup event is not the same
+    // as the event target of the mousedown event
+    if (elementUnderMouse !== event.target) {
+        return; // do nothing
+    }
+
     // If the previous action was interrupted
     if (isActionInterrupted) {
         isActionInterrupted = false;
@@ -2571,6 +2584,50 @@ window.addEventListener('message', event => {
         hideElementHover();
     }
 
+    if (event.data.type === 'element:attribute') {
+        // Find the element by id
+        const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
+
+        // If the element is found
+        if (element) {
+            const attribute = event.data.payload.attribute;
+            const value = event.data.payload.value;
+
+            const checked = event.data.payload.checked === 'true';
+            const attributes = element.dataset.uwAttributes ? JSON.parse(element.dataset.uwAttributes) : {};
+
+            // Save the current action state
+            const previousState = {
+                elementId: element.dataset.uwId,
+                attributeName: attribute,
+                attributeValue: attributes[attribute]?.value,
+                attributeList: element.dataset.uwAttributes,
+            };
+
+            attributes[attribute] = { value, checked };
+            element.dataset.uwAttributes = JSON.stringify(attributes);
+            attributeElement(element, attribute, checked ? value : null);
+
+            // Push to the action history
+            const upcomingState = {
+                elementId: element.dataset.uwId,
+                attributeName: attribute,
+                attributeValue: value,
+                attributeList: element.dataset.uwAttributes,
+            };
+            rememberAction('element:attribute', previousState, upcomingState);
+
+            // refresh the element highlight
+            refreshElementHighlight();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+
+            // send the document tree to the parent window
+            sendDocumentTree();
+        }
+    }
+
     if (event.data.type === 'element:style') {
         // Find the element by id
         const element = document.querySelector(`[data-uw-id="${event.data.payload.id}"]`);
@@ -2580,41 +2637,49 @@ window.addEventListener('message', event => {
             const property = event.data.payload.property;
             const value = event.data.payload.value;
 
-            // Check if the CSS property value is valid
-            if (isStyleValid(property, value)) {
-                const checked = event.data.payload.checked === 'true';
-                const properties = element.dataset.uwProperties ? JSON.parse(element.dataset.uwProperties) : {};
+            const isPropertyValid = ((property, value) => {
+                const dummyElement = document.createElement('div');
+                dummyElement.style[property] = value;
+                return dummyElement.style[property] !== '';
+            })(property, value);
 
-                // Save the current action state
-                const previousState = {
-                    elementId: element.dataset.uwId,
-                    propertyName: property,
-                    propertyValue: properties[property]?.value,
-                    propertyList: element.dataset.uwProperties,
-                };
+            const checked = event.data.payload.checked === 'true';
+            const properties = element.dataset.uwProperties ? JSON.parse(element.dataset.uwProperties) : {};
 
-                properties[property] = { value, checked };
-                element.dataset.uwProperties = JSON.stringify(properties);
+            // Save the current action state
+            const previousState = {
+                elementId: element.dataset.uwId,
+                propertyName: property,
+                propertyValue: properties[property]?.value,
+                propertyList: element.dataset.uwProperties,
+            };
+
+            properties[property] = { value, checked };
+            element.dataset.uwProperties = JSON.stringify(properties);
+            if (isPropertyValid) {
+                if (value === '[empty]') {
+                    value = '';
+                }
                 styleElement(element, property, checked ? value : null);
-
-                // Push to the action history
-                const upcomingState = {
-                    elementId: element.dataset.uwId,
-                    propertyName: property,
-                    propertyValue: value,
-                    propertyList: element.dataset.uwProperties,
-                };
-                rememberAction('element:style', previousState, upcomingState);
-
-                // refresh the element highlight
-                refreshElementHighlight();
-
-                // send the selected element to the parent window
-                sendSelectedElement();
-
-                // send the document tree to the parent window
-                sendDocumentTree();
             }
+
+            // Push to the action history
+            const upcomingState = {
+                elementId: element.dataset.uwId,
+                propertyName: property,
+                propertyValue: value,
+                propertyList: element.dataset.uwProperties,
+            };
+            rememberAction('element:style', previousState, upcomingState);
+
+            // refresh the element highlight
+            refreshElementHighlight();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+
+            // send the document tree to the parent window
+            sendDocumentTree();
         }
     }
 
@@ -2684,10 +2749,99 @@ window.addEventListener('message', event => {
         appConfig = event.data.payload.appConfig;
         apiSchema = event.data.payload.apiSchema;
 
-        // Set unique ID for all elements inside the document' body
+        const getAppliedStyles = (element) => {
+            var cssStyleRules = Array.from(document.styleSheets)
+                .slice(0, -1)
+                .flatMap(styleSheet => Array.from(styleSheet.cssRules))
+                .filter(cssRule => element.matches(cssRule.selectorText));
+            var rules = [];
+            if (cssStyleRules.length) {
+                for (i = 0; i < cssStyleRules.length; i++) {
+                    const cssStyleRule = cssStyleRules[i];
+                    rules.push({
+                        order: i,
+                        selector: cssStyleRule.selectorText,
+                        stylesheet: cssStyleRule.parentStyleSheet.href,
+                        styles: Object.entries(cssStyleRule.style)
+                            .filter(([key, value]) => value !== '' && isNaN(key))
+                            .reduce((style, [key, value]) => {
+                                style[camelToKebab(key)] = value;
+                                return style;
+                            }, {}),
+                    })
+                }
+            }
+            if (element.getAttribute('style')) {
+                rules.push({
+                    order: cssStyleRules.length,
+                    selector: 'inline',
+                    stylesheet: 'inline',
+                    styles: element.getAttribute('style')
+                        .trim()
+                        .replace(/\n/g, '')
+                        .replace(/\s+/g, ' ')
+                        .split(';')
+                        .filter(rule => rule.trim() !== '')
+                        .reduce((style, rule) => {
+                            const [property, value] = rule.split(':').map(s => s.trim());
+                            style[camelToKebab(property)] = value;
+                            return style;
+                        }, {}),
+                });
+            }
+            return rules;
+        }
+
         document.querySelectorAll('*').forEach(element => {
+            if (['html', 'head', 'meta', 'title', 'link', 'script'].includes(element.tagName.toLowerCase())) {
+                return; // skip the element
+            }
+
+            // Populate the dataset attribute helper
+            const attributes = {};
+            Array.from(element.attributes).forEach(attribute => {
+                if (attribute.name === 'style') {
+                    return; // skip the style attribute
+                }
+                attributes[attribute.name] = {
+                    value: attribute.value.trim().replace(/\s+/g, ' '),
+                    checked: true,
+                };
+            });
+            element.dataset.uwAttributes = JSON.stringify(attributes);
+
+            // Set unique ID
             element.dataset.uwId = generateUniqueId(element.tagName.toLocaleLowerCase());
             element.dataset.uwLabel = apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name || 'Element';
+
+            // Disable click events on hyperlink
+            if (element.tagName.toLowerCase() === 'a') {
+                element.setAttribute('onclick', 'return false;');
+            }
+
+            // Populate the dataset property helper
+            const rules = getAppliedStyles(element);
+            const properties = {};
+            rules.forEach(rule => {
+                Object.entries(rule.styles).forEach(([property, value]) => {
+                    properties[property] = {
+                        value: value,
+                        checked: true,
+                    };
+                });
+            });
+            element.dataset.uwProperties = JSON.stringify(properties);
+
+            // Migrate inline styles to stylesheet
+            // TODO: add support for HTML marketing emails
+            if (element.hasAttribute('style')) {
+                element.removeAttribute('style');
+            }
+            rules.filter(rule => rule.selector === 'inline').forEach(rule => {
+                Object.entries(rule.styles).forEach(([property, value]) => {
+                    styleElement(element, property, value);
+                });
+            });
         });
 
         // Send the document tree to the parent window
@@ -2737,11 +2891,6 @@ window.addEventListener('message', event => {
 
 //
 document.addEventListener('DOMContentLoaded', () => {
-    // Disable click events on hyperlinks
-    document.querySelectorAll('a').forEach(element => {
-        element.setAttribute('onclick', 'return false;');
-    });
-
     // Send the ready message to the parent window
     window.parent.postMessage({
         type: 'window:ready',

@@ -13,6 +13,10 @@ var isViewportResizing = false;
 
 const mainCanvas = document.getElementById('main-canvas');
 
+const kebabToCamel = (kebab) => {
+    return kebab.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+}
+
 const hexToRgba = (hex) => {
     hex = hex.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -20,10 +24,6 @@ const hexToRgba = (hex) => {
     const b = parseInt(hex.substring(4, 6), 16);
     const a = parseInt(hex.substring(6, 8) || 'ff', 16) / 255;
     return `rgba(${r}, ${g}, ${b}, ${a})`;
-}
-
-const kebabToCamel = (kebab) => {
-    return kebab.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 }
 
 const unsetCanvasSizes = () => {
@@ -334,20 +334,41 @@ const refreshAttributesPanel = () => {
                 attribute.belongsTo.includes(selectedElement.tagName.toLowerCase())
             ) &&
             ! [
-                // 'class',
-                // 'slot',
-                // 'style',
+                // TODO: implement special treatment for these attributes
+                // 'draggable',
+                // 'contenteditable',
+                // 'inert',
+                // 'autofocus',
+                // 'enterkeyhint',
+                'style',
             ].includes(attribute.name)
         )
         .forEach(attribute => {
             const attributeContainer = document.createElement('fieldset');
             attributeContainer.classList.add('field-container');
 
+            const cachedAttribute = JSON.parse(selectedElement.dataset.uwAttributes || '{}')[attribute.name];
+
             // Create the checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
+            checkbox.dataset.key = attribute.name;
+            checkbox.checked = cachedAttribute?.checked || false;
             checkbox.id = `attribute-${attribute.name}`;
             checkbox.classList.add('field-checkbox');
+            checkbox.addEventListener('change', event => {
+                // send the property value to the main canvas
+                const inputBox = event.target.parentElement.querySelector('.field-value');
+                mainCanvas.contentWindow.postMessage({
+                    type: 'element:attribute',
+                    payload: {
+                        id: selectedElement.id,
+                        attribute: event.target.dataset.key,
+                        value: attribute.type === 'boolean' ? true : inputBox.value || inputBox.placeholder,
+                        checked: event.target.checked ? 'true' : 'false',
+                    },
+                }, '*');
+            });
             attributeContainer.appendChild(checkbox);
 
             // Create the label
@@ -358,31 +379,41 @@ const refreshAttributesPanel = () => {
             label.classList.add('field-name');
             attributeContainer.appendChild(label);
 
-            // If the attribute type is char
-            if (attribute.type === 'char') {
-                // create the input box
-                const inputBox = document.createElement('input');
-                inputBox.type = 'text';
-                inputBox.maxLength = 1;
-                inputBox.classList.add('field-value');
-                attributeContainer.appendChild(inputBox);
+            //
+            const onKeyDown = event => {
+                if (event.key === 'Enter' || event.key === 'Tab') {
+                    // Send the attribute value to the main canvas
+                    const checkBox = event.target.parentElement.querySelector('.field-checkbox');
+                    mainCanvas.contentWindow.postMessage({
+                        type: 'element:attribute',
+                        payload: {
+                            id: selectedElement.id,
+                            attribute: event.target.dataset.key,
+                            value: event.target.value,
+                            checked: checkBox.checked ? 'true' : 'false',
+                        },
+                    }, '*');
+                    return;
+                }
+                if (event.key === 'Escape') {
+                    // Restore the attribute value
+                    event.target.value = cachedAttribute?.value;
+                    return;
+                }
             }
 
-            // If the attribute type is string
-            if (attribute.type === 'string') {
+            // If the attribute type is char, string, or number
+            if (['char', 'string', 'number'].includes(attribute.type)) {
                 // create the input box
                 const inputBox = document.createElement('input');
-                inputBox.type = 'text';
+                inputBox.type = attribute.type === 'number' ? 'number' : 'text';
+                inputBox.value = cachedAttribute?.value || '';
+                inputBox.dataset.key = attribute.name;
+                if (attribute.type === 'char') {
+                    inputBox.maxLength = 1;
+                }
                 inputBox.classList.add('field-value');
-                attributeContainer.appendChild(inputBox);
-            }
-
-            // If the attribute type is number
-            if (attribute.type === 'number') {
-                // create the input box
-                const inputBox = document.createElement('input');
-                inputBox.type = 'number';
-                inputBox.classList.add('field-value');
+                inputBox.addEventListener('keydown', onKeyDown);
                 attributeContainer.appendChild(inputBox);
             }
 
@@ -439,7 +470,10 @@ const refreshAttributesPanel = () => {
                 // create the input box
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
+                inputBox.value = cachedAttribute?.value || '';
+                inputBox.dataset.key = attribute.name;
                 inputBox.classList.add('field-value');
+                inputBox.addEventListener('keydown', onKeyDown);
                 attributeContainer.appendChild(inputBox);
 
                 // create the dropdown list
@@ -471,7 +505,10 @@ const refreshAttributesPanel = () => {
                 // FIXME: should be a dynamic list of key-value pairs
                 const inputBox = document.createElement('input');
                 inputBox.type = 'text';
+                inputBox.value = cachedAttribute?.value || '';
+                inputBox.dataset.key = attribute.name;
                 inputBox.classList.add('field-value');
+                inputBox.addEventListener('keydown', onKeyDown);
                 attributeContainer.appendChild(inputBox);
             }
 
@@ -514,8 +551,9 @@ const refreshPropertiesPanel = () => {
         {
             name: 'spacing',
             fields: [
-                'width', 'height', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding-top', 'padding-right',
-                'padding-bottom', 'padding-left', 'border-left-width', 'border-right-width', 'border-top-width', 'border-bottom-width',
+                'width', 'height', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding', 'padding-top',
+                'padding-right', 'padding-bottom', 'padding-left', 'border-width', 'border-left-width', 'border-right-width',
+                'border-top-width', 'border-bottom-width',
             ],
         },
         {
@@ -528,7 +566,7 @@ const refreshPropertiesPanel = () => {
             name: 'typography',
             fields: [
                 'font-family', 'font-size', 'font-style', 'font-weight', 'line-height', 'letter-spacing', 'text-align',
-                'text-indent', 'text-transform', 'color', 'text-decoration', 'text-shadow',
+                'text-indent', 'text-transform'
             ],
         }
     ];
@@ -618,8 +656,8 @@ const refreshPropertiesPanel = () => {
             inputBox.type = 'text';
             inputBox.dataset.key = fieldName;
             inputBox.classList.add('field-value');
-            inputBox.value = cachedProperty?.value || propertySpecification.initialValue;
-            inputBox.placeholder = propertySpecification.initialValue || computedValue;
+            inputBox.value = cachedProperty?.value || computedValue || propertySpecification.initialValue;
+            inputBox.placeholder = propertySpecification.initialValue;
             inputBox.addEventListener('keydown', event => {
                 if (event.key === 'Enter' || event.key === 'Tab') {
                     // Send the property value to the main canvas
@@ -629,7 +667,7 @@ const refreshPropertiesPanel = () => {
                         payload: {
                             id: selectedElement.id,
                             property: event.target.dataset.key,
-                            value: event.target.value || event.target.placeholder,
+                            value: event.target.value,
                             checked: checkBox.checked ? 'true' : 'false',
                         },
                     }, '*');

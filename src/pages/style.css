@@ -51,6 +51,10 @@ canvas {
     display: none !important;
 }
 
+.no-pointer-events {
+    pointer-events: none;
+}
+
 .scrollable {
     overflow: auto;
     scroll-behavior: smooth;
@@ -167,7 +171,8 @@ canvas {
             align-items: center;
             justify-content: center;
 
-            pointer-events: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .left-toolbar,
@@ -204,8 +209,6 @@ canvas {
         overflow-y: hidden;
 
         .main-panel {
-            padding: 10px;
-
             flex: 1;
 
             display: flex;
@@ -224,7 +227,7 @@ canvas {
                 align-items: start;
 
                 .main-canvas__titlebar {
-                    padding: 2px 6px;
+                    padding: 4px 6px;
                     margin-bottom: -1px;
 
                     display: flex;
@@ -235,7 +238,6 @@ canvas {
                     font-size: 11px;
                     line-height: 16px;
                     background-color: var(--color-primary);
-                    border: var(--default-border);
                     color: var(--color-base);
 
                     white-space: nowrap;
@@ -267,10 +269,9 @@ canvas {
                     flex-direction: column;
 
                     background-color: var(--color-primary);
-                    border: var(--default-border);
 
                     overflow: hidden;
-                    resize: both;
+                    /* resize: both; */
 
                     .top-ruler {
                         flex-shrink: 0;
@@ -441,8 +442,6 @@ canvas {
                 user-select: none;
 
                 &.expanded {
-                    flex: 1;
-
                     height: fit-content;
 
                     display: flex;
@@ -513,6 +512,10 @@ canvas {
         &.preview {
             background-color: var(--color-orange);
         }
+    }
+
+    .panel__search {
+        width: 100%;
     }
 
     input,

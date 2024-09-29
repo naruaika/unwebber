@@ -61,7 +61,8 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
     // Register IPC event handlers
-    ipcMain.handle('apis:load', apis.load);
+    ipcMain.handle('apis:schema', apis.schema);
+    ipcMain.handle('apis:template', apis.template);
     ipcMain.handle('config:load', config.load);
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);

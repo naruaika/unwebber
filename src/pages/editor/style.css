@@ -105,8 +105,8 @@
 
 #outline-panel {
     .content__container {
+        flex: 1;
         padding: 0;
-
         align-items: start;
 
         > ul > li {
@@ -317,50 +317,6 @@
 }
 
 #properties-panel {
-    #layout-section {
-        .section__container {
-            position: relative;
-
-            .simulator {
-                box-sizing: border-box;
-                overflow: auto;
-
-                width: 100%;
-                height: auto;
-                aspect-ratio: 4 / 3;
-
-                background-color: var(--color-secondary);
-                border: var(--border-size) solid var(--color-base);
-
-                &::-webkit-scrollbar {
-                    width: 8px;
-                    height: 8px;
-                }
-
-                .parent-element {
-                    flex: 1;
-                    box-sizing: border-box;
-                    padding: 5px;
-                    gap: 5px;
-
-                    .element {
-                        box-sizing: border-box;
-                        gap: 5px;
-                        border: var(--border-size) solid var(--color-blue);
-                        background: var(--color-light-gray);
-                    }
-
-                    * {
-                        box-sizing: border-box;
-                        padding: 5px;
-                        background: var(--color-gray);
-                        border: var(--border-size) dashed var(--color-base);
-                    }
-                }
-            }
-        }
-    }
-
     #spacing-section {
         .box-model {
             position: relative;
@@ -416,9 +372,10 @@
             }
 
             .input {
+                box-sizing: border-box;
                 align-self: center;
                 overflow: hidden;
-                max-width: 48px;
+                max-width: 32px;
                 white-space: normal;
                 word-break: break-all;
 
@@ -476,6 +433,50 @@
 
                 .input {
                     padding: 5px;
+                }
+            }
+        }
+    }
+
+    #layout-section {
+        .section__container {
+            position: relative;
+
+            .simulator {
+                box-sizing: border-box;
+                overflow: auto;
+
+                width: 100%;
+                height: auto;
+                aspect-ratio: 4 / 3;
+
+                background-color: var(--color-secondary);
+                border: var(--border-size) solid var(--color-base);
+
+                &::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+
+                .parent-element {
+                    flex: 1;
+                    box-sizing: border-box;
+                    padding: 5px;
+                    gap: 5px;
+
+                    .element {
+                        box-sizing: border-box;
+                        gap: 5px;
+                        border: var(--border-size) solid var(--color-blue);
+                        background: var(--color-light-gray);
+                    }
+
+                    * {
+                        box-sizing: border-box;
+                        padding: 5px;
+                        background: var(--color-gray);
+                        border: var(--border-size) dashed var(--color-base);
+                    }
                 }
             }
         }

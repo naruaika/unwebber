@@ -8,7 +8,8 @@ contextBridge.exposeInMainWorld('unwebber', {
     },
 
     apis: {
-        load: () => ipcRenderer.invoke('apis:load'),
+        schema: () => ipcRenderer.invoke('apis:schema'),
+        template: (tid, cname) => ipcRenderer.invoke('apis:template', tid, cname),
     },
 
     config: {

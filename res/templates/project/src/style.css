@@ -5,6 +5,10 @@ body {
     align-items: start;
 }
 
+figure {
+    margin: 0;
+}
+
 .sample-container {
     padding: 20px;
     display: flex;

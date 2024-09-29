@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const read = () => {
+const schema = () => {
     // Get API schema file path
     const filePath = path.join(__dirname, '../apis/index.json');
 
@@ -24,7 +24,27 @@ const read = () => {
     return apiSchema;
 };
 
-// Alias for read() function
-const load = () => read();
+const template = (_, templateId, className = 'element') => {
+    // Get API template file path
+    const filePath = path.join(__dirname, '../../res/templates', `${className}s`, `${templateId}.html`);
 
-module.exports = { read, load };
+    // If the file path doesn't exist, return an empty string
+    if (! fs.existsSync(filePath)) {
+        console.error(`Web API template file not found at ${filePath}`);
+        return '<div>[Empty]</div>';
+    }
+
+    let apiTemplate = '';
+
+    try {
+        // Read the API template file
+        apiTemplate = fs.readFileSync(filePath, 'utf8');
+        console.debug(`Web API template file loaded from ${filePath}`);
+    } catch (error) {
+        console.error(error);
+    }
+
+    return apiTemplate;
+}
+
+module.exports = { schema, template };

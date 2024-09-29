@@ -1,39 +1,41 @@
 var appConfig = {};
 var apiSchema = {};
 
+var isDocumentReady = false;
+
+// For action history feature
 var actionHistory = [];
 var actionHistoryIndex = -1;
 var isActionBeingWatched = false;
 var isActionInterrupted = false;
 
-var isDocumentReady = false;
-
+// For element selection feature
 var hoveredElement = null;
 var selectedElement = null;
-
+//
 var elementUnderMouse = null;
 var elementIndexUnderMouse = 0;
 var isElementSelectedWithAltKey = false;
 var isElementMoving = false;
 
+// For element modification feature
 var elementOnCopy = null;
 var elementOnCut = null;
 var elementSkeleton = null;
 var elementToInsert = null;
 
+// To visualize the element selection
 var elementHover = null;
 var elementParentHover = null;
 var elementHighlight = null;
 var elementParentHighlight = null;
-
+//
 var horizontalRulerLine = null;
 var verticalRulerLine = null;
 
 var mousePosition = { x: 0, y: 0, offsetX: 0, offsetY: 0 };
 
-const camelToKebab = (camel) => {
-    return camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-}
+const camelToKebab = (camel) => camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
 const generateUniqueId = (type = 'element') => {
     let result = '';
@@ -45,12 +47,50 @@ const generateUniqueId = (type = 'element') => {
     return `${type}-${result}`;
 }
 
-const debounce = (func, timeout = 1000 / 60 / 2) => {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => func.apply(this, args), timeout);
-    };
+const getAppliedStyleRules = (element) => {
+    var rules = [];
+
+    // Get CSS style rules from all stylesheets applied to the element
+    var cssStyleRules = Array.from(document.styleSheets)
+        .slice(0, -1)
+        .flatMap(styleSheet => Array.from(styleSheet.cssRules))
+        .filter(cssRule => element.matches(cssRule.selectorText));
+    for (i = 0; i < cssStyleRules.length; i++) {
+        const cssStyleRule = cssStyleRules[i];
+        rules.push({
+            order: i,
+            selector: cssStyleRule.selectorText,
+            stylesheet: cssStyleRule.parentStyleSheet.href,
+            styles: Object.entries(cssStyleRule.style)
+                .filter(([key, value]) => value !== '' && isNaN(key))
+                .reduce((style, [key, value]) => {
+                    style[camelToKebab(key)] = value;
+                    return style;
+                }, {}),
+        })
+    }
+
+    // Get the inline CSS style rules applied to the element
+    if (element.getAttribute('style')) {
+        rules.push({
+            order: cssStyleRules.length,
+            selector: 'inline',
+            stylesheet: 'inline',
+            styles: element.getAttribute('style')
+                .trim()
+                .replace(/\n/g, '')
+                .replace(/\s+/g, ' ')
+                .split(';')
+                .filter(rule => rule.trim() !== '')
+                .reduce((style, rule) => {
+                    const [property, value] = rule.split(':').map(s => s.trim());
+                    style[camelToKebab(property)] = value;
+                    return style;
+                }, {}),
+        });
+    }
+
+    return rules;
 }
 
 const isElementTextable = (element) => {
@@ -59,8 +99,8 @@ const isElementTextable = (element) => {
     }
 
     // Check if the element has no text node
-    if (! Array.from(element.childNodes).some(
-        child => child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== ''
+    if (! Array.from(element.childNodes).some(child =>
+        child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== ''
     )) {
         return false;
     }
@@ -102,7 +142,7 @@ const isElementVoid = (element) => {
     return false;
 }
 
-const enableWhitespaceInsertionOnButton = (event) => {
+const enableWhitespaceOnButton = (event) => {
     if (event.key === ' ') {
         event.preventDefault();
 
@@ -269,7 +309,13 @@ const undoAction = () => {
                 // Style the element with the previous property
                 const styledElementProperties = JSON.parse(actionState.previous.propertyList || '{}');
                 const styledElementPropertyChecked = styledElementProperties[actionState.previous.propertyName]?.checked;
-                styleElement(styledElement, actionState.previous.propertyName, styledElementPropertyChecked ? actionState.previous.propertyValue : false);
+                styleElement(
+                    styledElement,
+                    actionState.previous.propertyName,
+                    styledElementPropertyChecked
+                        ? actionState.previous.propertyValue
+                        : false,
+                );
                 styledElement.dataset.uwProperties = actionState.previous.propertyList || '{}';
 
                 // Refresh the hover element
@@ -408,7 +454,13 @@ const redoAction = () => {
                 // Style the element with the upcoming property
                 const styledElementProperties = JSON.parse(actionState.upcoming.propertyList || '{}');
                 const styledElementPropertyChecked = styledElementProperties[actionState.upcoming.propertyName]?.checked;
-                styleElement(styledElement, actionState.upcoming.propertyName, styledElementPropertyChecked ? actionState.upcoming.propertyValue : false);
+                styleElement(
+                    styledElement,
+                    actionState.upcoming.propertyName,
+                    styledElementPropertyChecked
+                        ? actionState.upcoming.propertyValue
+                        : false,
+                );
                 styledElement.dataset.uwProperties = actionState.upcoming.propertyList || '{}';
 
                 // Refresh the hover element
@@ -428,6 +480,67 @@ const redoAction = () => {
     }
 
     isActionBeingWatched = false;
+}
+
+const setupElement = (element) => {
+    // Generate a new ID for the copied element
+    element.dataset.uwId = generateUniqueId(
+        element.dataset.uwId?.split('-').slice(0, -1).join('-') ||
+        element.tagName.toLowerCase()
+    );
+    element.dataset.uwLabel =
+        element.dataset.uwLabel ||
+        apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name ||
+        'Element';
+
+    // Disable click events on hyperlink
+    if (element.tagName.toLowerCase() === 'a') {
+        makeElementNotClickable(element);
+    }
+
+    // Loop through the copied element children recursively
+    element.querySelectorAll('*').forEach(child => {
+        // generate a new ID
+        child.dataset.uwId = generateUniqueId(
+            child.dataset.uwId?.split('-').slice(0, -1).join('-') ||
+            child.tagName.toLowerCase()
+        );
+        child.dataset.uwLabel =
+            child.dataset.uwLabel ||
+            apiSchema.htmlElements.find(htmlElement => htmlElement.tag === child.tagName.toLowerCase())?.name ||
+            'Element';
+
+        // disable click events on hyperlink
+        if (child.tagName.toLowerCase() === 'a') {
+            makeElementNotClickable(child);
+        }
+    });
+
+    // Populate the dataset attribute helper
+    const attributes = {};
+    Array.from(element.attributes).forEach(attribute => {
+        if (attribute.name === 'style') {
+            return; // skip the style attribute
+        }
+        attributes[attribute.name] = {
+            value: attribute.value.trim().replace(/\s+/g, ' '),
+            checked: true,
+        };
+    });
+    element.dataset.uwAttributes = JSON.stringify(attributes);
+
+    // Populate the dataset property helper
+    const styleRules = getAppliedStyleRules(element);
+    const properties = {};
+    styleRules.forEach(rule => {
+        Object.entries(rule.styles).forEach(([property, value]) => {
+            properties[property] = {
+                value: value,
+                checked: true,
+            };
+        });
+    });
+    element.dataset.uwProperties = JSON.stringify(properties);
 }
 
 const selectElement = (element) => {
@@ -553,7 +666,7 @@ const pasteElement = () => {
         }
 
         // Loop through the copied element children recursively
-        elementToPaste.querySelectorAll('*[data-uw-id]').forEach(child => {
+        elementToPaste.querySelectorAll('*').forEach(child => {
             // generate a new id for the copied element
             child.dataset.uwId = generateUniqueId(child.dataset.uwId.split('-').slice(0, -1).join('-'));
             if (child.id) {
@@ -655,22 +768,8 @@ const insertElement = () => {
         return; // do nothing
     }
 
-    // Generate a new id for the copied element
-    elementToInsert.dataset.uwId = generateUniqueId(
-        elementToInsert.dataset.uwId
-            ? elementToInsert.id.split('-').slice(0, -1).join('-')
-            : elementToInsert.tagName.toLowerCase()
-    );
-
-    // Loop through the copied element children recursively
-    elementToInsert.querySelectorAll('*[id]').forEach(child => {
-        // generate a new id for the copied element
-        child.dataset.uwId = generateUniqueId(
-            child.dataset.uwId
-                ? child.id.split('-').slice(0, -1).join('-')
-                : child.tagName.toLowerCase()
-        );
-    });
+    // Setup the element to be compatible with the editor
+    setupElement(elementToInsert);
 
     // Save the current action state
     const previousState = {};
@@ -707,70 +806,117 @@ const insertElement = () => {
 }
 
 const moveElement = (event) => {
-    // Find the element over the mouse
-    hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+    try {
+        // Find the element over the mouse
+        hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
 
-    // If the element over the mouse is not the target element
-    if (hoveredElement !== selectedElement) {
-        // save the current action state
-        const previousState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
+        // If the element over the mouse is not the target element
+        if (hoveredElement !== selectedElement) {
+            // save the current action state
+            const previousState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
 
-        // move the target element before the skeleton element
-        elementSkeleton.parentElement.insertBefore(selectedElement, elementSkeleton);
+            // move the target element before the skeleton element
+            elementSkeleton.parentElement.insertBefore(selectedElement, elementSkeleton);
 
-        // push to the action history
-        const upcomingState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-        rememberAction('element:move', previousState, upcomingState);
+            // remove .uw-element-empty class from the parent element
+            selectedElement.parentElement.classList.remove('uw-element-empty');
 
-        // send the document tree to the parent window
-        sendDocumentTree();
+            // push to the action history
+            const upcomingState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+            rememberAction('element:move', previousState, upcomingState);
 
-        // wait for the element bounding rect to be updated
-        window.setTimeout(() => {
-            // then send the selected element to the parent window
-            sendSelectedElement();
-        }, 50);
+            // send the document tree to the parent window
+            sendDocumentTree();
+
+            // wait for the element bounding rect to be updated
+            window.setTimeout(() => {
+                // then send the selected element to the parent window
+                sendSelectedElement();
+            }, 50);
+        }
+    } catch (error) {
+        console.error(error);
     }
 }
 
 const moveElementToUpTree = () => {
-    // If the selected element has previous sibling
-    let previousSibling = selectedElement.previousSibling;
+    try {
+        // If the selected element has previous sibling
+        let previousSibling = selectedElement.previousSibling;
 
-    // If the previous sibling is an empty text node
-    if (
-        previousSibling &&
-        previousSibling.nodeType === Node.TEXT_NODE &&
-        previousSibling.textContent.trim() === ''
-    ) {
-        // find the closest previous sibling
-        while (
-            previousSibling &&
-            previousSibling.nodeType === Node.TEXT_NODE &&
-            previousSibling.textContent.trim() === '' &&
-            previousSibling.previousSibling
-        ) {
-            previousSibling = previousSibling.previousSibling;
-        }
+        // If the previous sibling is an empty text node
         if (
+            previousSibling &&
             previousSibling.nodeType === Node.TEXT_NODE &&
             previousSibling.textContent.trim() === ''
         ) {
-            previousSibling = null;
+            // find the closest previous sibling
+            while (
+                previousSibling &&
+                previousSibling.nodeType === Node.TEXT_NODE &&
+                previousSibling.textContent.trim() === '' &&
+                previousSibling.previousSibling
+            ) {
+                previousSibling = previousSibling.previousSibling;
+            }
+            if (
+                previousSibling.nodeType === Node.TEXT_NODE &&
+                previousSibling.textContent.trim() === ''
+            ) {
+                previousSibling = null;
+            }
         }
-    }
 
-    if (previousSibling) {
-        // and if the previous sibling is a container
-        if (! isElementVoid(previousSibling)) {
+        if (previousSibling) {
+            // and if the previous sibling is a container
+            if (! isElementVoid(previousSibling)) {
+                // save the current action state
+                const previousState = {
+                    elementId: selectedElement.dataset.uwId,
+                    containerId: selectedElement.parentElement.dataset.uwId,
+                    positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+                };
+
+                // move the selected element to the bottom of the container
+                previousSibling.appendChild(selectedElement);
+
+                // remove .uw-element-empty class from the parent element
+                previousSibling.classList.remove('uw-element-empty');
+
+                // push to the action history
+                const upcomingState = {
+                    elementId: selectedElement.dataset.uwId,
+                    containerId: selectedElement.parentElement.dataset.uwId,
+                    positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+                };
+                rememberAction('element:move', previousState, upcomingState);
+
+                // refresh the hover element
+                refreshElementHover();
+
+                // refresh the highlight element
+                refreshElementHighlight();
+
+                // scroll the window to the selected element
+                scrollToElement(selectedElement);
+
+                // send the document tree to the parent window
+                sendDocumentTree();
+
+                // send the selected element to the parent window
+                sendSelectedElement();
+
+                return;
+            }
+
             // save the current action state
             const previousState = {
                 elementId: selectedElement.dataset.uwId,
@@ -778,8 +924,8 @@ const moveElementToUpTree = () => {
                 positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
             };
 
-            // move the selected element to the bottom of the container
-            previousSibling.appendChild(selectedElement);
+            // move the selected element up the tree
+            selectedElement.parentElement.insertBefore(selectedElement, previousSibling);
 
             // push to the action history
             const upcomingState = {
@@ -807,121 +953,13 @@ const moveElementToUpTree = () => {
             return;
         }
 
-        // save the current action state
-        const previousState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-
-        // move the selected element up the tree
-        selectedElement.parentElement.insertBefore(selectedElement, previousSibling);
-
-        // push to the action history
-        const upcomingState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-        rememberAction('element:move', previousState, upcomingState);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // scroll the window to the selected element
-        scrollToElement(selectedElement);
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-
-        return;
-    }
-
-    // If the parent element is the body
-    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
-        return; // do nothing
-    }
-
-    // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement) {
-        // save the current action state
-        const previousState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-
-        // move the selected element up the tree
-        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement);
-
-        // push to the action history
-        const upcomingState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-        rememberAction('element:move', previousState, upcomingState);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-    }
-
-    // Scroll the window to the selected element
-    scrollToElement(selectedElement);
-}
-
-const moveElementToDownTree = () => {
-    // If the selected element has next sibling
-    let nextSibling = selectedElement.nextSibling;
-
-    // If the previous sibling is an empty text node
-    if (
-        nextSibling &&
-        nextSibling.nodeType === Node.TEXT_NODE &&
-        nextSibling.textContent.trim() === ''
-    ) {
-        // find the closest previous sibling
-        while (
-            nextSibling &&
-            nextSibling.nodeType === Node.TEXT_NODE &&
-            nextSibling.textContent.trim() === '' &&
-            nextSibling.nextSibling
-        ) {
-            nextSibling = nextSibling.nextSibling;
-        }
-        if (
-            nextSibling.nodeType === Node.TEXT_NODE &&
-            nextSibling.textContent.trim() === ''
-        ) {
-            nextSibling = null;
-        }
-    }
-    if (nextSibling) {
-        // and if the next sibling is the helper/script element
-        if (
-            nextSibling.classList?.contains('uw-helper') ||
-            nextSibling.tagName?.toLowerCase() === 'script'
-        ) {
+        // If the parent element is the body
+        if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
             return; // do nothing
         }
 
-        // and if the next sibling is a container
-        if (! isElementVoid(nextSibling)) {
+        // If the parent element is inside a container
+        if (selectedElement.parentElement.parentElement) {
             // save the current action state
             const previousState = {
                 elementId: selectedElement.dataset.uwId,
@@ -929,8 +967,123 @@ const moveElementToDownTree = () => {
                 positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
             };
 
-            // move the selected element to the top of the container
-            nextSibling.insertBefore(selectedElement, nextSibling.firstChild);
+            // move the selected element up the tree
+            selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement);
+
+            // push to the action history
+            const upcomingState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+            rememberAction('element:move', previousState, upcomingState);
+
+            // refresh the hover element
+            refreshElementHover();
+
+            // refresh the highlight element
+            refreshElementHighlight();
+
+            // send the document tree to the parent window
+            sendDocumentTree();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+        }
+
+        // Scroll the window to the selected element
+        scrollToElement(selectedElement);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+const moveElementToDownTree = () => {
+    try {
+        // If the selected element has next sibling
+        let nextSibling = selectedElement.nextSibling;
+
+        // If the previous sibling is an empty text node
+        if (
+            nextSibling &&
+            nextSibling.nodeType === Node.TEXT_NODE &&
+            nextSibling.textContent.trim() === ''
+        ) {
+            // find the closest previous sibling
+            while (
+                nextSibling &&
+                nextSibling.nodeType === Node.TEXT_NODE &&
+                nextSibling.textContent.trim() === '' &&
+                nextSibling.nextSibling
+            ) {
+                nextSibling = nextSibling.nextSibling;
+            }
+            if (
+                nextSibling.nodeType === Node.TEXT_NODE &&
+                nextSibling.textContent.trim() === ''
+            ) {
+                nextSibling = null;
+            }
+        }
+        if (nextSibling) {
+            // and if the next sibling is the helper/script element
+            if (
+                nextSibling.classList?.contains('uw-helper') ||
+                nextSibling.tagName?.toLowerCase() === 'script'
+            ) {
+                return; // do nothing
+            }
+
+            // and if the next sibling is a container
+            if (! isElementVoid(nextSibling)) {
+                // save the current action state
+                const previousState = {
+                    elementId: selectedElement.dataset.uwId,
+                    containerId: selectedElement.parentElement.dataset.uwId,
+                    positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+                };
+
+                // move the selected element to the top of the container
+                nextSibling.insertBefore(selectedElement, nextSibling.firstChild);
+
+                // remove .uw-element-empty class from the parent element
+                nextSibling.classList.remove('uw-element-empty');
+
+                // push to the action history
+                const upcomingState = {
+                    elementId: selectedElement.dataset.uwId,
+                    containerId: selectedElement.parentElement.dataset.uwId,
+                    positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+                };
+                rememberAction('element:move', previousState, upcomingState);
+
+                // refresh the hover element
+                refreshElementHover();
+
+                // refresh the highlight element
+                refreshElementHighlight();
+
+                // scroll the window to the selected element
+                scrollToElement(selectedElement);
+
+                // send the document tree to the parent window
+                sendDocumentTree();
+
+                // send the selected element to the parent window
+                sendSelectedElement();
+
+                return;
+            }
+
+            // save the current action state
+            const previousState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+
+            // move the selected element down the tree
+            selectedElement.parentElement.insertBefore(nextSibling, selectedElement);
 
             // push to the action history
             const upcomingState = {
@@ -958,82 +1111,49 @@ const moveElementToDownTree = () => {
             return;
         }
 
-        // save the current action state
-        const previousState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
+        // If the parent element is the body
+        if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
+            return; // do nothing
+        }
 
-        // move the selected element down the tree
-        selectedElement.parentElement.insertBefore(nextSibling, selectedElement);
+        // If the parent element is inside a container
+        if (selectedElement.parentElement.parentElement) {
+            // save the current action state
+            const previousState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
 
-        // push to the action history
-        const upcomingState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-        rememberAction('element:move', previousState, upcomingState);
+            // move the selected element down the tree
+            selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextSibling);
 
-        // refresh the hover element
-        refreshElementHover();
+            // push to the action history
+            const upcomingState = {
+                elementId: selectedElement.dataset.uwId,
+                containerId: selectedElement.parentElement.dataset.uwId,
+                positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
+            };
+            rememberAction('element:move', previousState, upcomingState);
 
-        // refresh the highlight element
-        refreshElementHighlight();
+            // refresh the hover element
+            refreshElementHover();
 
-        // scroll the window to the selected element
+            // refresh the highlight element
+            refreshElementHighlight();
+
+            // send the document tree to the parent window
+            sendDocumentTree();
+
+            // send the selected element to the parent window
+            sendSelectedElement();
+        }
+
+        // Scroll the window to the selected element
         scrollToElement(selectedElement);
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-
-        return;
+    } catch (error) {
+        console.error(error);
     }
-
-    // If the parent element is the body
-    if (selectedElement.parentElement.tagName.toLowerCase() === 'body') {
-        return; // do nothing
-    }
-
-    // If the parent element is inside a container
-    if (selectedElement.parentElement.parentElement) {
-        // save the current action state
-        const previousState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-
-        // move the selected element down the tree
-        selectedElement.parentElement.parentElement.insertBefore(selectedElement, selectedElement.parentElement.nextSibling);
-
-        // push to the action history
-        const upcomingState = {
-            elementId: selectedElement.dataset.uwId,
-            containerId: selectedElement.parentElement.dataset.uwId,
-            positionIndex: Array.prototype.indexOf.call(selectedElement.parentElement.childNodes, selectedElement),
-        };
-        rememberAction('element:move', previousState, upcomingState);
-
-        // refresh the hover element
-        refreshElementHover();
-
-        // refresh the highlight element
-        refreshElementHighlight();
-
-        // send the document tree to the parent window
-        sendDocumentTree();
-
-        // send the selected element to the parent window
-        sendSelectedElement();
-    }
-
-    // Scroll the window to the selected element
-    scrollToElement(selectedElement);
 }
 
 const attributeElement = (element, attributeName, attributeValue = null) => {
@@ -1045,19 +1165,10 @@ const attributeElement = (element, attributeName, attributeValue = null) => {
 }
 
 const styleElement = (element, propertyName, propertyValue = null) => {
-    // FIXME: what if the document has no or more than one stylesheet?
-    const stylesheet = document.styleSheets[0];
-    const selector = `[data-uw-id="${element.dataset.uwId}"]`;
-    let rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
-    if (! rules) {
-        stylesheet.insertRule(selector + "{}", stylesheet.cssRules.length);
-        rules = [...stylesheet.cssRules].find(r => r.selectorText === selector);
-    }
     if (propertyValue) {
-        // TODO: do not use !important
-        rules.style.setProperty(propertyName, propertyValue, 'important');
+        element.style[propertyName] = propertyValue;
     } else {
-        rules.style.removeProperty(propertyName);
+        element.style.removeProperty(propertyName);
     }
 }
 
@@ -1105,7 +1216,7 @@ const makeElementEditable = (element) => {
     // If the element is a button
     if (element.tagName.toLowerCase() === 'button') {
         // enable whitespace insertion by manually handling the space key
-        element.addEventListener('keydown', enableWhitespaceInsertionOnButton);
+        element.addEventListener('keydown', enableWhitespaceOnButton);
     }
 
     // Make the clicked element not draggable
@@ -1134,7 +1245,7 @@ const makeElementNotEditable = (element) => {
     // If the element is a button
     if (element.tagName.toLowerCase() === 'button') {
         // remove the event listener to enable whitespace insertion
-        element.removeEventListener('keydown', enableWhitespaceInsertionOnButton);
+        element.removeEventListener('keydown', enableWhitespaceOnButton);
     }
 
     // Enable click event triggered by the space key for button only
@@ -1157,6 +1268,19 @@ const makeElementNotEditable = (element) => {
     }
 }
 
+const preventClickEventHandler = (event) => {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+}
+
+const makeElementNotClickable = (element) => {
+    element.addEventListener('click', preventClickEventHandler);
+}
+
+const makeElementClickable = (element) => {
+    element.removeEventListener('click', preventClickEventHandler);
+}
+
 const refreshElementHover = (element = null) => {
     // If the hovered element is not defined
     if (! element) {
@@ -1172,7 +1296,8 @@ const refreshElementHover = (element = null) => {
     }
 
     // If the element over the mouse is the helper element
-    if (element.classList.contains('uw-helper')) {
+    // but not the hover element
+    if (element.classList.contains('uw-helper') && element !== elementHover) {
         // hide the hover element
         hideElementHover();
         return;
@@ -1199,13 +1324,64 @@ const refreshElementHover = (element = null) => {
         elementHover = document.createElement('div');
         elementHover.classList.add('uw-helper');
         elementHover.classList.add('uw-element-hover');
+
+        elementHover.addEventListener('mousedown', (event) => {
+            event.stopImmediatePropagation();
+            elementHover.style.pointerEvents = 'none';
+            elementUnderMouse = document.elementFromPoint(mousePosition.x, mousePosition.y);
+            elementHover.style.pointerEvents = 'all';
+            makeElementDraggable(elementUnderMouse);
+            event.target.draggable = true;
+        });
+
+        elementHover.addEventListener('mouseup', (event) => {
+            if (event.target.draggable == false) {
+                return;
+            }
+            event.stopImmediatePropagation();
+            event.target.draggable = false;
+            elementHover.style.pointerEvents = 'none';
+            elementUnderMouse = document.elementFromPoint(mousePosition.x, mousePosition.y);
+            elementUnderMouse.dispatchEvent(new MouseEvent('mouseup', event));
+        });
+
+        elementHover.addEventListener('dragstart', (event) => {
+            event.stopImmediatePropagation();
+            event.dataTransfer.dropEffect = 'move';
+            const transparentCanvas = document.createElement('canvas');
+            event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
+            transparentCanvas.remove();
+            isElementMoving = true;
+        });
+
+        elementHover.addEventListener('dragend', (event) => {
+            event.stopImmediatePropagation();
+            event.target.draggable = false;
+            selectElement(elementUnderMouse);
+            elementUnderMouse.dispatchEvent(new DragEvent('dragend', event));
+        });
+
+        elementHover.addEventListener('drag', (event) => {
+            event.stopImmediatePropagation();
+            event.target.draggable = false;
+            elementUnderMouse.dispatchEvent(new DragEvent('drag', event));
+        });
+
         document.body.appendChild(elementHover);
     }
 
+    // If the hovered element is the audio, video, or hyperlink
+    // or is the element hover
+    if (
+        ['audio'].includes(hoveredElement.tagName.toLowerCase()) ||
+        hoveredElement === elementHover
+    ) {
+        elementHover.style.pointerEvents = 'all';
+    } else {
+        elementHover.style.pointerEvents = 'none';
+    }
+
     // Show the hover element
-    // FIXME: since offsetWidth() sometimes return a wrong value for an auto-sized
-    // element in Chromium, so we have to use getBoundingClientRect() instead.
-    // See https://issues.chromium.org/issues/40332719 for more details
     const boundingRect = hoveredElement.getBoundingClientRect();
     elementHover.style.top = `${boundingRect.top + window.scrollY}px`;
     elementHover.style.left = `${boundingRect.left + window.scrollX}px`;
@@ -1213,20 +1389,26 @@ const refreshElementHover = (element = null) => {
     elementHover.style.height = `${boundingRect.height}px`;
     elementHover.classList.remove('uw-hidden');
 
-    if (! isElementVoid(hoveredElement)) {
-        // Add a container class to the hover element
-        elementHover.classList.add('uw-element-container-highlight');
-    } else {
-        // Remove a container class from the hover element
-        elementHover.classList.remove('uw-element-container-highlight');
-    }
-
     // Add a title to the hover element
     elementHover.dataset.title = hoveredElement.tagName.toLowerCase();
-    elementHover.dataset.title += ` ${hoveredElement.id ? '#' + hoveredElement.id : hoveredElement.dataset.uwId ? '@' + hoveredElement.dataset.uwId : ''}`;
+    elementHover.dataset.title += ` ${
+        hoveredElement.id
+            ? '#' + hoveredElement.id
+            : hoveredElement.dataset.uwId
+                ? '@' + hoveredElement.dataset.uwId
+                : ''
+    }`;
 
-    // Send the hovered element to the parent window
-    sendHoveredElement(hoveredElement);
+    if (hoveredElement !== elementHover) {
+        // Send the hovered element to the parent window
+        sendHoveredElement(hoveredElement);
+    } else {
+        // Get the real target element under the hover element
+        // and send it to the parent window
+        elementHover.style.pointerEvents = 'none';
+        sendHoveredElement(document.elementFromPoint(mousePosition.x, mousePosition.y));
+        elementHover.style.pointerEvents = 'all';
+    }
 }
 
 const hideElementHover = () => {
@@ -1251,11 +1433,6 @@ const createElementHighlights = () => {
     elementHighlight = document.createElement('div');
     elementHighlight.classList.add('uw-helper');
     elementHighlight.classList.add('uw-element-highlight');
-
-    // Add a container class to the element
-    if (! isElementVoid(selectedElement)) {
-        elementHighlight.classList.add('uw-element-container-highlight');
-    }
 
     // Append the highlight element to the body
     document.body.appendChild(elementHighlight);
@@ -1289,9 +1466,11 @@ const createElementHighlights = () => {
 
 const deleteElementHighlights = () => {
     // Remove highlights from the selected elements
-    document.querySelectorAll('.uw-element-highlight, .uw-element-parent-highlight, .uw-element-drag-area')?.forEach(element => {
-        element.remove();
-    });
+    document.querySelectorAll(`
+        .uw-element-highlight,
+        .uw-element-parent-highlight,
+        .uw-element-drag-area
+    `)?.forEach(element => element.remove());
     elementHighlight = null;
     elementParentHighlight = null;
 }
@@ -1299,10 +1478,11 @@ const deleteElementHighlights = () => {
 const refreshElementHighlight = () => {
     if (elementHighlight) {
         // Update the position of the highlight element
-        elementHighlight.style.top = `${selectedElement.offsetTop}px`;
-        elementHighlight.style.left = `${selectedElement.offsetLeft}px`;
-        elementHighlight.style.width = `${selectedElement.offsetWidth}px`;
-        elementHighlight.style.height = `${selectedElement.offsetHeight}px`;
+        const boundingRect = selectedElement.getBoundingClientRect();
+        elementHighlight.style.top = `${boundingRect.top + window.scrollY}px`;
+        elementHighlight.style.left = `${boundingRect.left + window.scrollX}px`;
+        elementHighlight.style.width = `${boundingRect.width}px`;
+        elementHighlight.style.height = `${boundingRect.height}px`;
 
         // Add a title to the highlight element
         elementHighlight.dataset.title = selectedElement.tagName.toLowerCase();
@@ -1311,16 +1491,15 @@ const refreshElementHighlight = () => {
         }
 
         // Update the position of the drag area points
-        const boundingRect = selectedElement.getBoundingClientRect();
         const dragAreaPoints = document.querySelectorAll('.uw-element-drag-area');
         const dragAreaPointsPosition = [
             { x: boundingRect.left, y: boundingRect.top - 1, title: 'top-left', },
-            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top - 1, title: 'top-center', },
+            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top - 1, title: 'middle-top', },
             { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top - 1, title: 'top-right', },
             { x: boundingRect.left, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-left', },
             { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-right', },
             { x: boundingRect.left, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-left', },
-            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-center', },
+            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top + boundingRect.height - 1, title: 'middle-bottom', },
             { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-right', },
         ]
         dragAreaPoints.forEach((dragAreaPoint, index) => {
@@ -1338,8 +1517,8 @@ const refreshElementHighlight = () => {
                 case 'bottom-left':
                     dragAreaPoint.style.cursor = 'nesw-resize';
                     break;
-                case 'top-center':
-                case 'bottom-center':
+                case 'middle-top':
+                case 'middle-bottom':
                     dragAreaPoint.style.cursor = 'ns-resize';
                     break;
                 case 'middle-left':
@@ -1348,23 +1527,44 @@ const refreshElementHighlight = () => {
                     break;
             }
 
-            // Hide some drag area points if the selected element is too small
-            if (selectedElement.offsetHeight < 10) {
-                if (['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(dragAreaPointsPosition[index].title)) {
-                    dragAreaPoint.style.display = 'none';
+            // Unhide the drag area point
+            dragAreaPoint.classList.remove('uw-hidden');
+
+            // Hide some drag area points if the selected element is too small either in width
+            if (boundingRect.width <= 5) {
+                if (
+                    dragAreaPointsPosition[index].title.startsWith('top') ||
+                    dragAreaPointsPosition[index].title.startsWith('bottom') ||
+                    dragAreaPointsPosition[index].title.endsWith('left') ||
+                    dragAreaPointsPosition[index].title.endsWith('right')
+                ) {
+                    dragAreaPoint.classList.add('uw-hidden');
                 }
-            } else if (selectedElement.offsetHeight < 20) {
-                if (['middle-left', 'middle-right'].includes(dragAreaPointsPosition[index].title)) {
-                    dragAreaPoint.style.display = 'none';
+            } else if (boundingRect.width <= 10) {
+                if (
+                    dragAreaPointsPosition[index].title === 'middle-top' ||
+                    dragAreaPointsPosition[index].title === 'middle-bottom'
+                ) {
+                    dragAreaPoint.classList.add('uw-hidden');
                 }
             }
-            if (selectedElement.offsetWidth < 10) {
-                if (['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(dragAreaPointsPosition[index].title)) {
-                    dragAreaPoint.style.display = 'none';
+
+            // Hide some drag area points if the selected element is too small either in height
+            if (boundingRect.height <= 5) {
+                if (
+                    dragAreaPointsPosition[index].title.startsWith('top') ||
+                    dragAreaPointsPosition[index].title.startsWith('bottom') ||
+                    dragAreaPointsPosition[index].title.endsWith('top') ||
+                    dragAreaPointsPosition[index].title.endsWith('bottom')
+                ) {
+                    dragAreaPoint.classList.add('uw-hidden');
                 }
-            } else if (selectedElement.offsetWidth < 20) {
-                if (['top-center', 'bottom-center'].includes(dragAreaPointsPosition[index].title)) {
-                    dragAreaPoint.style.display = 'none';
+            } else if (boundingRect.height <= 10) {
+                if (
+                    dragAreaPointsPosition[index].title === 'middle-left' ||
+                    dragAreaPointsPosition[index].title === 'middle-right'
+                ) {
+                    dragAreaPoint.classList.add('uw-hidden');
                 }
             }
 
@@ -1394,48 +1594,40 @@ const refreshElementHighlight = () => {
 const createElementSkeleton = (element) => {
     // Create a skeleton element to visualize the element being moved
     elementSkeleton = element.cloneNode(true);
+    elementSkeleton.classList.remove('uw-hidden')
+
     elementSkeleton.style.position = 'relative';
     elementSkeleton.classList.add('uw-helper');
     element.parentElement.insertBefore(elementSkeleton, element.nextSibling);
 
-    // Create a new element to highlight the skeleton element
-    const elementSkeletonHighlight = document.createElement('div');
-    elementSkeletonHighlight.style.position = 'absolute';
-    elementSkeletonHighlight.style.top = 0;
-    elementSkeletonHighlight.style.left = 0;
-    elementSkeletonHighlight.style.bottom = 0;
-    elementSkeletonHighlight.style.right = 0;
-    elementSkeletonHighlight.classList.add('uw-helper');
-    elementSkeletonHighlight.classList.add('uw-element-skeleton');
-    elementSkeleton.appendChild(elementSkeletonHighlight);
+    // Add .uw-helper class to all children of the skeleton element
+    elementSkeleton.querySelectorAll('*').forEach(child => {
+        child.classList.add('uw-helper');
+    });
 
-    // If the element is a container
-    if (! isElementVoid(elementSkeleton)) {
-        // add a container class to the skeleton element
-        elementSkeletonHighlight.classList.add('uw-element-container-highlight');
-    }
+    // Create a new element to highlight the skeleton element
+    elementHighlight = document.createElement('div');
+    elementHighlight.style.position = 'absolute';
+    elementHighlight.classList.add('uw-helper');
+    elementHighlight.classList.add('uw-element-skeleton');
+    document.body.appendChild(elementHighlight);
 
     // Add a title to the highlight element
-    elementSkeletonHighlight.dataset.title = elementSkeleton.tagName.toLowerCase();
+    elementHighlight.dataset.title = elementSkeleton.tagName.toLowerCase();
     if (elementSkeleton.id) {
-        elementSkeletonHighlight.dataset.title += ` #${elementSkeleton.id}`;
+        elementHighlight.dataset.title += ` #${elementSkeleton.id}`;
     }
 
     // Create a new element to highlight the parent of the selection
-    const elementParent = element.parentElement;
     elementParentHover = document.createElement('div');
-    elementParentHover.style.top = `${elementParent.offsetTop}px`;
-    elementParentHover.style.left = `${elementParent.offsetLeft}px`;
-    elementParentHover.style.width = `${elementParent.offsetWidth}px`;
-    elementParentHover.style.height = `${elementParent.offsetHeight}px`;
     elementParentHover.classList.add('uw-helper');
-    elementParentHover.classList.add('uw-element-parent-hover');
+    elementParentHover.classList.add('uw-element-parent-highlight');
     document.body.appendChild(elementParentHover);
 
     // Add a title to the highlight element
-    elementParentHover.dataset.title = elementParent.tagName.toLowerCase();
-    if (elementParent.id) {
-        elementParentHover.dataset.title += ` #${elementParent.id}`;
+    elementParentHover.dataset.title = element.parentElement.tagName.toLowerCase();
+    if (element.parentElement.id) {
+        elementParentHover.dataset.title += ` #${element.parentElement.id}`;
     }
 }
 
@@ -1617,25 +1809,31 @@ const moveElementSkeleton = () => {
     }
 }
 
-const refreshSkeletonParentHoverElement = () => {
-    // Find the parent of the skeleton element
-    const skeletonParent = elementSkeleton.parentElement;
+const refreshElementSkeleton = () => {
+    //
+    const boundingRect = elementSkeleton.getBoundingClientRect();
+    elementHighlight.style.top = `${boundingRect.top + window.scrollY}px`;
+    elementHighlight.style.left = `${boundingRect.left + window.scrollX}px`;
+    elementHighlight.style.width = `${boundingRect.width}px`;
+    elementHighlight.style.height = `${boundingRect.height}px`;
 
-    // Create a new element to highlight the parent of the selection
-    const boundingRect = skeletonParent.getBoundingClientRect();
-    elementParentHover.style.top = `${boundingRect.top + window.scrollY}px`;
-    elementParentHover.style.left = `${boundingRect.left + window.scrollX}px`;
-    elementParentHover.style.width = `${boundingRect.width}px`;
-    elementParentHover.style.height = `${boundingRect.height}px`;
+    //
+    const parentBoundingRect = elementSkeleton.parentElement.getBoundingClientRect();
+    elementParentHover.style.top = `${parentBoundingRect.top + window.scrollY}px`;
+    elementParentHover.style.left = `${parentBoundingRect.left + window.scrollX}px`;
+    elementParentHover.style.width = `${parentBoundingRect.width}px`;
+    elementParentHover.style.height = `${parentBoundingRect.height}px`;
 }
 
 const deleteElementSkeleton = () => {
-    // Remove the skeleton element
+    // Remove the skeleton element and its highlights
+    document.querySelectorAll(`
+        .uw-element-skeleton,
+        .uw-element-parent-highlight
+    `)?.forEach(element => element.remove());
     elementSkeleton?.remove();
     elementSkeleton = null;
-
-    // Remove highlight from the parent of the selected elements
-    elementParentHover?.remove();
+    elementHighlight = null;
     elementParentHover = null;
 }
 
@@ -1743,9 +1941,11 @@ const createElementBoxModel = () => {
 
 const removeElementBoxModel = () => {
     // Remove the box model helper elements
-    document.querySelectorAll('.uw-element-margins, .uw-element-paddings, .uw-element-alignment')?.forEach(element => {
-        element.remove();
-    });
+    document.querySelectorAll(`
+        .uw-element-margins,
+        .uw-element-paddings,
+        .uw-element-alignment
+    `)?.forEach(element => element.remove());
 }
 
 const createElementLayoutIdentifiers = () => {
@@ -1920,29 +2120,43 @@ const sendSelectedElement = () => {
             id: selectedElement.dataset.uwId,
             elementId: selectedElement.id,
             classList: Array.from(selectedElement.classList).filter(className => ! className.startsWith('uw-')),
-            innerHTML: selectedElement.innerHTML,
-            innerText: selectedElement.innerText,
-            outerHTML: selectedElement.outerHTML,
             style: selectedElement.style.cssText,
-            computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(selectedElement)).filter(([key, _]) => isNaN(key))),
+            computedStyle: Object.fromEntries(
+                Object.entries(window.getComputedStyle(selectedElement)).filter(([key, _]) => isNaN(key))
+            ),
             boundingRect: selectedElement.getBoundingClientRect(),
             dataset: Object.assign({}, selectedElement.dataset),
-            attributes: Array.from(selectedElement.attributes).map(attribute => ({ name: attribute.name, value: attribute.value })),
+            attributes: Array.from(selectedElement.attributes).map(attribute => ({
+                name: attribute.name,
+                value: attribute.value,
+            })),
             children: Array.from(selectedElement.children).map(child => ({
                 tagName: child.tagName,
                 id: child.dataset.uwId,
                 classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
-                computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(child)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                computedStyle: Object.fromEntries(
+                    Object.entries(window.getComputedStyle(child)).filter(([key, _]) =>
+                        isNaN(key) && layoutRelatedProperties.some(prop => key === prop)
+                    )
+                ),
             })),
             parent: {
                 tagName: selectedElement.parentElement.tagName,
                 id: selectedElement.parentElement.dataset.uwId,
-                computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(selectedElement.parentElement)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                computedStyle: Object.fromEntries(
+                    Object.entries(window.getComputedStyle(selectedElement.parentElement)).filter(([key, _]) =>
+                        isNaN(key) && layoutRelatedProperties.some(prop => key === prop)
+                    )
+                ),
                 children: Array.from(selectedElement.parentElement.children).map(child => ({
                     tagName: child.tagName,
                     id: child.dataset.uwId,
                     classList: Array.from(child.classList).filter(className => ! className.startsWith('uw-')),
-                    computedStyle: Object.fromEntries(Object.entries(window.getComputedStyle(child)).filter(([key, _]) => isNaN(key) && layoutRelatedProperties.some(prop => key === prop))),
+                    computedStyle: Object.fromEntries(
+                        Object.entries(window.getComputedStyle(child)).filter(([key, _]) =>
+                            isNaN(key) && layoutRelatedProperties.some(prop => key === prop)
+                        )
+                    ),
                 })),
             },
         },
@@ -1989,30 +2203,19 @@ const sendDocumentTree = () => {
 const onElementDragStart = (event) => {
     event.stopImmediatePropagation();
 
-    //
-    event.dataTransfer.dropEffect = 'move';
-
     // Create a transparent canvas to set as drag image
     const transparentCanvas = document.createElement('canvas');
     event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
+    event.dataTransfer.dropEffect = 'move';
     transparentCanvas.remove();
 
-    // Check if the selected element is under the mouse
-    const elements = document.elementsFromPoint(event.clientX, event.clientY).filter(element => ! element.classList.contains('uw-helper') && element.tagName.toLowerCase() !== 'html');
-    if (elements.includes(selectedElement)) {
-        return; // do nothing
-    }
+    selectElement(elementUnderMouse);
 
     isElementMoving = true;
-
-    // Otherwise, select the element under the mouse
-    selectElement(elementUnderMouse);
 }
 
 const onElementDragEnd = (event) => {
     event.preventDefault();
-
-    isElementMoving = false;
 
     // If the element drag action is not interrupted
     if (event.dataTransfer.dropEffect !== 'none') {
@@ -2034,6 +2237,8 @@ const onElementDragEnd = (event) => {
 
     // Refresh the hover element
     refreshElementHover();
+
+    isElementMoving = false;
 }
 
 const onElementDragOver = (event) => {
@@ -2045,18 +2250,21 @@ const onElementDrag = (event) => {
 
     // If the target element is not hidden
     if (! event.target.classList.contains('uw-hidden')) {
-        // TODO: add support for dragging an element positioned absolute or fixed
-        // create a skeleton element to visualize the element being moved
-        createElementSkeleton(event.target);
-
-        // hide the target element
-        event.target.classList.add('uw-hidden')
-
         // delete the highlight elements
         deleteElementHighlights();
 
         // hide the hover element
         hideElementHover();
+
+        // TODO: add support for dragging an element positioned absolute or fixed
+        // create a skeleton element to visualize the element being moved
+        createElementSkeleton(event.target);
+
+        // hide the target element
+        event.target.classList.add('uw-hidden');
+
+        // refresh the skeleton element
+        refreshElementSkeleton();
     }
 
     // // Check if the mouse has moved less than 5 pixels
@@ -2091,13 +2299,11 @@ const onElementDrag = (event) => {
     moveElementSkeleton();
 
     // Refresh the skeleton parent hover element
-    refreshSkeletonParentHoverElement();
+    refreshElementSkeleton();
 }
 
-// Handler for mouse events on the document
-document.addEventListener('mousemove', (event) => {
+const onDocumentMouseMove = (event) => {
     // If the document is not ready
-    // FIXME: sometimes the document is not ready when the mouse move event is triggered
     if (! isDocumentReady) {
         return; // do nothing
     }
@@ -2116,25 +2322,34 @@ document.addEventListener('mousemove', (event) => {
             refreshElementHover();
         }
     }
-});
-document.addEventListener('mousedown', (event) => {
-    if (event.altKey) {
-        return; // do nothing
-    }
+}
+
+const onDocumentMouseDown = (event) => {
+    // Make the previous element under the mouse not draggable
     if (elementUnderMouse) {
         makeElementNotDraggable(elementUnderMouse);
     }
+
+    // Skip for the helper elements
     if (event.target.classList.contains('uw-helper')) {
-        return; // do nothing
+        return;
     }
+
+    // Re-assign the element under the mouse
     elementUnderMouse = event.target;
-    makeElementDraggable(elementUnderMouse);
-});
-document.addEventListener('mouseup', (event) => {
-    // If the event target of the mouseup event is not the same
-    // as the event target of the mousedown event
+
+    // If the element under the mouse is not editable
+    if (elementUnderMouse.contentEditable !== 'true') {
+        // make the element draggable
+        makeElementDraggable(elementUnderMouse);
+    }
+}
+
+const onDocumentMouseUp = (event) => {
+    // Prevent selecting the element when the mouse is released
+    // for example when selecting text inside an element
     if (elementUnderMouse !== event.target) {
-        return; // do nothing
+        return;
     }
 
     // If the previous action was interrupted
@@ -2163,7 +2378,9 @@ document.addEventListener('mouseup', (event) => {
         isElementSelectedWithAltKey = true;
         // get the elements under the mouse
         // TODO: sort the child elements so that the child elements appear before its parent element
-        const elements = document.elementsFromPoint(event.clientX, event.clientY).filter(element => ! element.classList.contains('uw-helper') && element.tagName.toLowerCase() !== 'html');
+        const elements = document.elementsFromPoint(event.clientX, event.clientY).filter(element =>
+            ! element.classList.contains('uw-helper') && element.tagName.toLowerCase() !== 'html'
+        );
         if (! elements.includes(selectedElement)) {
             elementIndexUnderMouse = 0;
         }
@@ -2205,28 +2422,29 @@ document.addEventListener('mouseup', (event) => {
         ) {
             // make the clicked element editable
             makeElementEditable(selectedElement);
+
+            // make the clicked element not draggable
+            makeElementNotDraggable(selectedElement);
+
             return;
         }
     }
 
     // Select the clicked element
     selectElement(element);
-});
+}
 
-// Handler for mouse enter events
-document.addEventListener('mouseenter', () => {
+const onDocumentMouseEnter = () => {
     // Refresh the hover element
     refreshElementHover();
-});
+}
 
-// Handler for mouse leave events
-document.addEventListener('mouseleave', () => {
+const onDocumentMouseLeave = () => {
     // Hide the hover element
     hideElementHover();
-});
+}
 
-// Handler for key press events
-document.addEventListener('keydown', (event) => {
+const onDocumentKeyDown = (event) => {
     if (event.key === 'Escape') {
         if (selectedElement?.contentEditable === 'true') {
             // Make the selected element not editable
@@ -2353,8 +2571,9 @@ document.addEventListener('keydown', (event) => {
             return;
         }
     }
-});
-document.addEventListener('keyup', () => {
+}
+
+const onDocumentKeyUp = () => {
     if (selectedElement?.contentEditable === 'true') {
         // Refresh the element highlight
         refreshElementHighlight();
@@ -2364,32 +2583,20 @@ document.addEventListener('keyup', () => {
 
         return;
     }
-});
+}
 
-// To hide the not-allowed cursor while dragging
-document.addEventListener('dragover', event => {
-    event.preventDefault();
-});
-document.addEventListener('dragenter', event => {
-    event.preventDefault();
-});
-
-// Handler for window scroll events
-window.addEventListener('scroll', () => {
-    refreshElementHighlight();
-});
-
-// Handler for mouse down event on the main window
-window.addEventListener('mousedown', () => {
+const onWindowMouseDown = () => {
     // Send the mouse down event to the parent window
     window.parent.postMessage({
         type: 'canvas:focus',
         payload: {},
     }, '*');
-}, { capture: true });
+}
 
-// Handler for document scroll events
-document.addEventListener('scroll', () => {
+const onWindowScroll = () => {
+    // Refresh the element highlight
+    refreshElementHighlight();
+
     // Send the document scroll position to the parent window
     window.parent.postMessage({
         type: 'document:scroll',
@@ -2403,10 +2610,9 @@ document.addEventListener('scroll', () => {
             }
         },
     }, '*');
-});
+}
 
-// Handler for receiving messages from the main window
-window.addEventListener('message', event => {
+const onWindowMessage = (event) => {
     if (event.origin !== window.location.origin) {
         return; // do nothing
     }
@@ -2428,7 +2634,7 @@ window.addEventListener('message', event => {
             }
 
             // Refresh the skeleton parent hover element
-            refreshSkeletonParentHoverElement();
+            refreshElementSkeleton();
 
             // If the element over the mouse is a helper element
             if (hoveredElement.classList.contains('uw-helper')) {
@@ -2462,14 +2668,18 @@ window.addEventListener('message', event => {
             }
 
             // Convert the HTML code of the template to an element
-            const parsedTemplate = new DOMParser().parseFromString(event.data.payload.template, 'text/xml').documentElement;
-            elementToInsert = document.createElement(parsedTemplate.tagName);
-            elementToInsert.innerHTML = parsedTemplate.innerHTML;
-            elementToInsert.style.cssText = parsedTemplate.style?.cssText || '';
-            elementToInsert.classList.add(...parsedTemplate.classList);
+            elementToInsert = new DOMParser().parseFromString(event.data.payload.template, 'text/html').body.firstChild;
+
+            // Disable click events on hyperlink
+            if (elementToInsert.tagName.toLowerCase() === 'a') {
+                makeElementNotClickable(elementToInsert);
+            }
 
             // Add the template element to the body
             document.body.appendChild(elementToInsert);
+
+            // Delete the highlight elements
+            deleteElementHighlights();
 
             // Create a skeleton element to visualize the element being inserted
             createElementSkeleton(elementToInsert);
@@ -2479,9 +2689,6 @@ window.addEventListener('message', event => {
 
             // Delete the template element
             elementToInsert?.remove();
-
-            // Delete the highlight elements
-            deleteElementHighlights();
         }
 
         return;
@@ -2749,99 +2956,12 @@ window.addEventListener('message', event => {
         appConfig = event.data.payload.appConfig;
         apiSchema = event.data.payload.apiSchema;
 
-        const getAppliedStyles = (element) => {
-            var cssStyleRules = Array.from(document.styleSheets)
-                .slice(0, -1)
-                .flatMap(styleSheet => Array.from(styleSheet.cssRules))
-                .filter(cssRule => element.matches(cssRule.selectorText));
-            var rules = [];
-            if (cssStyleRules.length) {
-                for (i = 0; i < cssStyleRules.length; i++) {
-                    const cssStyleRule = cssStyleRules[i];
-                    rules.push({
-                        order: i,
-                        selector: cssStyleRule.selectorText,
-                        stylesheet: cssStyleRule.parentStyleSheet.href,
-                        styles: Object.entries(cssStyleRule.style)
-                            .filter(([key, value]) => value !== '' && isNaN(key))
-                            .reduce((style, [key, value]) => {
-                                style[camelToKebab(key)] = value;
-                                return style;
-                            }, {}),
-                    })
-                }
-            }
-            if (element.getAttribute('style')) {
-                rules.push({
-                    order: cssStyleRules.length,
-                    selector: 'inline',
-                    stylesheet: 'inline',
-                    styles: element.getAttribute('style')
-                        .trim()
-                        .replace(/\n/g, '')
-                        .replace(/\s+/g, ' ')
-                        .split(';')
-                        .filter(rule => rule.trim() !== '')
-                        .reduce((style, rule) => {
-                            const [property, value] = rule.split(':').map(s => s.trim());
-                            style[camelToKebab(property)] = value;
-                            return style;
-                        }, {}),
-                });
-            }
-            return rules;
-        }
-
         document.querySelectorAll('*').forEach(element => {
             if (['html', 'head', 'meta', 'title', 'link', 'script'].includes(element.tagName.toLowerCase())) {
                 return; // skip the element
             }
-
-            // Populate the dataset attribute helper
-            const attributes = {};
-            Array.from(element.attributes).forEach(attribute => {
-                if (attribute.name === 'style') {
-                    return; // skip the style attribute
-                }
-                attributes[attribute.name] = {
-                    value: attribute.value.trim().replace(/\s+/g, ' '),
-                    checked: true,
-                };
-            });
-            element.dataset.uwAttributes = JSON.stringify(attributes);
-
-            // Set unique ID
-            element.dataset.uwId = generateUniqueId(element.tagName.toLocaleLowerCase());
-            element.dataset.uwLabel = apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name || 'Element';
-
-            // Disable click events on hyperlink
-            if (element.tagName.toLowerCase() === 'a') {
-                element.setAttribute('onclick', 'return false;');
-            }
-
-            // Populate the dataset property helper
-            const rules = getAppliedStyles(element);
-            const properties = {};
-            rules.forEach(rule => {
-                Object.entries(rule.styles).forEach(([property, value]) => {
-                    properties[property] = {
-                        value: value,
-                        checked: true,
-                    };
-                });
-            });
-            element.dataset.uwProperties = JSON.stringify(properties);
-
-            // Migrate inline styles to stylesheet
-            // TODO: add support for HTML marketing emails
-            if (element.hasAttribute('style')) {
-                element.removeAttribute('style');
-            }
-            rules.filter(rule => rule.selector === 'inline').forEach(rule => {
-                Object.entries(rule.styles).forEach(([property, value]) => {
-                    styleElement(element, property, value);
-                });
-            });
+            // Setup the element to be compatible with the editor
+            setupElement(element);
         });
 
         // Send the document tree to the parent window
@@ -2887,10 +3007,25 @@ window.addEventListener('message', event => {
         // Re-create the element highlight
         createElementHighlights();
     }
-});
+}
 
-//
 document.addEventListener('DOMContentLoaded', () => {
+    //
+    document.addEventListener('mousemove', onDocumentMouseMove);
+    document.addEventListener('mousedown', onDocumentMouseDown);
+    document.addEventListener('mouseup', onDocumentMouseUp);
+    document.addEventListener('mouseenter', onDocumentMouseEnter);
+    document.addEventListener('mouseleave', onDocumentMouseLeave);
+    document.addEventListener('keydown', onDocumentKeyDown);
+    document.addEventListener('keyup', onDocumentKeyUp);
+    document.addEventListener('dragover', event => event.preventDefault());
+    document.addEventListener('dragenter', event => event.preventDefault());
+
+    //
+    window.addEventListener('mousedown', onWindowMouseDown, { capture: true });
+    window.addEventListener('scroll', onWindowScroll);
+    window.addEventListener('message', onWindowMessage);
+
     // Send the ready message to the parent window
     window.parent.postMessage({
         type: 'window:ready',

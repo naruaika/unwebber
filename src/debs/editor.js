@@ -493,28 +493,16 @@ const setupElement = (element) => {
         apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name ||
         'Element';
 
-    // Disable click events on hyperlink
-    if (element.tagName.toLowerCase() === 'a') {
+    // Disable click events on some elements
+    // FIXME: the input behavior is not really satisfying
+    if (['a', 'audio', 'iframe', 'input', 'select', 'video'].includes(element.tagName.toLowerCase())) {
         makeElementNotClickable(element);
     }
 
-    // Loop through the copied element children recursively
-    element.querySelectorAll('*').forEach(child => {
-        // generate a new ID
-        child.dataset.uwId = generateUniqueId(
-            child.dataset.uwId?.split('-').slice(0, -1).join('-') ||
-            child.tagName.toLowerCase()
-        );
-        child.dataset.uwLabel =
-            child.dataset.uwLabel ||
-            apiSchema.htmlElements.find(htmlElement => htmlElement.tag === child.tagName.toLowerCase())?.name ||
-            'Element';
-
-        // disable click events on hyperlink
-        if (child.tagName.toLowerCase() === 'a') {
-            makeElementNotClickable(child);
-        }
-    });
+    // Attach toggle event listener on details element
+    if (element.tagName.toLowerCase() === 'details') {
+        element.addEventListener('toggle', () => refreshElementHighlight());
+    }
 
     // Populate the dataset attribute helper
     const attributes = {};
@@ -541,6 +529,9 @@ const setupElement = (element) => {
         });
     });
     element.dataset.uwProperties = JSON.stringify(properties);
+
+    // Loop through the copied element children recursively
+    Array.from(element.children).forEach(child => setupElement(child));
 }
 
 const selectElement = (element) => {
@@ -1373,7 +1364,7 @@ const refreshElementHover = (element = null) => {
     // If the hovered element is the audio, video, or hyperlink
     // or is the element hover
     if (
-        ['audio'].includes(hoveredElement.tagName.toLowerCase()) ||
+        ['audio', 'iframe', 'input', 'select', 'video'].includes(hoveredElement.tagName.toLowerCase()) ||
         hoveredElement === elementHover
     ) {
         elementHover.style.pointerEvents = 'all';
@@ -1491,87 +1482,89 @@ const refreshElementHighlight = () => {
         }
 
         // Update the position of the drag area points
-        const dragAreaPoints = document.querySelectorAll('.uw-element-drag-area');
-        const dragAreaPointsPosition = [
-            { x: boundingRect.left, y: boundingRect.top - 1, title: 'top-left', },
-            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top - 1, title: 'middle-top', },
-            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top - 1, title: 'top-right', },
-            { x: boundingRect.left, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-left', },
-            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-right', },
-            { x: boundingRect.left, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-left', },
-            { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top + boundingRect.height - 1, title: 'middle-bottom', },
-            { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-right', },
-        ]
-        dragAreaPoints.forEach((dragAreaPoint, index) => {
-            dragAreaPoint.style.top = `${dragAreaPointsPosition[index].y + window.scrollY - 3}px`;
-            dragAreaPoint.style.left = `${dragAreaPointsPosition[index].x + window.scrollX - 3}px`;
-            dragAreaPoint.dataset.title = dragAreaPointsPosition[index].title;
+        if (selectedElement?.contentEditable !== 'true') {
+            const dragAreaPoints = document.querySelectorAll('.uw-element-drag-area');
+            const dragAreaPointsPosition = [
+                { x: boundingRect.left, y: boundingRect.top - 1, title: 'top-left', },
+                { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top - 1, title: 'middle-top', },
+                { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top - 1, title: 'top-right', },
+                { x: boundingRect.left, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-left', },
+                { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height / 2 - 1, title: 'middle-right', },
+                { x: boundingRect.left, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-left', },
+                { x: boundingRect.left + boundingRect.width / 2 - 1 / 2, y: boundingRect.top + boundingRect.height - 1, title: 'middle-bottom', },
+                { x: boundingRect.left + boundingRect.width - 2, y: boundingRect.top + boundingRect.height - 1, title: 'bottom-right', },
+            ]
+            dragAreaPoints.forEach((dragAreaPoint, index) => {
+                dragAreaPoint.style.top = `${dragAreaPointsPosition[index].y + window.scrollY - 3}px`;
+                dragAreaPoint.style.left = `${dragAreaPointsPosition[index].x + window.scrollX - 3}px`;
+                dragAreaPoint.dataset.title = dragAreaPointsPosition[index].title;
 
-            // Set the cursor style for the drag area points
-            switch (dragAreaPointsPosition[index].title) {
-                case 'top-left':
-                case 'bottom-right':
-                    dragAreaPoint.style.cursor = 'nwse-resize';
-                    break;
-                case 'top-right':
-                case 'bottom-left':
-                    dragAreaPoint.style.cursor = 'nesw-resize';
-                    break;
-                case 'middle-top':
-                case 'middle-bottom':
-                    dragAreaPoint.style.cursor = 'ns-resize';
-                    break;
-                case 'middle-left':
-                case 'middle-right':
-                    dragAreaPoint.style.cursor = 'ew-resize';
-                    break;
-            }
+                // Set the cursor style for the drag area points
+                switch (dragAreaPointsPosition[index].title) {
+                    case 'top-left':
+                    case 'bottom-right':
+                        dragAreaPoint.style.cursor = 'nwse-resize';
+                        break;
+                    case 'top-right':
+                    case 'bottom-left':
+                        dragAreaPoint.style.cursor = 'nesw-resize';
+                        break;
+                    case 'middle-top':
+                    case 'middle-bottom':
+                        dragAreaPoint.style.cursor = 'ns-resize';
+                        break;
+                    case 'middle-left':
+                    case 'middle-right':
+                        dragAreaPoint.style.cursor = 'ew-resize';
+                        break;
+                }
 
-            // Unhide the drag area point
-            dragAreaPoint.classList.remove('uw-hidden');
+                // Unhide the drag area point
+                dragAreaPoint.classList.remove('uw-hidden');
 
-            // Hide some drag area points if the selected element is too small either in width
-            if (boundingRect.width <= 5) {
-                if (
-                    dragAreaPointsPosition[index].title.startsWith('top') ||
-                    dragAreaPointsPosition[index].title.startsWith('bottom') ||
-                    dragAreaPointsPosition[index].title.endsWith('left') ||
-                    dragAreaPointsPosition[index].title.endsWith('right')
-                ) {
+                // Hide some drag area points if the selected element is too small either in width
+                if (boundingRect.width <= 5) {
+                    if (
+                        dragAreaPointsPosition[index].title.startsWith('top') ||
+                        dragAreaPointsPosition[index].title.startsWith('bottom') ||
+                        dragAreaPointsPosition[index].title.endsWith('left') ||
+                        dragAreaPointsPosition[index].title.endsWith('right')
+                    ) {
+                        dragAreaPoint.classList.add('uw-hidden');
+                    }
+                } else if (boundingRect.width <= 10) {
+                    if (
+                        dragAreaPointsPosition[index].title === 'middle-top' ||
+                        dragAreaPointsPosition[index].title === 'middle-bottom'
+                    ) {
+                        dragAreaPoint.classList.add('uw-hidden');
+                    }
+                }
+
+                // Hide some drag area points if the selected element is too small either in height
+                if (boundingRect.height <= 5) {
+                    if (
+                        dragAreaPointsPosition[index].title.startsWith('top') ||
+                        dragAreaPointsPosition[index].title.startsWith('bottom') ||
+                        dragAreaPointsPosition[index].title.endsWith('top') ||
+                        dragAreaPointsPosition[index].title.endsWith('bottom')
+                    ) {
+                        dragAreaPoint.classList.add('uw-hidden');
+                    }
+                } else if (boundingRect.height <= 10) {
+                    if (
+                        dragAreaPointsPosition[index].title === 'middle-left' ||
+                        dragAreaPointsPosition[index].title === 'middle-right'
+                    ) {
+                        dragAreaPoint.classList.add('uw-hidden');
+                    }
+                }
+
+                if (isElementMoving) {
                     dragAreaPoint.classList.add('uw-hidden');
                 }
-            } else if (boundingRect.width <= 10) {
-                if (
-                    dragAreaPointsPosition[index].title === 'middle-top' ||
-                    dragAreaPointsPosition[index].title === 'middle-bottom'
-                ) {
-                    dragAreaPoint.classList.add('uw-hidden');
-                }
-            }
-
-            // Hide some drag area points if the selected element is too small either in height
-            if (boundingRect.height <= 5) {
-                if (
-                    dragAreaPointsPosition[index].title.startsWith('top') ||
-                    dragAreaPointsPosition[index].title.startsWith('bottom') ||
-                    dragAreaPointsPosition[index].title.endsWith('top') ||
-                    dragAreaPointsPosition[index].title.endsWith('bottom')
-                ) {
-                    dragAreaPoint.classList.add('uw-hidden');
-                }
-            } else if (boundingRect.height <= 10) {
-                if (
-                    dragAreaPointsPosition[index].title === 'middle-left' ||
-                    dragAreaPointsPosition[index].title === 'middle-right'
-                ) {
-                    dragAreaPoint.classList.add('uw-hidden');
-                }
-            }
-
-            if (isElementMoving) {
-                dragAreaPoint.classList.add('uw-hidden');
-            }
-        });
+            });
+        }
     }
 
     if (elementParentHighlight) {
@@ -2239,6 +2232,12 @@ const onElementDragEnd = (event) => {
     refreshElementHover();
 
     isElementMoving = false;
+
+    // Wait for the element bounding rect to be updated
+    window.setTimeout(() => {
+        // then refresh the highlight elements
+        refreshElementHighlight();
+    }, 50);
 }
 
 const onElementDragOver = (event) => {
@@ -2267,14 +2266,14 @@ const onElementDrag = (event) => {
         refreshElementSkeleton();
     }
 
-    // // Check if the mouse has moved less than 5 pixels
-    // // to prevent flickering when hovering over border elements
-    // if (
-    //     Math.abs(event.clientX - mousePosition.x) < 5 &&
-    //     Math.abs(event.clientY - mousePosition.y) < 5
-    // ) {
-    //     return; // do nothing
-    // }
+    // Check if the mouse has moved less than 5 pixels
+    // to prevent flickering when hovering over border elements
+    if (
+        Math.abs(event.clientX - mousePosition.x) < 5 &&
+        Math.abs(event.clientY - mousePosition.y) < 5
+    ) {
+        return; // do nothing
+    }
 
     // Update the mouse position
     mousePosition.x = event.clientX;

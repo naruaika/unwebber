@@ -514,8 +514,20 @@ canvas {
         }
     }
 
-    .panel__search {
+    .panel__search-container {
+        position: sticky;
+        top: -8px;
         width: 100%;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        margin-top: -8px;
+        margin-bottom: -4px;
+        background: var(--color-primary);
+
+        .panel__search {
+            width: 100%;
+            font-size: 11px;
+        }
     }
 
     input,

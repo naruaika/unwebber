@@ -14,6 +14,20 @@ const mainCanvas = document.getElementById('main-canvas');
 
 const kebabToCamel = (kebab) => kebab.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 
+const searchInText = (query, text) => {
+    const queryChars = query.split('');
+    const textChars = text.split('');
+    let queryIndex = 0;
+    let textIndex = 0;
+    while (queryIndex < queryChars.length && textIndex < textChars.length) {
+        if (queryChars[queryIndex] === textChars[textIndex]) {
+            queryIndex++;
+        }
+        textIndex++;
+    }
+    return queryIndex === queryChars.length;
+}
+
 const hexToRgba = (hex) => {
     hex = hex.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -85,8 +99,8 @@ const refreshCanvasRulers = (drawSelectedElement = true) => {
     const rulerStepLarge = 50;
     const mainCanvasScrollLeft =
         mainCanvas.contentWindow.pageXOffset ||
-        mainCanvas.contentDocument.documentElement.scrollLeft ||
-        mainCanvas.contentDocument.body.scrollLeft ||
+        mainCanvas.contentDocument.documentElement?.scrollLeft ||
+        mainCanvas.contentDocument.body?.scrollLeft ||
         0;
     for (let i = 0; i < topRulerBoundingRect.width; i += rulerSmallStep) {
         const tickHeight = i % rulerStepLarge === 0
@@ -127,8 +141,8 @@ const refreshCanvasRulers = (drawSelectedElement = true) => {
     // Draw the ruler ticks for the left ruler
     const mainCanvasScrollTop =
         mainCanvas.contentWindow.pageYOffset ||
-        mainCanvas.contentDocument.documentElement.scrollTop ||
-        mainCanvas.contentDocument.body.scrollTop ||
+        mainCanvas.contentDocument.documentElement?.scrollTop ||
+        mainCanvas.contentDocument.body?.scrollTop ||
         0;
     for (let i = 0; i < leftRulerBoundingRect.height; i += rulerSmallStep) {
         const tickHeight = i % rulerStepLarge === 0
@@ -289,6 +303,10 @@ const refreshOutlinePanel = (documentTree) => {
                 icon.classList.add('icon', 'icon-box');
                 button.appendChild(icon);
             } else {
+                // add blank icon
+                const blank = document.createElement('div');
+                blank.classList.add('icon', 'blank');
+                button.appendChild(blank);
                 // add a square icon
                 const icon = document.createElement('div');
                 icon.classList.add('icon', 'icon-square');
@@ -575,7 +593,8 @@ const refreshAttributesPanel = () => {
                 attribute.belongsTo.includes(selectedElement.tagName.toLowerCase())
             ) &&
             ! [
-                // TODO: implement special treatment for these attributes
+                // TODO: add support for custom attribute, e.g. onclick
+                // TODO: implement special treatment for exclusive attributes
                 // 'draggable',
                 // 'contenteditable',
                 // 'inert',
@@ -753,7 +772,7 @@ const refreshAttributesPanel = () => {
                 attributeContainer.appendChild(inputBox);
             }
 
-            // TODO: add support for custom attribute option indicated by the "etc" key
+            // TODO: add support for custom value indicated by the "etc" key
 
             listContainer.appendChild(attributeContainer);
         });
@@ -1245,35 +1264,49 @@ const populateTemplatesPanel = () => {
     listContainer.querySelector('.placeholder').remove();
 
     // Add search input to the templates panel
+    const searchInputContainer = document.createElement('div');
+    searchInputContainer.classList.add('panel__search-container');
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.placeholder = 'Search templates...';
     searchInput.classList.add('panel__search');
     searchInput.addEventListener('input', event => {
-        const query = event.target.value.toLowerCase();
+        // filter the template elements based on the search query
+        // TODO: sort the results based on the relevance
         listContainer.querySelectorAll('.template-element').forEach(element => {
-            if (element.dataset.label.toLowerCase().includes(query)) {
-                element.classList.remove('hidden');
-            } else {
-                element.classList.add('hidden');
-            }
+            element.classList.toggle('hidden', ! searchInText(
+                event.target.value.toLowerCase(),
+                `${element.dataset.label.toLowerCase()} <${element.dataset.tagName.toLowerCase()}>`
+            ));
         });
     });
-    listContainer.append(searchInput, listContainer.firstChild);
+    searchInput.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            // clear the search input
+            event.target.value = '';
+            // trigger the input event
+            event.target.dispatchEvent(new Event('input'));
+            return;
+        }
+    });
+    searchInputContainer.append(searchInput);
+    listContainer.append(searchInputContainer);
 
     // Populate template options
     apiSchema.htmlElements
         .filter(template =>
             ! template.categories.includes('metadata') &&
             ! [
-                'html',
-                'head',
-                'title',
-                'style',
-                'script',
                 'body',
-                // 'template',
-                // 'slot',
+                'embed',
+                'head',
+                'html',
+                'object',
+                'script',
+                'slot',
+                'style',
+                'template',
+                'title',
             ].includes(template.tag)
         )
         .forEach(template => {

@@ -1,0 +1,36 @@
+<div>
+    <form
+        oninput="
+            this.elements['result'].value =
+                `To make a bread dough with, you'll also need ${parseFloat((this.elements['flour'].valueAsNumber * 0.012).toFixed(1))}g of yeast`
+                + `and ${parseFloat((this.elements['flour'].valueAsNumber * 0.66).toFixed(1))}g of water.`
+        "
+    >
+        <fieldset
+            style="
+                border: 0;
+                margin: 0;
+                padding: 0;
+            "
+        >
+            <label>
+                Flour (in grams)
+            </label>
+            <input
+                style="
+                    box-sizing: border-box;
+                    width: 80px;
+                    padding: 8px;
+                    border: 1px solid #000000;
+                    border-radius: 5px;
+                "
+                type="number"
+                name="flour"
+                value="500"
+            >
+        </fieldset>
+        <output name="result">
+            To make a bread dough with, you'll also need 6g of yeast and 330g of water.
+        </output>
+    </form>
+</div>

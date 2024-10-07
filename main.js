@@ -29,6 +29,7 @@ const createWindow = () => {
             height: 36,
         },
         // icon: path.join(__dirname, 'res/icons/unwebber.svg'),
+        backgroundColor: '#252525',
 
         webPreferences: {
             preload: path.join(__dirname, 'src/preload.js')
@@ -67,6 +68,7 @@ app.whenReady().then(() => {
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);
     ipcMain.on('project:close', project.close);
+    ipcMain.handle('project:temp', project.saveTemp);
 
     // Create a new window
     createWindow();

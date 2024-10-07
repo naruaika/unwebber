@@ -32,31 +32,31 @@
             <div class="left-toolbar">
 
                 <!-- Application Menu Button -->
-                <button class="button button-setting" id="application-menu-button" onclick="window.unwebber.project.close()" tabindex="1">
+                <button class="button" id="application-menu-button" tabindex="1">
                     <div class="icon icon-unwebber application-logo"></div>
                     <div class="icon icon-chevron-down"></div>
                 </button>
 
-                <!-- Visual Edit Button -->
-                <fieldset>
-                    <input type="radio" value="visual" id="visual-edit-button" name="editor-mode" tabindex="2" />
-                    <label for="visual-edit-button" class="button">
+                <!-- Move Edit Button -->
+                <fieldset tabindex="1">
+                    <input type="radio" name="edit-mode" value="move" class="main-tool__edit" id="edit-move-button" />
+                    <label for="edit-move-button" class="button">
                         <div class="icon icon-mouse-pointer"></div>
                     </label>
                 </fieldset>
 
-                <!-- Transform Edit Button -->
-                <fieldset>
-                    <input type="radio" value="transform" id="transform-edit-button" name="editor-mode" tabindex="3" />
-                    <label for="transform-edit-button" class="button">
+                <!-- Node Edit Button -->
+                <fieldset tabindex="1">
+                    <input type="radio" name="edit-mode" value="node" class="main-tool__edit" id="edit-node-button" />
+                    <label for="edit-node-button" class="button">
                         <div class="icon icon-pen-tool"></div>
                     </label>
                 </fieldset>
 
                 <!-- Code Edit Button -->
-                <fieldset>
-                    <input type="radio" value="code" id="code-edit-button" name="editor-mode" tabindex="4" />
-                    <label for="code-edit-button" class="button">
+                <fieldset tabindex="1">
+                    <input type="radio" name="edit-mode" value="code" class="main-tool__edit" id="edit-code-button" />
+                    <label for="edit-code-button" class="button">
                         <div class="icon icon-code"></div>
                     </label>
                 </fieldset>
@@ -65,26 +65,26 @@
             <!-- Right Toolbar -->
             <div class="right-toolbar">
 
-                <!-- Website Preview Button -->
-                <fieldset>
-                    <input type="radio" value="preview" id="website-preview-button" name="editor-mode" tabindex="5" />
-                    <label for="website-preview-button" class="button">
+                <!-- Live Edit Button -->
+                <fieldset tabindex="1">
+                    <input type="radio" name="edit-mode" value="live" class="main-tool__edit" id="edit-live-button" />
+                    <label for="edit-live-button" class="button">
                         <div class="icon icon-play"></div>
                     </label>
                 </fieldset>
 
                 <!-- Document View Button -->
-                <button class="button button-setting" id="document-view-button" tabindex="6">
+                <button class="button" id="document-view-button" tabindex="1">
                     <div class="icon icon-monitor"></div>
                 </button>
 
                 <!-- Document Version Button -->
-                <button class="button button-setting" id="document-version-button" tabindex="7">
+                <button class="button" id="document-version-button" tabindex="1">
                     <div class="icon icon-git-branch"></div>
                 </button>
 
                 <!-- Document Setting Button -->
-                <button class="button button-setting" id="document-setting-button" tabindex="8">
+                <button class="button" id="document-setting-button" tabindex="1">
                     <div class="icon icon-settings"></div>
                 </button>
             </div>
@@ -99,35 +99,38 @@
             <div class="main-sidebar__left">
 
                 <!-- Pages Panel -->
-                <div class="main-sidebar__panel" id="pages-panel" tabindex="9">
-                    <button class="header">
+                <div class="main-sidebar__panel" id="pages-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Pages</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
+                        <!-- NOTE: The contents are dynamically generated. -->
                         <span class="placeholder">No pages found.</span>
                     </div>
                 </div>
 
                 <!-- Outline Panel -->
-                <div class="main-sidebar__panel" id="outline-panel" tabindex="10">
-                    <button class="header">
+                <div class="main-sidebar__panel" id="outline-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Outline</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No element found.</span>
+                        <!-- NOTE: The contents are dynamically generated. -->
+                        <span class="placeholder">No elements found.</span>
                     </div>
                     <div class="breadcrumb scrollable"></div>
                 </div>
 
                 <!-- Assets Panel -->
-                <div class="main-sidebar__panel" id="assets-panel" tabindex="11">
-                    <button class="header">
+                <div class="main-sidebar__panel" id="assets-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Assets</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
+                        <!-- NOTE: The contents are dynamically generated. -->
                         <span class="placeholder">No assets found.</span>
                     </div>
                 </div>
@@ -149,15 +152,16 @@
                         <div class="row">
                             <canvas class="left-ruler"></canvas>
                             <div class="container">
-                                <div class="main-canvas__overlay hidden"></div>
+                                <div class="main-canvas__overlay"></div>
                                 <iframe
                                     src=""
                                     title=""
-                                    class="main-canvas"
-                                    id="main-canvas"
+                                    class="main-iframe"
+                                    id="main-iframe"
                                     loading="lazy"
                                     frameborder="0"
                                     seamless
+                                    tabindex="-1"
                                 ></iframe>
                             </div>
                         </div>
@@ -169,24 +173,25 @@
             <div class="main-sidebar__right">
 
                 <!-- Attributes Panel -->
-                <div class="main-sidebar__panel" id="attributes-panel" tabindex="12">
-                    <button class="header">
+                <div class="main-sidebar__panel" id="attributes-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Attributes</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No element selected.</span>
+                        <!-- NOTE: The contents are dynamically generated. -->
+                        <span class="placeholder">No elements selected.</span>
                     </div>
                 </div>
 
                 <!-- Properties Panel -->
-                <div class="main-sidebar__panel" id="properties-panel" tabindex="13">
-                    <button class="header">
+                <div class="main-sidebar__panel" id="properties-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Properties</div>
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No element selected.</span>
+                        <span class="placeholder">No elements selected.</span>
 
                         <!-- Spacing -->
                         <div class="panel__section hidden" id="spacing-section">
@@ -194,37 +199,6 @@
                                 <div class="title">Spacing</div>
                             </div>
                             <div class="section__container">
-                                <div class="box-model">
-                                    <div class="column margin">
-                                        <div class="input margin__top" contenteditable="true">0</div>
-                                        <div class="row">
-                                            <div class="input margin__left" contenteditable="true">0</div>
-                                            <div class="column border">
-                                                <div class="input border__top" contenteditable="true">0</div>
-                                                <div class="row">
-                                                    <div class="input border__left" contenteditable="true">0</div>
-                                                    <div class="column padding">
-                                                        <div class="input padding__top" contenteditable="true">0</div>
-                                                        <div class="row">
-                                                            <div class="input padding__left" contenteditable="true">0</div>
-                                                            <div class="element">
-                                                                <div class="input element__width" contenteditable="true">0</div>
-                                                                <span>&#10005;</span>
-                                                                <div class="input element__height" contenteditable="true">0</div>
-                                                            </div>
-                                                            <div class="input padding__right" contenteditable="true">0</div>
-                                                        </div>
-                                                        <div class="input padding__bottom" contenteditable="true">0</div>
-                                                    </div>
-                                                    <div class="input border__right" contenteditable="true">0</div>
-                                                </div>
-                                                <div class="input border__bottom" contenteditable="true">0</div>
-                                            </div>
-                                            <div class="input margin__right" contenteditable="true">0</div>
-                                        </div>
-                                        <div class="input margin__bottom" contenteditable="true">0</div>
-                                    </div>
-                                </div>
                                 <form class="form"></form>
                             </div>
                         </div>
@@ -235,7 +209,6 @@
                                 <div class="title">Layout</div>
                             </div>
                             <div class="section__container">
-                                <div class="simulator scrollable"></div>
                                 <form class="form"></form>
                             </div>
                         </div>
@@ -246,9 +219,6 @@
                                 <div class="title">Position</div>
                             </div>
                             <div class="section__container">
-                                <div class="navigator__container">
-                                    <canvas class="navigator"></canvas>
-                                </div>
                                 <form class="form"></form>
                             </div>
                         </div>
@@ -266,13 +236,14 @@
                 </div>
 
                 <!-- Templates Panel -->
-                <div class="main-sidebar__panel" id="templates-panel" tabindex="14">
-                    <div class="header">
+                <div class="main-sidebar__panel" id="templates-panel" tabindex="">
+                    <button class="header" tabindex="">
                         <div class="title">Templates</div>
                         <div class="icon icon-chevron-down"></div>
-                    </div>
+                    </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No template available.</span>
+                        <!-- NOTE: The contents are dynamically generated. -->
+                        <span class="placeholder">No templates found.</span>
                     </div>
                 </div>
             </div>
@@ -280,11 +251,33 @@
 
         <!-- Main Status Bar -->
         <div class="main-statusbar">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Sequi iusto, consequuntur dolorem consequatur modi corrupti incidunt atque.
+            <span class="container">
+                <!-- NOTE: The text content is dynamically generated. -->
+                <b>Drag</b> to marquee select. <b>Click</b> an object to select it.
+            </span>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu__container" class="hidden">
+        <div class="context-menu scrollable" draggable="true">
+            <!-- NOTE: The context contents are dynamically generated. -->
+            <div class="item">
+                <div class="icon icon-cut"></div>
+                <div class="label">Cut</div>
+            </div>
+            <div class="item">
+                <div class="icon icon-copy"></div>
+                <div class="label">Copy</div>
+            </div>
+            <div class="item">
+                <div class="icon icon-paste"></div>
+                <div class="label">Paste</div>
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="script.js"></script>
+    <script src="script.js" type="module"></script>
 </body>
 </html>

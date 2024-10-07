@@ -10,6 +10,7 @@ const schema = {
     name: null,
     description: null,
     version: null,
+    entrypoint: null,
 };
 
 const validate = (projectSign, schema) => {
@@ -49,26 +50,6 @@ const create = () => {
         throw error;
     }
 
-    // Load the app configuration
-    const appConfig = config.read();
-
-    // Update the current project details
-    appConfig.project.current = {
-        path: workDir,
-        name: 'Untitled',
-        isSaved: false,
-        isTemp: true,
-    };
-
-    // Append to the recent project list
-    appConfig.project.recent.paths = [
-        workDir,
-        ...appConfig.project.recent.paths.slice(0, 2),
-    ];
-
-    // Save the updated configuration
-    config.write(appConfig);
-
     // Open the project
     open(null, workDir);
 };
@@ -90,20 +71,29 @@ const open = (_, workDir) => {
     // Validate the project signature
     validate(signature, schema);
 
-    // Update current project details
+    // Load the app configuration
     const appConfig = config.read();
+
+    // Update current project details
     appConfig.project.current = {
         path: workDir,
-        name: signature.name,
+        signature: signature,
+        cursor: signature.entrypoint,
         isSaved: true,
         isTemp: workDir.startsWith(app.getPath('temp')),
     };
-    config.write(appConfig);
 
-    // Copy index.html to index.d.html
+    // Append to the recent project list
+    appConfig.project.recent.paths = [
+        workDir,
+        ...appConfig.project.recent.paths.slice(0, 2),
+    ];
+
+    // Create temporary files
+    const dIndexRelativePath = signature.entrypoint.replace('.html', '.d.html');
     try {
-        const indexPath = path.join(workDir, 'src/index.html');
-        const dIndexPath = path.join(workDir, 'src/index.d.html');
+        const indexPath = path.join(workDir, signature.entrypoint);
+        const dIndexPath = path.join(workDir, dIndexRelativePath);
         fs.copyFileSync(indexPath, dIndexPath);
         console.debug(`Copied ${indexPath} to ${dIndexPath}`);
     } catch (error) {
@@ -111,26 +101,31 @@ const open = (_, workDir) => {
         throw error;
     }
 
-    // Attach editor.js and editor.css to index.d.html
+    // Attach editor files to the temporary files
     try {
-        const indexPath = path.join(workDir, 'src/index.d.html');
+        const dIndexPath = path.join(workDir, dIndexRelativePath);
         const editorJsPath = path.join(__dirname, '../debs/editor.js');
         const editorCssPath = path.join(__dirname, '../debs/editor.css');
-        const indexContent = fs.readFileSync(indexPath, 'utf-8');
 
-        const editorJsTag = `<script src="${editorJsPath}"></script>`;
-        const editorCssTag = `<link rel="stylesheet" href="${editorCssPath}">`;
+        const editorJsTag = `<script data-uw-ignore src="${editorJsPath}"></script>`;
+        const editorCssTag = `<link data-uw-ignore rel="stylesheet" href="${editorCssPath}">`;
 
-        const indexContentUpdated = indexContent
+        const indexContentUpdated = fs.readFileSync(dIndexPath, 'utf-8')
             .replace('</head>', `    ${editorCssTag}${os.EOL}</head>`)
             .replace('</body>', `    ${editorJsTag}${os.EOL}</body>`);
 
-        fs.writeFileSync(indexPath, indexContentUpdated);
-        console.debug(`Attached editor.js and editor.css to ${indexPath}`);
+        fs.writeFileSync(dIndexPath, indexContentUpdated);
+        console.debug(`Attached editor files to ${dIndexPath}`);
     } catch (error) {
         console.error(error);
         throw error;
     }
+
+    // Update the project file cursor
+    appConfig.project.current.cursor = dIndexRelativePath;
+
+    // Save the updated configuration
+    config.write(appConfig);
 
     // Go to editor page
     BrowserWindow.getFocusedWindow().webContents.loadFile(pages.editor);
@@ -140,9 +135,12 @@ const close = () => {
     // Load the app configuration
     const appConfig = config.read();
 
-    // Delete index.d.html of the current project
+    // Delete temporary files of the current project
     try {
-        const indexPath = path.join(appConfig.project.current.path, 'src/index.d.html');
+        const indexPath = path.join(
+            appConfig.project.current.path,
+            signature.entrypoint.replace('.html', '.d.html'),
+        );
         fs.rmSync(indexPath);
         console.debug(`Deleted ${indexPath}`);
     } catch (error) {
@@ -168,7 +166,31 @@ const close = () => {
     config.write(appConfig);
 
     // Go to editor page
-    BrowserWindow.getFocusedWindow().webContents.loadFile(pages.welcome);
+    BrowserWindow.getFocusedWindow()?.webContents.loadFile(pages.welcome);
 };
 
-module.exports = { create, open, close };
+const saveTemp = (_, data) => {
+    // Load the app configuration
+    const appConfig = config.read();
+
+    // Write the temporary document
+    try {
+        const indexPath = path.join(
+            appConfig.project.current.path,
+            signature.entrypoint.replace('.html', '.d.html'),
+        );
+        fs.writeFileSync(indexPath, data, 'utf-8');
+        console.debug(`Saved temporary document to ${indexPath}`);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+
+    // Update current project details
+    appConfig.project.current.isSaved = true;
+    config.write(appConfig);
+
+    return appConfig;
+};
+
+module.exports = { create, open, close, saveTemp };

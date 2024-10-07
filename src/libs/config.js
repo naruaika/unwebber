@@ -54,6 +54,19 @@ const read = () => {
     // Validate the configuration
     validate(appConfig, schema);
 
+    // Verify if the recent project paths are valid
+    appConfig.project.recent.paths = appConfig.project.recent.paths.filter((projectPath) => {
+        return fs.existsSync(projectPath);
+    });
+
+    // Remove duplicate recent project paths
+    appConfig.project.recent.paths = appConfig.project.recent.paths.filter((projectPath, index, self) => {
+        return index === self.indexOf(projectPath);
+    });
+
+    // Save the updated configuration
+    write(appConfig);
+
     return appConfig;
 };
 

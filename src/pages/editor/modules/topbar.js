@@ -54,6 +54,10 @@ const onElementSelect = (event) => {
     const element = mainFrame.contentDocument.querySelector(`[data-uw-id="${event.detail.uwId}"]`);
     setSelectedElement(element);
     console.log(`[Editor] Select element: @${element.dataset.uwId}`);
+
+    //
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
+    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementHover = (event) => {
@@ -67,9 +71,20 @@ const onElementHover = (event) => {
     const element = mainFrame.contentDocument.querySelector(`[data-uw-id="${event.detail.uwId}"]`);
     setHoveredElement(element);
     console.log(`[Editor] Hover element: @${element.dataset.uwId}`);
+
+    //
+    window.dispatchEvent(new CustomEvent('outline:hover'));
 }
 
 const onElementCut = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot cut element: no element selected');
@@ -114,10 +129,19 @@ const onElementCut = () => {
     console.log(`[Editor] Cut element: @${actionContext.element.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
+    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementCopy = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot cut element: no element selected');
@@ -136,6 +160,14 @@ const onElementCopy = () => {
 }
 
 const onElementPaste = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no element-to-paste
     if (! elementToPaste) {
         console.log('[Editor] Cannot paste element: no element to paste');
@@ -202,10 +234,20 @@ const onElementPaste = () => {
     console.log(`[Editor] Paste element: @${actionContext.element.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
+    window.dispatchEvent(new CustomEvent('outline:select'));
+    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementDelete = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot delete element: no element selected');
@@ -245,10 +287,19 @@ const onElementDelete = () => {
     console.log(`[Editor] Delete element: @${actionContext.element.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
+    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementDuplicate = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot duplicate element: no element selected');
@@ -290,27 +341,25 @@ const onElementDuplicate = () => {
 
     //
     console.log(`[Editor] Duplicate element: @${duplicatedElement.dataset.uwId}`);
-
-    // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
 }
 
-const onElementClone = () => { /* TODO: implement this */ }
-
-const onElementWrap = () => { /* TODO: implement this */ }
-
 const onElementUnwrap = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot unwrap element: no element selected');
         return;
     }
 
-    // Prevent unwrapping the HTML, head, body, meta, title, link, or base elements
-    if (
-        ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(selectedElement.tagName.toLowerCase()) ||
-        selectedElement.parentElement.tagName.toLowerCase() === 'body'
-    ) {
+    // Prevent unwrapping the HTML, head, or body elements
+    if (['html', 'head', 'body'].includes(selectedElement.tagName.toLowerCase())) {
         console.log('[Editor] Cannot unwrap element: the element is not allowed to be unwrapped');
         return;
     }
@@ -328,8 +377,8 @@ const onElementUnwrap = () => {
     const previousState = { container: parentElement };
 
     // Unwrap the selected element and all of its siblings
-    Array.from(selectedElement.parentElement.childNodes).forEach(node => {
-        selectedElement.parentElement.insertAdjacentElement('beforebegin', node);
+    Array.from(parentElement.childNodes).forEach(node => {
+        parentElement.insertAdjacentElement('beforebegin', node);
     });
 
     // Remove the parent element of the selected element
@@ -349,18 +398,18 @@ const onElementUnwrap = () => {
     console.log(`[Editor] Unwrap element in: @${previousState.container.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
-const onElementInsertBefore = () => { /* TODO: implement this */ }
-
-const onElementInsertAfter = () => { /* TODO: implement this */ }
-
-const onElementInsertFirstChild = () => { /* TODO: implement this */ }
-
-const onElementInsertLastChild = () => { /* TODO: implement this */ }
-
 const onElementMoveUp = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot move up element: no element selected');
@@ -419,10 +468,18 @@ const onElementMoveUp = () => {
     console.log(`[Editor] Move up element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementMoveDown = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot move down element: no element selected');
@@ -481,10 +538,18 @@ const onElementMoveDown = () => {
     console.log(`[Editor] Move down element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementOutdentUp = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot outdent up element: no element selected');
@@ -536,10 +601,18 @@ const onElementOutdentUp = () => {
     console.log(`[Editor] Move out up element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementOutdentDown = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot outdent down element: no element selected');
@@ -591,10 +664,18 @@ const onElementOutdentDown = () => {
     console.log(`[Editor] Move out down element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementIndentUp = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot indent up element: no element selected');
@@ -645,10 +726,18 @@ const onElementIndentUp = () => {
     console.log(`[Editor] Indent up element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementIndentDown = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
     // Return if there is no selected element
     if (! selectedElement) {
         console.log('[Editor] Cannot indent down element: no element selected');
@@ -699,7 +788,7 @@ const onElementIndentDown = () => {
     console.log(`[Editor] Indent down element: @${selectedElement.dataset.uwId}`);
 
     // Request the document tree refresh
-    window.dispatchEvent(new CustomEvent('document:tree'));
+    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 (() => {
@@ -712,22 +801,62 @@ const onElementIndentDown = () => {
     // Register the window message event listener
     window.addEventListener('element:select', onElementSelect);
     window.addEventListener('element:hover', onElementHover);
+    window.addEventListener('element:select-same-color', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-bgcolor', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-brcolor', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-brstyle', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-border', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-olcolor', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-olstyle', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-outline', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-elabel', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-etag', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-same-colortag', () => { /* TODO: implement this */ });
     window.addEventListener('element:cut', onElementCut);
     window.addEventListener('element:copy', onElementCopy);
     window.addEventListener('element:paste', onElementPaste);
+    window.addEventListener('element:paste-text-content', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-inner-html', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-outer-html', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-style', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-size', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-width', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-height', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-size-separately', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-width-separately', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-height-separately', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-before', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-after', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-first-child', () => { /* TODO: implement this */ });
+    window.addEventListener('element:paste-last-child', () => { /* TODO: implement this */ });
     window.addEventListener('element:delete', onElementDelete);
     window.addEventListener('element:duplicate', onElementDuplicate);
-    window.addEventListener('element:clone', onElementClone);
-    window.addEventListener('element:wrap', onElementWrap);
+    window.addEventListener('element:create-clone', () => { /* TODO: implement this */ });
+    window.addEventListener('element:unlink-clone', () => { /* TODO: implement this */ });
+    window.addEventListener('element:select-original-clone', () => { /* TODO: implement this */ });
+    window.addEventListener('element:wrap', () => { /* TODO: implement this */ });
     window.addEventListener('element:unwrap', onElementUnwrap);
-    window.addEventListener('insert-before', onElementInsertBefore)
-    window.addEventListener('insert-after', onElementInsertAfter)
-    window.addEventListener('insert-first-child', onElementInsertFirstChild)
-    window.addEventListener('insert-last-child', onElementInsertLastChild)
+    window.addEventListener('element:insert-before', () => { /* TODO: implement this */ });
+    window.addEventListener('element:insert-after', () => { /* TODO: implement this */ });
+    window.addEventListener('element:insert-first-child', () => { /* TODO: implement this */ });
+    window.addEventListener('element:insert-last-child', () => { /* TODO: implement this */ });
+    window.addEventListener('element:convert-to', () => { /* TODO: implement this */ });
+    window.addEventListener('element:move-to-top', () => { /* TODO: implement this */ });
     window.addEventListener('element:move-up', onElementMoveUp);
     window.addEventListener('element:move-down', onElementMoveDown);
+    window.addEventListener('element:move-to-bottom', () => { /* TODO: implement this */ });
     window.addEventListener('element:outdent-up', onElementOutdentUp);
     window.addEventListener('element:outdent-down', onElementOutdentDown);
     window.addEventListener('element:indent-up', onElementIndentUp);
     window.addEventListener('element:indent-down', onElementIndentDown);
+    window.addEventListener('element:align-left', () => { /* TODO: implement this */ });
+    window.addEventListener('element:align-center', () => { /* TODO: implement this */ });
+    window.addEventListener('element:align-right', () => { /* TODO: implement this */ });
+    window.addEventListener('element:align-top', () => { /* TODO: implement this */ });
+    window.addEventListener('element:align-middle', () => { /* TODO: implement this */ });
+    window.addEventListener('element:align-bottom', () => { /* TODO: implement this */ });
+    window.addEventListener('element:rotate-left', () => { /* TODO: implement this */ });
+    window.addEventListener('element:rotate-right', () => { /* TODO: implement this */ });
+    window.addEventListener('element:flip-horizontal', () => { /* TODO: implement this */ });
+    window.addEventListener('element:flip-vertical', () => { /* TODO: implement this */ });
 })()

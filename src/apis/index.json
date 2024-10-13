@@ -1286,7 +1286,7 @@
         },
         {
             "name": "as",
-            "type": "string",
+            "type": "enum",
             "belongsTo": ["link"],
             "description": "Specifies the type of content being loaded by the link.",
             "options": [
@@ -1449,7 +1449,7 @@
         },
         {
             "name": "capture",
-            "type": "string",
+            "type": "enum",
             "belongsTo": ["input"],
             "description": "Specifies a new file should be captured and which device should be used.",
             "options": [
@@ -1512,14 +1512,24 @@
             "description": "Defines the number of columns in a textarea.",
             "documentation": [
                 "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea#cols"
-            ]
+            ],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "colspan",
             "type": "number",
             "belongsTo": ["td", "th"],
             "description": "The colspan attribute defines the number of columns a cell should span.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "content",
@@ -1857,10 +1867,15 @@
         },
         {
             "name": "height",
-            "type": "string",
+            "type": "number",
             "belongsTo": ["canvas", "embed", "iframe", "img", "input", "object", "video"],
             "description": "Specifies the height of elements listed here. For all other elements, use the CSS height property.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "hidden",
@@ -1886,7 +1901,12 @@
             "type": "number",
             "belongsTo": ["meter"],
             "description": "Indicates the lower bound of the upper range.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 0,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "href",
@@ -2136,35 +2156,58 @@
             "type": "number",
             "belongsTo": ["meter"],
             "description": "Indicates the upper bound of the lower range.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "max",
             "type": "string",
             "belongsTo": ["input", "meter", "progress"],
             "description": "Indicates the maximum value allowed.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max"
+            "documentation": [
+                "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max"
+            ]
         },
         {
             "name": "maxlength",
             "type": "number",
             "belongsTo": ["input", "textarea"],
             "description": "Defines the maximum number of characters allowed in the element.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength"
+            "documentation": [
+                "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength"
+            ],
+            "slider": {
+                "min": 1,
+                "max": 160,
+                "step": 1
+            }
         },
         {
             "name": "min",
             "type": "string",
             "belongsTo": ["input", "meter", "progress"],
             "description": "Indicates the minimum value allowed.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min"
+            "documentation": [
+                "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min"
+            ]
         },
         {
             "name": "minlength",
             "type": "number",
             "belongsTo": ["input", "textarea"],
             "description": "Defines the minimum number of characters allowed in the element.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/minlength"
+            "documentation": [
+                "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/minlength"
+            ],
+            "slider": {
+                "min": 1,
+                "max": 160,
+                "step": 1
+            }
         },
         {
             "name": "media",
@@ -2197,7 +2240,12 @@
             "type": "number",
             "belongsTo": ["input", "meter"],
             "description": "Indicates the minimum value allowed.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 0,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "multiple",
@@ -2245,7 +2293,12 @@
             "type": "number",
             "belongsTo": ["meter"],
             "description": "Indicates the optimal numeric value.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 0,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "pattern",
@@ -2570,14 +2623,24 @@
             "type": "number",
             "belongsTo": ["textarea"],
             "description": "Defines the number of rows in a text area.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "rowspan",
             "type": "number",
             "belongsTo": ["td", "th"],
             "description": "Defines the number of rows a table cell should span over.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "sandbox",
@@ -2612,7 +2675,14 @@
             "type": "number",
             "belongsTo": ["input", "select"],
             "description": "Defines the width of the element (in pixels). If the element's type attribute is text or password then it's the number of characters.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/size"
+            "documentation": [
+                "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/size"
+            ],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "sizes",
@@ -2633,7 +2703,12 @@
             "type": "number",
             "belongsTo": ["col", "colgroup"],
             "description": "Defines the number of columns a table cell should span over.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "spellcheck",
@@ -2692,14 +2767,24 @@
             "type": "number",
             "belongsTo": ["ol"],
             "description": "Defines the first number if other than 1.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "step",
             "type": "number",
             "belongsTo": ["input"],
             "description": "Specifies the interval between valid values in a number-based input.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "style",
@@ -2713,7 +2798,12 @@
             "type": "number",
             "belongsTo": "global",
             "description": "Overrides the browser's default tab order and follows the one specified instead.",
-            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex"
+            "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex",
+            "slider": {
+                "min": 1,
+                "max": 100,
+                "step": 1
+            }
         },
         {
             "name": "target",
@@ -2801,7 +2891,12 @@
             "type": "number",
             "belongsTo": ["canvas", "embed", "iframe", "img", "input", "object", "video"],
             "description": "For the elements listed here, this establishes the element's width.",
-            "documentation": []
+            "documentation": [],
+            "slider": {
+                "min": 1,
+                "max": 1000,
+                "step": 1
+            }
         },
         {
             "name": "wrap",

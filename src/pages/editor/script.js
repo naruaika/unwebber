@@ -18,14 +18,14 @@ const onWindowMessage = (event) => {
         console.log('[Editor] Setting up the document...');
 
         // Setup the document to be compatible with the editor
-        setupDocument(mainFrame.contentDocument.documentElement);
+        setupDocument(mainFrame.contentDocument.documentElement, false);
 
         //
         console.log('[Editor] Setting up the document... [DONE]');
 
         // Emit events to trigger the sidebar panels refresh
-        window.dispatchEvent(new CustomEvent('document:tree'));
-        window.dispatchEvent(new CustomEvent('document:templates'));
+        window.dispatchEvent(new CustomEvent('outline:refresh'));
+        window.dispatchEvent(new CustomEvent('template:refresh'));
     }
 }
 
@@ -46,6 +46,10 @@ const onWindowMessage = (event) => {
     topbar.setMode(topbar.Mode.MOVE);
 
     // Open the default sidebar panels
-    sidebar.setActive(sidebar.Panel.PROPERTIES);
+    // sidebar.setActive(sidebar.Panel.PROPERTIES);
+    // sidebar.toggleExpansion(sidebar.Panel.PROPERTIES);
+    sidebar.setActive(sidebar.Panel.ATTRIBUTES);
+    sidebar.toggleExpansion(sidebar.Panel.ATTRIBUTES);
     sidebar.setActive(sidebar.Panel.OUTLINE);
+    sidebar.toggleExpansion(sidebar.Panel.OUTLINE);
 })()

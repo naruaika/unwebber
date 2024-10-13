@@ -24,12 +24,12 @@ const createWindow = () => {
         title: 'Unwebber',
         titleBarStyle: 'hidden',
         titleBarOverlay: {
-            color: '#252525',
+            color: '#333333',
             symbolColor: '#FFFFFF',
             height: 36,
         },
         // icon: path.join(__dirname, 'res/icons/unwebber.svg'),
-        backgroundColor: '#252525',
+        backgroundColor: '#333333',
 
         webPreferences: {
             preload: path.join(__dirname, 'src/preload.js')

@@ -79,5 +79,5 @@ const refreshPanel = () => {
 
 (() => {
     // Register the window message event listener
-    window.addEventListener('document:templates', refreshPanel);
+    window.addEventListener('template:refresh', refreshPanel);
 })()

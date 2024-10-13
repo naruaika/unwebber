@@ -1,7 +1,7 @@
 'use strict';
 
-import { apiSchema, elementData, selectedElement } from "../../globals.js";
-import { convertKebabToCamel } from "../../helpers.js";
+import { apiSchema, elementData, selectedElement } from "../globals.js";
+import { convertKebabToCamel } from "../helpers.js";
 
 const refreshPanel = () => {
     //

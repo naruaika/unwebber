@@ -71,38 +71,7 @@ const showMenu = (event) => {
             // Create a child menu container
             const childMenu = document.createElement('div');
             childMenu.classList.add('context-menu', 'scrollable', 'no-drag', 'hidden');
-            group.addEventListener('mouseenter', (event) => {
-                hoveredItem = event.currentTarget;
-                timeoutId = setTimeout(() => {
-                    if (hoveredItem !== event.target) {
-                        return;
-                    }
-                    clearTimeout(timeoutId);
-                    // hide all the child menus
-                    Array.from(menu.children)
-                        .filter(_item => _item.classList.contains('group'))
-                        .forEach(_group => {
-                            _group.querySelector('.context-menu').classList.add('hidden');
-                        });
-                    // show the current hovered child menu
-                    childMenu.classList.remove('hidden');
-                    // position the child menu
-                    const groupBoundingRect = group.getBoundingClientRect();
-                    const childMenuBoundingRect = childMenu.getBoundingClientRect();
-                    let childMenuLeft = groupBoundingRect.right - 3;
-                    let childMenuTop = groupBoundingRect.top;
-                    // reposition if the child menu will overflow horizontally
-                    if (childMenuLeft + childMenuBoundingRect.width > window.innerWidth) {
-                        childMenuLeft = groupBoundingRect.left - childMenuBoundingRect.width + 3;
-                    }
-                    // reposition if the child menu will overflow vertically
-                    if (childMenuTop + childMenuBoundingRect.height > window.innerHeight) {
-                        childMenuTop = window.innerHeight - childMenuBoundingRect.height + 3;
-                    }
-                    childMenu.style.left = `${childMenuLeft}px`;
-                    childMenu.style.top = `${childMenuTop - 4}px`;
-                }, 200);
-            });
+            group.addEventListener('mouseenter', (event) => onMouseOverGroupMenuItem(event, group, childMenu));
             group.appendChild(childMenu);
 
             return;
@@ -138,7 +107,7 @@ const showMenu = (event) => {
         `;
         menuItem.addEventListener('mouseenter', () => onMouseOverMenuItem(menuItem));
         menuItem.addEventListener('click', () => {
-            window.setTimeout(item.action, 50);
+            setTimeout(item.action, 50);
             hideMenu();
         });
 
@@ -178,10 +147,43 @@ const hideMenu = () => {
     menu.classList.remove('show');
 }
 
+const onMouseOverGroupMenuItem = (event, group, childMenu) => {
+    clearTimeout(timeoutId);
+    hoveredItem = event.currentTarget;
+    timeoutId = setTimeout(() => {
+        if (hoveredItem !== event.target) {
+            return;
+        }
+        // Hide all the child menus
+        Array.from(menu.children)
+            .filter(_item => _item.classList.contains('group'))
+            .forEach(_group => {
+                _group.querySelector('.context-menu').classList.add('hidden');
+            });
+        // Show the current hovered child menu
+        childMenu.classList.remove('hidden');
+        // Position the child menu
+        const groupBoundingRect = group.getBoundingClientRect();
+        const childMenuBoundingRect = childMenu.getBoundingClientRect();
+        let childMenuLeft = groupBoundingRect.right - 3;
+        let childMenuTop = groupBoundingRect.top;
+        // Reposition if the child menu will overflow horizontally
+        if (childMenuLeft + childMenuBoundingRect.width > window.innerWidth) {
+            childMenuLeft = groupBoundingRect.left - childMenuBoundingRect.width + 3;
+        }
+        // Reposition if the child menu will overflow vertically
+        if (childMenuTop + childMenuBoundingRect.height > window.innerHeight) {
+            childMenuTop = window.innerHeight - childMenuBoundingRect.height + 3;
+        }
+        childMenu.style.left = `${childMenuLeft}px`;
+        childMenu.style.top = `${childMenuTop - 4}px`;
+    }, 200);
+}
+
 const onMouseOverMenuItem = (menuItem) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
-        // hide all the child menus
+        // Hide all the child menus of the other groups
         Array.from(menuItem.closest('.context-menu').children)
             .filter(_item => _item.classList.contains('group') && _item !== menuItem)
             .forEach(_group => _group.querySelector('.context-menu').classList.add('hidden'));

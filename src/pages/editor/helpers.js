@@ -116,6 +116,12 @@ export const setupDocument = (element, regenerateId = true) => {
         element.dataset.uwId = generateUniqueId();
     }
 
+    // Reset the IDs of the copied element and its children
+    if (regenerateId) {
+        element.removeAttribute('id');
+        Array.from(element.querySelectorAll('[id]')).forEach(child => child.removeAttribute('id'));
+    }
+
     // Cache the element data
     setElementData(element.dataset.uwId, {
         label: ''
@@ -126,5 +132,5 @@ export const setupDocument = (element, regenerateId = true) => {
     });
 
     // Loop through the copied element children recursively
-    Array.from(element.children).forEach(child => setupDocument(child));
+    Array.from(element.children).forEach(child => setupDocument(child, regenerateId));
 }

@@ -62,7 +62,7 @@ const undoAction = () => {
                 elementData[actionState.reference.uwId].label = actionState.previous.label;
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
             }
 
             break;
@@ -86,7 +86,8 @@ const undoAction = () => {
                 setSelectedElement(cutElement);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;
@@ -107,7 +108,8 @@ const undoAction = () => {
                 setElementData(pastedElement.dataset.uwId, null);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;
@@ -127,7 +129,8 @@ const undoAction = () => {
                 setSelectedElement(deletedElement);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;
@@ -164,7 +167,7 @@ const redoAction = () => {
                 elementData[actionState.reference.uwId].label = actionState.upcoming.label;
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
             }
 
             break;
@@ -186,7 +189,8 @@ const redoAction = () => {
                 setSelectedElement(null);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;
@@ -209,7 +213,8 @@ const redoAction = () => {
                 setSelectedElement(pastedElement);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;
@@ -227,7 +232,8 @@ const redoAction = () => {
                 setSelectedElement(null);
 
                 // Request the document tree refresh
-                window.dispatchEvent(new CustomEvent('document:tree'));
+                window.dispatchEvent(new CustomEvent('outline:refresh'));
+                window.dispatchEvent(new CustomEvent('attribute:refresh'));
             }
 
             break;

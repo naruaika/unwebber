@@ -1,6 +1,6 @@
 'use strict';
 
-import { apiSchema, setElementData } from './globals.js';
+import { apiSchema, setMetadata } from './globals.js';
 
 export const isObjectEmpty = (obj) => {
     for (let _ in obj) {
@@ -13,12 +13,12 @@ export const convertCamelToKebab = (camel) => camel.replace(/([a-z])([A-Z])/g, '
 
 export const convertKebabToCamel = (kebab) => kebab.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
 
-export const generateUniqueId = () => {
+export const generateUniqueId = (length = 10) => {
     let uniqueId = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const length = characters.length;
-    for (let i = 0; i < 10; i++) {
-        uniqueId += characters.charAt(Math.floor(Math.random() * length));
+    const charLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        uniqueId += characters.charAt(Math.floor(Math.random() * charLength));
     }
     return uniqueId;
 }
@@ -123,7 +123,7 @@ export const setupDocument = (element, regenerateId = true) => {
     }
 
     // Cache the element data
-    setElementData(element.dataset.uwId, {
+    setMetadata(element.dataset.uwId, {
         label: ''
             || apiSchema.htmlElements.find(htmlElement => htmlElement.tag === element.tagName.toLowerCase())?.name
             || element.tagName.toLowerCase(),

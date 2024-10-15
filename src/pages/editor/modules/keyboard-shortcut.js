@@ -7,19 +7,19 @@
             return;
         }
 
-        if (event.ctrlKey && event.key === 'd') {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
             window.dispatchEvent(new CustomEvent('element:duplicate'));
             return;
         }
 
-        if (event.ctrlKey && event.key === 'z') {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
             window.dispatchEvent(new CustomEvent('action:undo'));
             return;
         }
 
         if (
-            (event.ctrlKey && event.key === 'y') ||
-            (event.ctrlKey && event.shiftKey && event.code === 'KeyZ')
+            ((event.ctrlKey || event.metaKey) && event.key === 'y') ||
+            ((event.ctrlKey || event.metaKey) && event.shiftKey && event.code === 'KeyZ')
         ) {
             window.dispatchEvent(new CustomEvent('action:redo'));
             return;

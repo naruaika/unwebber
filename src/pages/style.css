@@ -520,8 +520,9 @@ canvas {
             }
 
             > .content__container {
-                padding: 8px;
+                flex: 1;
 
+                padding: 8px;
                 display: none;
 
                 font-size: 11px;
@@ -629,7 +630,8 @@ canvas {
         }
 
         &:focus {
-            border: var(--border-size) solid var(--color-blue) !important;
+            outline: var(--border-size) solid var(--color-blue) !important;
+            z-index: 1;
         }
 
         &:focus-visible {
@@ -778,7 +780,6 @@ canvas {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         background-color: var(--color-primary);
         border: var(--border-size) solid var(--color-gray-475);
-        border-radius: 5px;
 
         white-space: nowrap;
 
@@ -797,7 +798,6 @@ canvas {
                 width: 20px;
                 margin: 4px auto;
                 border: 1px solid var(--color-gray-400);
-                border-radius: 4px;
             }
         }
 
@@ -823,10 +823,11 @@ canvas {
 
             font-weight: 300;
             color: var(--color-base);
-            border-radius: 5px;
 
             &:hover,
             &:has(.context-menu:not(.hidden)) {
+                /* FIXME: the hovered item with child menu opened should not be highlighted
+                when its sibling with no child menu got hovered */
                 background-color: var(--color-gray);
             }
 
@@ -872,6 +873,8 @@ canvas {
 .icon-edit { mask: url('../../res/icons/edit-2.svg'); }
 .icon-maximize { mask: url('../../res/icons/maximize-2.svg'); }
 .icon-minimize { mask: url('../../res/icons/minimize-2.svg'); }
+.icon-plus { mask: url('../../res/icons/plus.svg'); }
+.icon-minus { mask: url('../../res/icons/minus.svg'); }
 .icon-eye { mask: url('../../res/icons/eye.svg'); }
 .icon-eye-off { mask: url('../../res/icons/eye-off.svg'); }
 .icon-dot { mask: url('../../res/icons/dot.svg'); }

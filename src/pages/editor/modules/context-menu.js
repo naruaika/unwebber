@@ -19,7 +19,9 @@ const showMenu = (event) => {
             // If all the items below the spacer are disabled, don't show the spacer
             if (
                 item.for &&
-                event.uwMenu.filter(_item => item.for.includes(_item.id)).every(_item => _item.disabled)
+                event.uwMenu
+                    .filter(_item => item.for.includes(_item.id))
+                    .every(_item => _item.disabled)
             ) {
                 return;
             }
@@ -54,7 +56,11 @@ const showMenu = (event) => {
         // Create a group
         if (item.group) {
             // If all the items belongs the group are disabled, don't show the group
-            if (event.uwMenu.filter(_item => item.for.includes(_item.id)).every(_item => _item.disabled)) {
+            if (
+                event.uwMenu
+                    .filter(_item => item.for.includes(_item.id))
+                    .every(_item => _item.disabled)
+            ) {
                 return;
             }
 
@@ -157,9 +163,7 @@ const onMouseOverGroupMenuItem = (event, group, childMenu) => {
         // Hide all the child menus
         Array.from(menu.children)
             .filter(_item => _item.classList.contains('group'))
-            .forEach(_group => {
-                _group.querySelector('.context-menu').classList.add('hidden');
-            });
+            .forEach(_group => _group.querySelector('.context-menu').classList.add('hidden'));
         // Show the current hovered child menu
         childMenu.classList.remove('hidden');
         // Position the child menu
@@ -167,11 +171,11 @@ const onMouseOverGroupMenuItem = (event, group, childMenu) => {
         const childMenuBoundingRect = childMenu.getBoundingClientRect();
         let childMenuLeft = groupBoundingRect.right - 3;
         let childMenuTop = groupBoundingRect.top;
-        // Reposition if the child menu will overflow horizontally
+        // reposition if the child menu will overflow horizontally
         if (childMenuLeft + childMenuBoundingRect.width > window.innerWidth) {
             childMenuLeft = groupBoundingRect.left - childMenuBoundingRect.width + 3;
         }
-        // Reposition if the child menu will overflow vertically
+        // reposition if the child menu will overflow vertically
         if (childMenuTop + childMenuBoundingRect.height > window.innerHeight) {
             childMenuTop = window.innerHeight - childMenuBoundingRect.height + 3;
         }

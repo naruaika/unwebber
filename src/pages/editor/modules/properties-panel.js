@@ -1,6 +1,6 @@
 'use strict';
 
-import { apiSchema, elementData, selectedElement } from "../globals.js";
+import { apiSchema, metadata, selectedNode } from "../globals.js";
 import { convertKebabToCamel } from "../helpers.js";
 
 const refreshPanel = () => {
@@ -13,8 +13,8 @@ const refreshPanel = () => {
     // Remove all existing field containers
     panelContentContainer.querySelectorAll('.field-container').forEach(element => element.remove());
 
-    // If no element is selected
-    if (! selectedElement) {
+    // If no node is selected
+    if (! selectedNode.node) {
         // show the placeholder element
         panelContentContainer.querySelector('.placeholder')?.classList.remove('hidden');
         return;
@@ -23,8 +23,8 @@ const refreshPanel = () => {
     // Hide the placeholder element
     panelContentContainer.querySelector('.placeholder')?.classList.add('hidden');
 
-    // If no element is selected
-    if (! selectedElement) {
+    // If no node is selected
+    if (! selectedNode.node) {
         // show the placeholder element
         panelContentContainer.querySelector('.placeholder')?.classList.remove('hidden');
         panelContentContainer.querySelectorAll('.panel__section').forEach(element => element.classList.add('hidden'));
@@ -73,10 +73,10 @@ const refreshPanel = () => {
     ];
 
     const computedStyle = Object.fromEntries(
-        Object.entries(window.getComputedStyle(selectedElement)).filter(([key, _]) => isNaN(key))
+        Object.entries(window.getComputedStyle(selectedNode)).filter(([key, _]) => isNaN(key))
     )
-    const parentComputedStyle = selectedElement.parent ? Object.fromEntries(
-        Object.entries(window.getComputedStyle(selectedElement.parent)).filter(([key, _]) => isNaN(key))
+    const parentComputedStyle = selectedNode.node.parent ? Object.fromEntries(
+        Object.entries(window.getComputedStyle(selectedNode.node.parent)).filter(([key, _]) => isNaN(key))
     ) : {};
 
     // Populate the panel sections
@@ -111,7 +111,7 @@ const refreshPanel = () => {
             }
 
             //
-            const cachedProperty = elementData[selectedElement.dataset.uwId].properties?.[fieldName];
+            const cachedProperty = metadata[selectedNode.node.dataset.uwId].properties?.[fieldName];
             const computedValue = computedStyle[convertKebabToCamel(fieldName)];
 
             //
@@ -131,7 +131,7 @@ const refreshPanel = () => {
                 mainCanvas.contentWindow.postMessage({
                     type: 'element:style',
                     payload: {
-                        id: selectedElement.id,
+                        id: selectedNode.node.id,
                         property: event.target.dataset.key,
                         value: inputBox.value || inputBox.placeholder,
                         checked: event.target.checked ? 'true' : 'false',
@@ -164,19 +164,7 @@ const refreshPanel = () => {
                     event.target.value = cachedProperty?.value || propertySpecification.initialValue;
                 }
             });
-            inputBox.addEventListener('change', (event) => {
-                // TODO: Send the property value to the main canvas
-                // const checkBox = event.target.parentElement.querySelector('.field-checkbox');
-                // mainCanvas.contentWindow.postMessage({
-                //     type: 'element:style',
-                //     payload: {
-                //         id: selectedElement.id,
-                //         property: event.target.dataset.key,
-                //         value: event.target.value,
-                //         checked: checkBox.checked ? 'true' : 'false',
-                //     },
-                // }, '*');
-            });
+            inputBox.addEventListener('change', (event) => { /* TODO */});
             propertyContainer.appendChild(inputBox);
 
             // Create the datalist

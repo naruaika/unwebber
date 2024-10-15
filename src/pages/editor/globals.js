@@ -5,31 +5,39 @@ let apiSchema = {};
 
 let mousePosition = { x: 0, y: 0 };
 
-let elementData = {};
+let metadata = {};
 
-let selectedElement = null;
+let selectedNode = {
+    node: null,
+    position: null,
+    parent: null,
+};
 
-let hoveredElement = null;
+let hoveredNode = {
+    node: null,
+    position: null,
+    parent: null,
+};
 
-let hasCutElement = null;
+let hasCutNode = null;
 
-let elementToPaste = null;
+let nodeToPaste = {
+    node: null,
+    position: null,
+    parent: null,
+};
 
 const setMousePosition = (x, y) => mousePosition = { x, y };
 
-const setElementData = (key, value) => {
-    value === null
-        ? delete elementData[key]
-        : elementData[key] = value;
-};
+const setMetadata = (key, value) => { value === null ? delete metadata[key] : metadata[key] = value };
 
-const setSelectedElement = (element) => selectedElement = element;
+const setSelectedNode = (node, position = null, parent = null) => selectedNode = { node, position, parent };
 
-const setHoveredElement = (element) => hoveredElement = element;
+const setHoveredNode = (node, position = null, parent = null) => hoveredNode = { node, position, parent };
 
-const setHasCutElement = (boolean) => hasCutElement = boolean;
+const setHasCutNode = (boolean) => hasCutNode = boolean;
 
-const setElementToPaste = (element) => elementToPaste = element;
+const setNodeToPaste = (node, position = null, parent = null) => nodeToPaste = { node, position, parent };
 
 await window.unwebber.config.load().then(config => appConfig = config);
 await window.unwebber.apis.schema().then(schema => apiSchema = schema);
@@ -37,16 +45,18 @@ await window.unwebber.apis.schema().then(schema => apiSchema = schema);
 export {
     appConfig,
     apiSchema,
+
     mousePosition,
-    elementData,
-    selectedElement,
-    hoveredElement,
-    hasCutElement,
-    elementToPaste,
+    metadata,
+    selectedNode,
+    hoveredNode,
+    hasCutNode,
+    nodeToPaste,
+
     setMousePosition,
-    setElementData,
-    setSelectedElement,
-    setHoveredElement,
-    setHasCutElement,
-    setElementToPaste,
+    setMetadata,
+    setSelectedNode,
+    setHoveredNode,
+    setHasCutNode,
+    setNodeToPaste,
 };

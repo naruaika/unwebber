@@ -1,5 +1,6 @@
 import { appConfig } from './globals.js';
 import { setupDocument } from './helpers.js';
+import './modules/action-center.js';
 import './modules/action-history.js';
 import './modules/context-menu.js';
 import './modules/keyboard-shortcut.js';
@@ -46,10 +47,8 @@ const onWindowMessage = (event) => {
     topbar.setMode(topbar.Mode.MOVE);
 
     // Open the default sidebar panels
-    // sidebar.setActive(sidebar.Panel.PROPERTIES);
-    // sidebar.toggleExpansion(sidebar.Panel.PROPERTIES);
-    sidebar.setActive(sidebar.Panel.ATTRIBUTES);
     sidebar.toggleExpansion(sidebar.Panel.ATTRIBUTES);
-    sidebar.setActive(sidebar.Panel.OUTLINE);
+    sidebar.toggleExpansion(sidebar.Panel.PROPERTIES);
     sidebar.toggleExpansion(sidebar.Panel.OUTLINE);
+    sidebar.setActive(sidebar.Panel.OUTLINE);
 })()

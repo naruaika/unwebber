@@ -5,6 +5,7 @@ import './modules/action-history.js';
 import './modules/context-menu.js';
 import './modules/keyboard-shortcut.js';
 import * as topbar from './modules/topbar.js';
+import * as canvas from './modules/canvas.js';
 import * as sidebar from './modules/sidebar.js';
 import * as statusbar from './modules/status-bar.js';
 
@@ -27,6 +28,7 @@ const onWindowMessage = (event) => {
         // Emit events to trigger the sidebar panels refresh
         window.dispatchEvent(new CustomEvent('outline:refresh'));
         window.dispatchEvent(new CustomEvent('template:refresh'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh'));
     }
 }
 
@@ -47,7 +49,6 @@ const onWindowMessage = (event) => {
     topbar.setMode(topbar.Mode.MOVE);
 
     // Open the default sidebar panels
-    sidebar.toggleExpansion(sidebar.Panel.ATTRIBUTES);
     sidebar.toggleExpansion(sidebar.Panel.PROPERTIES);
     sidebar.toggleExpansion(sidebar.Panel.OUTLINE);
     sidebar.setActive(sidebar.Panel.OUTLINE);

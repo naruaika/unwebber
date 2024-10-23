@@ -455,7 +455,7 @@ const refreshPanel = () => {
     }
 
     // Create a placeholder element if the selected node is a text node
-    if (selectedNode.node.nodeType === Node.TEXT_NODE) {
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
         const placeholder = document.createElement('span');
         placeholder.innerText = 'No attributes available for text nodes.';
         placeholder.classList.add('placeholder');

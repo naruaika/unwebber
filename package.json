@@ -1,7 +1,7 @@
 {
   "name": "unwebber",
   "version": "1.0.0",
-  "description": "Unrealistic non-beginner website builder",
+  "description": "Unrealistic non-beginner web editor",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",

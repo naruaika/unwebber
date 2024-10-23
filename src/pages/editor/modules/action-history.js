@@ -94,6 +94,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -114,6 +115,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
 
@@ -134,6 +136,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -157,6 +160,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -183,6 +187,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
 
@@ -196,24 +201,24 @@ const undoAction = () => {
         case 'element:indent-up':
         case 'element:indent-down':
             // Find the element by the id
-            const movedUpElement = actionState.reference.element.dataset?.uwId
+            const movedElement = actionState.reference.element.dataset?.uwId
                 ? mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.reference.element.dataset.uwId}"]`)
                 : mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.previous.container.dataset.uwId}"]`).childNodes[actionState.previous.position];
 
             // Put the moved element back to the previous position
-            const movedUpParentElement = actionState.previous.container;
-            const movedUpPositionIndex = actionState.previous.position;
-            movedUpParentElement.insertBefore(movedUpElement, movedUpParentElement.childNodes[movedUpPositionIndex]);
+            const movedParentElement = actionState.previous.container;
+            const movedPositionIndex = actionState.previous.position;
+            movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
 
             // Set the selected element to the moved element
-            setSelectedNode(movedUpElement, movedUpPositionIndex, movedUpParentElement);
+            setSelectedNode(movedElement, movedPositionIndex, movedParentElement);
 
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
-
     }
 
     actionHistoryIndex -= 1;
@@ -275,6 +280,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -302,6 +308,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
 
@@ -322,6 +329,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -347,6 +355,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh'));
 
             break;
 
@@ -367,6 +376,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
 
@@ -380,21 +390,22 @@ const redoAction = () => {
         case 'element:indent-up':
         case 'element:indent-down':
             // Find the element by the id
-            const movedUpElement = actionState.reference.element.dataset?.uwId
+            const movedElement = actionState.reference.element.dataset?.uwId
                 ? mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.reference.element.dataset.uwId}"]`)
                 : mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.upcoming.container.dataset.uwId}"]`).childNodes[actionState.upcoming.position];
 
             // Put the moved element back to the upcoming position
-            const movedUpParentElement = actionState.upcoming.container;
-            const movedUpPositionIndex = actionState.upcoming.position;
-            movedUpParentElement.insertBefore(movedUpElement, movedUpParentElement.childNodes[movedUpPositionIndex]);
+            const movedParentElement = actionState.upcoming.container;
+            const movedPositionIndex = actionState.upcoming.position;
+            movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
 
             // Set the selected element to the moved element
-            setSelectedNode(movedUpElement, movedUpPositionIndex, movedUpParentElement);
+            setSelectedNode(movedElement, movedPositionIndex, movedParentElement);
 
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
 
             break;
     }

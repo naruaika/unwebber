@@ -25,6 +25,32 @@
             return;
         }
 
+        if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === '0') {
+            window.dispatchEvent(new CustomEvent('canvas:view'));
+            return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.key === '=') {
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'in' }));
+            return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.key === '-') {
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'out' }));
+            return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.key === '0') {
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'fit' }));
+            return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && ['1', '2', '3', '4'].includes(event.key)) {
+            const scale = Math.pow(2, parseInt(event.key) - 1);
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: scale }));
+            return;
+        }
+
         // TODO: add event listener for keydown to move elements with arrow keys
     });
     document.addEventListener('cut', () => window.dispatchEvent(new CustomEvent('element:cut')));

@@ -160,11 +160,13 @@
                         <div class="title">index.html</div>
                     </div>
                     <div class="main-canvas__container">
-                        <canvas class="top-ruler"></canvas>
+                        <div class="row">
+                            <div class="corner"></div>
+                            <canvas class="top-ruler"></canvas>
+                        </div>
                         <div class="row">
                             <canvas class="left-ruler"></canvas>
-                            <div class="container">
-                                <div class="main-canvas__overlay"></div>
+                            <div class="main-container helper">
                                 <iframe
                                     src=""
                                     title=""
@@ -175,6 +177,7 @@
                                     seamless
                                     tabindex="-1"
                                 ></iframe>
+                                <div class="main-canvas__overlay helper"></div>
                             </div>
                         </div>
                     </div>

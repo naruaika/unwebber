@@ -22,6 +22,9 @@ const onElementSelect = (event) => {
         ! event?.detail.uwParentId
     ) {
         setSelectedNode(null);
+        window.dispatchEvent(new CustomEvent('outline:refresh'));
+        window.dispatchEvent(new CustomEvent('attribute:refresh'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh'));
         return;
     }
 
@@ -35,9 +38,10 @@ const onElementSelect = (event) => {
     const elementId = event.detail.uwId || `${event.detail.uwParentId}[${event.detail.uwPosition}]`;
     console.log(`[Editor] Select element: @${elementId}`);
 
-    //
+    // Request panel updates
     window.dispatchEvent(new CustomEvent('outline:refresh'));
     window.dispatchEvent(new CustomEvent('attribute:refresh'));
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementHover = (event) => {
@@ -48,6 +52,8 @@ const onElementHover = (event) => {
         ! event?.detail.uwParentId
     ) {
         setHoveredNode(null);
+        window.dispatchEvent(new CustomEvent('outline:hover'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh'));
         return;
     }
 
@@ -61,8 +67,9 @@ const onElementHover = (event) => {
     const elementId = event.detail.uwId || `${event.detail.uwParentId}[${event.detail.uwPosition}]`;
     console.log(`[Editor] Hover element: @${elementId}`);
 
-    //
+    // Request panel updates
     window.dispatchEvent(new CustomEvent('outline:hover'));
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementCut = () => {
@@ -106,7 +113,7 @@ const onElementCut = () => {
     );
 
     // Clear the selected element
-    setSelectedNode(null);
+    onElementSelect({ detail: {} });
 
     // Request to save the action
     window.dispatchEvent(new CustomEvent('action:save', {
@@ -121,10 +128,6 @@ const onElementCut = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Cut element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
-    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementCopy = () => {
@@ -200,8 +203,8 @@ const onElementPaste = () => {
                 // Insert the element after the selected element if the selected element only contains empty text
                 // or append the element to the selected element
                 if (
-                    Array.from(selectedNode.node.childNodes).every(node => node.nodeType === Node.TEXT_NODE) &&
-                    nodeToPaste.node.nodeType !== Node.TEXT_NODE
+                    Array.from(selectedNode.node.childNodes).every(node => node.nodeType !== Node.ELEMENT_NODE) &&
+                    nodeToPaste.node.nodeType === Node.ELEMENT_NODE
                 ) {
                     selectedNode.parent.insertBefore(nodeToPaste.node, selectedNode.node.nextSibling);
                 } else {
@@ -263,11 +266,6 @@ const onElementPaste = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${upcomingState.container.dataset.uwId}[${upcomingState.position}]`;
     console.log(`[Editor] Paste element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
-    window.dispatchEvent(new CustomEvent('outline:select'));
-    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementDelete = () => {
@@ -302,7 +300,7 @@ const onElementDelete = () => {
     selectedNode.node.remove();
 
     // Clear the selected element
-    setSelectedNode(null);
+    onElementSelect({ detail: {} });
 
     // Request to save the action
     window.dispatchEvent(new CustomEvent('action:save', {
@@ -317,10 +315,6 @@ const onElementDelete = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Delete element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
-    window.dispatchEvent(new CustomEvent('attribute:refresh'));
 }
 
 const onElementDuplicate = () => {
@@ -406,7 +400,7 @@ const onElementUnwrap = () => {
 
     // Remove empty text nodes from the parent of the selected element
     Array.from(selectedNode.parent.childNodes).forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === '') {
+        if (node.nodeType !== Node.ELEMENT_NODE && node.textContent.trim() === '') {
             node.remove();
         }
     });
@@ -447,9 +441,6 @@ const onElementUnwrap = () => {
 
     //
     console.log(`[Editor] Unwrap element in: @${previousState.container.dataset.uwId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementMoveToTop = () => {
@@ -486,7 +477,7 @@ const onElementMoveToTop = () => {
         previousSibling &&
         (
             (
-                previousSibling.nodeType === Node.TEXT_NODE &&
+                previousSibling.nodeType !== Node.ELEMENT_NODE &&
                 previousSibling.textContent.trim() === ''
             ) ||
             'uwIgnore' in previousSibling.dataset
@@ -527,9 +518,6 @@ const onElementMoveToTop = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move to top element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementMoveUp = () => {
@@ -555,7 +543,7 @@ const onElementMoveUp = () => {
             (
                 ! selectedNode.node.previousElementSibling &&
                 (
-                    selectedNode.node.previousSibling.nodeType === Node.TEXT_NODE &&
+                    selectedNode.node.previousSibling.nodeType !== Node.ELEMENT_NODE &&
                     selectedNode.node.previousSibling.textContent.trim() === ''
                 )
             )
@@ -578,7 +566,7 @@ const onElementMoveUp = () => {
         previousSibling &&
         (
             (
-                previousSibling.nodeType === Node.TEXT_NODE &&
+                previousSibling.nodeType !== Node.ELEMENT_NODE &&
                 previousSibling.textContent.trim() === ''
             ) ||
             'uwIgnore' in previousSibling.dataset
@@ -619,9 +607,6 @@ const onElementMoveUp = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move up element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementMoveDown = () => {
@@ -647,7 +632,7 @@ const onElementMoveDown = () => {
             (
                 ! selectedNode.node.nextElementSibling &&
                 (
-                    selectedNode.node.nextSibling.nodeType === Node.TEXT_NODE &&
+                    selectedNode.node.nextSibling.nodeType !== Node.ELEMENT_NODE &&
                     selectedNode.node.nextSibling.textContent.trim() === ''
                 )
             )
@@ -670,7 +655,7 @@ const onElementMoveDown = () => {
         nextSibling &&
         (
             (
-                nextSibling.nodeType === Node.TEXT_NODE &&
+                nextSibling.nodeType !== Node.ELEMENT_NODE &&
                 nextSibling.textContent.trim() === ''
             ) ||
             'uwIgnore' in nextSibling.dataset
@@ -711,9 +696,6 @@ const onElementMoveDown = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move down element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementMoveToBottom = () => {
@@ -750,7 +732,7 @@ const onElementMoveToBottom = () => {
         nextSibling &&
         (
             (
-                nextSibling.nodeType === Node.TEXT_NODE &&
+                nextSibling.nodeType !== Node.ELEMENT_NODE &&
                 nextSibling.textContent.trim() === ''
             ) ||
             'uwIgnore' in nextSibling.dataset
@@ -791,9 +773,6 @@ const onElementMoveToBottom = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move to bottom element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementOutdentUp = () => {
@@ -857,9 +836,6 @@ const onElementOutdentUp = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementOutdentDown = () => {
@@ -923,9 +899,6 @@ const onElementOutdentDown = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementIndentUp = () => {
@@ -994,9 +967,6 @@ const onElementIndentUp = () => {
     //
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent up element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 const onElementIndentDown = () => {
@@ -1065,9 +1035,6 @@ const onElementIndentDown = () => {
     //
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent down element: @${elementId}`);
-
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
 }
 
 (() => {

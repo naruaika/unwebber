@@ -160,7 +160,10 @@ const blurListItemLabel = (event) => {
 
     // Apply the new label
     if (listItem.dataset.uwId) {
-        metadata[listItem.dataset.uwId].label = upcomingState.label;
+        setMetadata(listItem.dataset.uwId, {
+            ...metadata[listItem.dataset.uwId],
+            label: upcomingState.label,
+        });
     } else {
         selectedNode.node.textContent = upcomingState.label;
     }
@@ -237,6 +240,8 @@ const setElementColorTag = (color) => {
     };
 
     // Apply the new color tag
+    // TODO: move to action-center?
+    button.dataset.color = color;
     setMetadata(button.dataset.uwId, {
         ...metadata[button.dataset.uwId],
         color,
@@ -287,7 +292,9 @@ const showContextMenu = (event) => {
         }));
     }
 
-    const parentDisplay = window.getComputedStyle(selectedNode.parent).display;
+    const parentDisplay = selectedNode.parent
+        ? window?.getComputedStyle(selectedNode.parent).display
+        : 'block';
 
     const stylePosition = selectedNode.node.dataset?.uwId
         ? window.getComputedStyle(selectedNode.node).position
@@ -299,10 +306,10 @@ const showContextMenu = (event) => {
         previousSibling &&
         (
             (
-                previousSibling.nodeType === Node.TEXT_NODE &&
+                previousSibling.nodeType !== Node.ELEMENT_NODE &&
                 previousSibling.textContent.trim() === ''
             ) ||
-            'uwIgnore' in previousSibling.dataset
+            'uwIgnore' in (previousSibling.dataset || [])
         )
     ) {
         previousSibling = previousSibling.previousSibling;
@@ -317,10 +324,10 @@ const showContextMenu = (event) => {
         nextSibling &&
         (
             (
-                nextSibling.nodeType === Node.TEXT_NODE &&
+                nextSibling.nodeType !== Node.ELEMENT_NODE &&
                 nextSibling.textContent.trim() === ''
             ) ||
-            'uwIgnore' in nextSibling.dataset
+            'uwIgnore' in (nextSibling.dataset || [])
         )
     ) {
         nextSibling = nextSibling.nextSibling;
@@ -1292,7 +1299,7 @@ const mouseEnterListItem = (event) => {
     // Highlight the hovered list item
     highlightHoveredListItem(event);
 
-    // Prevent from updating the hovered element if the control key is not pressed
+    // Prevent from updating the hovered element if the alt key is not pressed
     if (! event.altKey) {
         return;
     }
@@ -1309,6 +1316,10 @@ const mouseEnterListItem = (event) => {
 }
 
 const mouseLeaveListItem = () => {
+    if (! hoveredNode.node) {
+        return;
+    }
+
     // Clear the hovered list item
     clearListItemHoveringHighlight();
 
@@ -1331,7 +1342,7 @@ const createListItem = (node, level) => {
         hasChild = [...node.childNodes].some(child => {
             return true &&
                 ! child.hasAttribute?.('data-uw-ignore') &&
-                (child.nodeType !== Node.TEXT_NODE || child.textContent.trim());
+                (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim());
         });
     }
 
@@ -1368,7 +1379,7 @@ const createListItem = (node, level) => {
         // add an element identifier icon
         let icon = document.createElement('div');
         icon.classList.add('icon',
-            node.nodeType === Node.TEXT_NODE
+            node.nodeType !== Node.ELEMENT_NODE
                 ? 'icon-type'
                 : 'icon-box'
         );
@@ -1385,9 +1396,11 @@ const createListItem = (node, level) => {
     buttonLabelContent.textContent = null ||
         metadata[node.dataset?.uwId]?.label ||
         (
-            node.nodeType === Node.TEXT_NODE
-                ? node.textContent.trim()
-                : ''
+            node.nodeType === Node.COMMENT_NODE
+                ? `/* ${node.textContent.trim()} */`
+                : node.nodeType !== Node.ELEMENT_NODE
+                    ? node.textContent.trim()
+                    : ''
         );
     buttonLabel.append(buttonLabelContent);
     if (node.tagName) {
@@ -1469,7 +1482,7 @@ const createListItem = (node, level) => {
             if (
                 child.hasAttribute?.('data-uw-ignore') ||
                 (
-                    child.nodeType === Node.TEXT_NODE &&
+                    child.nodeType !== Node.ELEMENT_NODE &&
                     ! child.textContent.trim()
                 )
             ) {
@@ -1519,14 +1532,50 @@ const refreshPanel = () => {
 
     // TODO: add search input to filter elements by tag name, id, and label
 
-    // Remove all the existing elements from the panel
-    panelContentContainer.innerHTML = '';
+    if (! isPanelReady) {
+        const documentTree = mainFrame.contentDocument.documentElement;
 
-    // Populate the outline panel with the document tree
-    const documentTree = mainFrame.contentDocument.documentElement;
-    const unorderedList = document.createElement('ul');
-    unorderedList.appendChild(createListItem(documentTree, 0));
-    panelContentContainer.appendChild(unorderedList);
+        const populateListItemTree = () => {
+            // Remove all the existing elements from the panel
+            panelContentContainer.innerHTML = '';
+
+            // Populate the outline panel with the document tree
+            const unorderedList = document.createElement('ul');
+            unorderedList.appendChild(createListItem(documentTree, 0));
+            panelContentContainer.appendChild(unorderedList);
+        }
+
+        // Use MutationObserver to watch for DOM changes
+        const observer = new MutationObserver(() => {
+            // Repopulate the outline panel if there are changes
+            populateListItemTree();
+
+            // If the selected element is found
+            if (selectedNode.node) {
+                // Get the list item element
+                const listItemButton = selectedNode.node.dataset?.uwId
+                    ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
+                    : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
+
+                // Highlight the selected element
+                highlightSelectedListItem({
+                    currentTarget: listItemButton,
+                    stopPropagation: () => {},
+                    preventDefault: () => {},
+                });
+            }
+        });
+
+        // Populate the outline panel with the document tree
+        populateListItemTree();
+
+        // Start observing the document tree for changes
+        observer.observe(documentTree, {
+            attributes: true,
+            childList: true,
+            subtree: true
+        });
+    }
 
     // If the selected element is found
     if (selectedNode.node) {
@@ -1535,12 +1584,20 @@ const refreshPanel = () => {
             ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
             : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
 
+        // Skip if the selected element is not found
+        if (! listItemButton) {
+            return;
+        }
+
         // Highlight the selected element
         highlightSelectedListItem({
             currentTarget: listItemButton,
             stopPropagation: () => {},
             preventDefault: () => {},
         });
+
+        // Scroll to the selected element
+        scrollToElement(listItemButton);
     }
 
     // Refresh the breadcrumb
@@ -1553,33 +1610,6 @@ const refreshPanel = () => {
     console.log('[Editor] Refreshing outline panel... [DONE]');
 }
 
-const onElementSelect = () => {
-    // Refresh the breadcrumb
-    refreshBreadcrumb();
-
-    // If the selected element is not found
-    if (! selectedNode.node) {
-        // Clear the selected element
-        clearListItemSelectionHighlight();
-        return;
-    }
-
-    // Get the list item element
-    const listItemButton = selectedNode.node.dataset?.uwId
-        ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
-        : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
-
-    // Highlight the selected element
-    highlightSelectedListItem({
-        currentTarget: listItemButton,
-        stopPropagation: () => {},
-        preventDefault: () => {},
-    });
-
-    // Scroll to the selected element
-    scrollToElement(listItemButton);
-}
-
 const onElementHover = () => {
     // If the hovered element is not found
     if (! hoveredNode.node) {
@@ -1589,7 +1619,7 @@ const onElementHover = () => {
     }
 
     // Get the list item element
-    const listItemButton = hoveredNode.node.nodeType !== Node.TEXT_NODE
+    const listItemButton = hoveredNode.node.nodeType === Node.ELEMENT_NODE
         ? panelContentContainer.querySelector(`button[data-uw-id="${hoveredNode.node.dataset.uwId}"]`)
         : panelContentContainer.querySelector(`li[data-uw-id="${hoveredNode.parent.dataset.uwId}"] ul button[data-uw-position="${hoveredNode.position}"]`);
 
@@ -1649,6 +1679,7 @@ const onPanelDrag = (event) => {
     }
 
     // Show the drag guide element
+    // TODO: improve the accuracy of the drag guide position
     const panelRect = panelContentContainer.getBoundingClientRect();
     const targetBoundingRect = target.getBoundingClientRect();
     const targetMidPoint = targetBoundingRect.top + targetBoundingRect.height / 2;
@@ -1723,11 +1754,12 @@ const onListItemButtonDrop = () => {
     // Save the current action state
     const previousState = {
         // FIXME: should be the container ID instead of the container element
-        container: draggedElement.parentElement.dataset.uwId,
+        container: draggedElement.parentElement,
         position: Array.prototype.indexOf.call(draggedElement.parentElement.childNodes, draggedElement),
     };
 
     // Apply the new parent
+    // TODO: move to action-center?
     switch (nodeDragPosition) {
         case 'before':
             targetElement.parentNode.insertBefore(draggedElement, targetElement);
@@ -1743,14 +1775,10 @@ const onListItemButtonDrop = () => {
     // Request to save the action
     const upcomingState = {
         // FIXME: should be the container ID instead of the container element
-        container: draggedElement.parentElement.dataset.uwId,
-        position: Array.prototype.indexOf.call(draggedElement.parentElement.children, draggedElement),
+        container: draggedElement.parentElement,
+        position: Array.prototype.indexOf.call(draggedElement.parentElement.childNodes, draggedElement),
     };
-    const actionContext = {
-        uwId: draggedElement.dataset?.uwId || '',
-        uwPosition: Array.prototype.indexOf.call(draggedElement.parentElement.childNodes, draggedElement),
-        uwParentId: draggedElement.parentElement.dataset.uwId || '',
-    };
+    const actionContext = { element: draggedElement };
     window.dispatchEvent(new CustomEvent('action:save', {
         detail: {
             title: 'element:move',
@@ -1767,9 +1795,9 @@ const onListItemButtonDrop = () => {
     // Request to update the selected element
     window.dispatchEvent(new CustomEvent('element:select', {
         detail: {
-            uwId: actionContext.uwId,
-            uwPosition: actionContext.uwPosition,
-            uwParentId: actionContext.uwParentId,
+            uwId: actionContext.element.dataset?.uwId,
+            uwPosition: upcomingState.position,
+            uwParentId: upcomingState.container.dataset.uwId,
             target: 'outline-panel',
         }
     }));
@@ -1792,6 +1820,5 @@ const onListItemButtonDragEnd = (event) => {
 
     // Register the window message event listener
     window.addEventListener('outline:refresh', refreshPanel);
-    window.addEventListener('outline:select', onElementSelect);
     window.addEventListener('outline:hover', onElementHover);
 })()

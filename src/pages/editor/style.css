@@ -674,6 +674,51 @@
     }
 }
 
+.main-canvas__overlay {
+    .selected-box,
+    .hovered-box {
+        position: absolute;
+        box-sizing: border-box;
+        border: 1px solid var(--color-blue);
+
+        /* Make sure the element on its own layer */
+        backface-visibility: hidden;
+        will-change: transform;
+        transform: translateZ(0);
+        isolation: isolate;
+        -webkit-font-smoothing: subpixel-antialiased;
+
+        &.editable {
+            border: 1px solid var(--color-orange) !important;
+        }
+
+        .drag-area {
+            position: absolute;
+            box-sizing: border-box;
+            width: 9px;
+            height: 9px;
+            box-sizing: border-box;
+            background-color: var(--color-base);
+            border: 1px solid var(--color-blue);
+            border-radius: 50%;
+            pointer-events: all;
+            z-index: 10001;
+
+            &:hover {
+                background-color: var(--color-blue);
+            }
+        }
+    }
+
+    .selected-box {
+        pointer-events: none;
+    }
+
+    .hovered-box {
+        border-color: var(--color-blue-400);
+    }
+}
+
 #context-menu__container {
     .color-tag {
         display: flex;

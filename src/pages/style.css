@@ -313,8 +313,8 @@ canvas {
             box-sizing: border-box;
             flex-direction: column;
 
-            background: var(--color-gray-900);
-            border: var(--border-size) solid var(--color-gray-900);
+            border-left: var(--default-border);
+            border-right: var(--default-border);
 
             .main-frame {
                 position: relative;
@@ -367,31 +367,42 @@ canvas {
                     display: flex;
                     flex-direction: column;
 
+                    background: repeating-conic-gradient(var(--color-gray-600) 0% 25%, var(--color-gray) 0% 50%) 0% / 20px 20px;
+
                     overflow: hidden;
                     /* resize: both; */
-
-                    .top-ruler {
-                        flex-shrink: 0;
-                        height: 20px;
-                        margin-left: 20px;
-                    }
 
                     .row {
                         display: flex;
                         flex: 1;
 
+                        .corner {
+                            height: 20px;
+                            width: 20px;
+                            background-color: var(--color-gray-700);
+                            z-index: 9999;
+                        }
+
+                        .top-ruler {
+                            flex-shrink: 0;
+                            height: 20px;
+                            z-index: 9999;
+                        }
+
                         .left-ruler {
                             flex-shrink: 0;
                             width: 20px;
+                            z-index: 9999;
                         }
 
-                        .container {
+                        .main-container {
                             flex: 1;
-
-                            position: relative;
-                            display: flex;
-
-                            background-color: var(--color-base);
+                            width: 100%;
+                            height: 100%;
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            overflow: hidden;
 
                             .main-canvas__overlay {
                                 position: absolute;
@@ -402,9 +413,15 @@ canvas {
                             }
 
                             .main-iframe {
-                                width: 100%;
-                                height: 100%;
+                                position: absolute;
                                 box-sizing: border-box;
+
+                                /* Make sure the overlay on its own layer */
+                                backface-visibility: hidden;
+                                will-change: transform;
+                                transform: translateZ(0);
+                                isolation: isolate;
+                                -webkit-font-smoothing: subpixel-antialiased;
                             }
                         }
                     }
@@ -540,7 +557,7 @@ canvas {
                 }
 
                 .placeholder {
-                    color: #999999;
+                    color: var(--color-gray-300);
                 }
 
                 .panel__section {
@@ -561,7 +578,7 @@ canvas {
                         font-weight: 700;
                         text-transform: uppercase;
 
-                        color: #999999;
+                        color: var(--color-gray-300);
 
                         -webkit-user-select: none;
                         user-select: none;

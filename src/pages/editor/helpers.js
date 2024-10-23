@@ -23,6 +23,15 @@ export const generateUniqueId = (length = 10) => {
     return uniqueId;
 }
 
+export const hexToRgba = (hex) => {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const a = parseInt(hex.substring(6, 8) || 'ff', 16) / 255;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 export const searchInText = (query, text) => {
     const queryChars = query.split('');
     const textChars = text.split('');

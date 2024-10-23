@@ -30,6 +30,8 @@ const createWindow = () => {
         },
         // icon: path.join(__dirname, 'res/icons/unwebber.svg'),
         backgroundColor: '#333333',
+        // vibrancy: 'fullscreen-ui', // on MacOS
+        // backgroundMaterial: 'acrylic', // on Windows 11
 
         webPreferences: {
             preload: path.join(__dirname, 'src/preload.js')

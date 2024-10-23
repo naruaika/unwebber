@@ -1,6 +1,6 @@
 # Unwebber
 
-Unwebber is an unrealistic non-beginner website builder.
+Unwebber is an unrealistic non-beginner web editor.
 
 ## Licenses
 

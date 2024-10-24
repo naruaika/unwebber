@@ -7,7 +7,7 @@ import {
     setNodeToPaste,
     setMetadata,
 } from '../globals.js';
-import { setupDocument } from '../helpers.js';
+import { setupDocument, styleElement } from '../helpers.js';
 
 const mainFrame = document.getElementById('main-iframe');
 
@@ -16,6 +16,8 @@ let actionHistory = [];
 let actionHistoryIndex = -1;
 
 const saveAction = (event) => {
+    // Get the current timestamp
+    const timestamp = Date.now();
 
     // Delete the action history after the current index
     if (actionHistoryIndex < actionHistory.length - 1) {
@@ -31,13 +33,30 @@ const saveAction = (event) => {
         memoryUsage = JSON.stringify(actionHistory).length;
     }
 
-    // Push the action state to the action history
-    actionHistory.push({
-        title: event.detail.title,
-        previous: event.detail.previous,
-        upcoming: event.detail.upcoming,
-        reference: event.detail.reference,
-    });
+    // If the title, the reference, and the signature of the previous and upcoming action are equal
+    // and the timestamp of the previous action is less than 500ms, update the previous action,
+    // otherwise push the action state to the action history
+    if (
+        actionHistory[actionHistoryIndex]?.title === event.detail.title &&
+        actionHistory[actionHistoryIndex]?.reference?.element === event.detail.reference.element &&
+        event.detail.signature === actionHistory[actionHistoryIndex]?.signature &&
+        timestamp - actionHistory[actionHistoryIndex]?.timestamp < 500
+    ) {
+        actionHistory[actionHistoryIndex] = {
+            ...actionHistory[actionHistoryIndex],
+            upcoming: event.detail.upcoming,
+            timestamp,
+        };
+    } else {
+        actionHistory.push({
+            title: event.detail.title,
+            previous: event.detail.previous,
+            upcoming: event.detail.upcoming,
+            reference: event.detail.reference,
+            signature: event.detail.signature,
+            timestamp,
+        });
+    }
 
     // Update the action history index
     actionHistoryIndex = actionHistory.length - 1;
@@ -115,7 +134,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { existence: true } }));
 
             break;
 
@@ -187,7 +206,7 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { existence: true } }));
 
             break;
 
@@ -216,7 +235,25 @@ const undoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+
+            break;
+
+        case 'element:transform':
+            // Find the element by the id
+            const transformedElement = mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.reference.element.dataset.uwId}"]`)
+
+            // Apply the transformation of the element
+            // TODO: should we restore the previous checked state?
+            styleElement(transformedElement, 'transform', actionState.previous.style.transform, true);
+
+            // Save the property value
+            const _metadata = metadata[transformedElement.dataset.uwId];
+            _metadata.properties['transform'] = { value: actionState.previous.style.transform, checked: true };
+            setMetadata(transformedElement.dataset.uwId, _metadata);
+
+            // Request panel updates
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
 
             break;
     }
@@ -308,7 +345,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { existence: true } }));
 
             break;
 
@@ -376,7 +413,7 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { existence: true } }));
 
             break;
 
@@ -405,7 +442,24 @@ const redoAction = () => {
             // Request panel updates
             window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
-            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { reset: true } }));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+
+            break;
+
+        case 'element:transform':
+            // Find the element by the id
+            const transformedElement = mainFrame.contentDocument.querySelector(`[data-uw-id="${actionState.reference.element.dataset.uwId}"]`)
+
+            // Apply the transformation of the element
+            styleElement(transformedElement, 'transform', actionState.upcoming.style.transform, true);
+
+            // Save the property value
+            const _metadata = metadata[transformedElement.dataset.uwId];
+            _metadata.properties['transform'] = { value: actionState.upcoming.style.transform, checked: true };
+            setMetadata(transformedElement.dataset.uwId, _metadata);
+
+            // Request panel updates
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
 
             break;
     }

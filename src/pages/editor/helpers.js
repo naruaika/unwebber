@@ -1,6 +1,6 @@
 'use strict';
 
-import { apiSchema, setMetadata } from './globals.js';
+import { apiSchema, metadata, setMetadata } from './globals.js';
 
 export const isObjectEmpty = (obj) => {
     for (let _ in obj) {
@@ -142,4 +142,37 @@ export const setupDocument = (element, regenerateId = true) => {
 
     // Loop through the copied element children recursively
     Array.from(element.children).forEach(child => setupDocument(child, regenerateId));
+}
+
+export const styleElement = (element, property, value = null, checked = null) => {
+    // Skip non-element nodes
+    if (element.nodeType !== Node.ELEMENT_NODE) {
+        return;
+    }
+
+    if (! value) {
+        // Remove the property from the element
+        element.style.removeProperty(property);
+
+        // Remove the property from the metadata
+        const _metadata = metadata[element.dataset.uwId];
+        _metadata.properties[property] = {
+            value: 'unset',
+            checked: checked || _metadata.properties[property]?.checked || false,
+        };
+        setMetadata(element.dataset.uwId, _metadata);
+
+        return;
+    }
+
+    // Set the property to the element
+    element.style[property] = value;
+
+    // Set the property to the metadata
+    const _metadata = metadata[element.dataset.uwId];
+    _metadata.properties[property] = {
+        value,
+        checked: checked || _metadata.properties[property]?.checked || true,
+    };
+    setMetadata(element.dataset.uwId, _metadata);
 }

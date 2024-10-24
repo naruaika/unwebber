@@ -9,8 +9,10 @@ import {
     setHasCutNode,
     setNodeToPaste,
     apiSchema,
+    metadata,
+    setMetadata,
 } from '../globals.js';
-import { setupDocument } from '../helpers.js';
+import { setupDocument, styleElement } from '../helpers.js';
 
 const mainFrame = document.getElementById('main-iframe');
 
@@ -24,7 +26,7 @@ const onElementSelect = (event) => {
         setSelectedNode(null);
         window.dispatchEvent(new CustomEvent('outline:refresh'));
         window.dispatchEvent(new CustomEvent('attribute:refresh'));
-        window.dispatchEvent(new CustomEvent('canvas:refresh'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
         return;
     }
 
@@ -53,7 +55,7 @@ const onElementHover = (event) => {
     ) {
         setHoveredNode(null);
         window.dispatchEvent(new CustomEvent('outline:hover'));
-        window.dispatchEvent(new CustomEvent('canvas:refresh'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
         return;
     }
 
@@ -1017,6 +1019,81 @@ const onElementIndentDown = () => {
     console.log(`[Editor] Indent down element: @${elementId}`);
 }
 
+const onElementTranslate = (event) => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
+    // Skip if there is no selected element
+    if (! selectedNode.node) {
+        console.log('[Editor] Cannot translate element: no element selected');
+        return;
+    }
+
+    // Skip if the selected node is non-element node
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
+        console.log('[Editor] Cannot translate element: not an element node');
+        return;
+    }
+
+    // Get the properties of the selected element
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Save the current action state
+    const previousState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+
+    // Apply the transformation of the element
+    const distance = event.detail.withShiftKey ? 10 : 1;
+    if (event.detail.direction.includes('up')) {
+        matrix.f -= distance;
+    }
+    if (event.detail.direction.includes('down')) {
+        matrix.f += distance;
+    }
+    if (event.detail.direction.includes('left')) {
+        matrix.e -= distance;
+    }
+    if (event.detail.direction.includes('right')) {
+        matrix.e += distance;
+    }
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+    const actionContext = { element: selectedNode.node };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:transform',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+            signature: event.detail.direction + distance,
+        }
+    }));
+
+    //
+    const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
+    console.log(`[Editor] Translate element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+}
+
 (() => {
     // Register the window message event listener
     window.addEventListener('element:select', onElementSelect);
@@ -1079,4 +1156,5 @@ const onElementIndentDown = () => {
     window.addEventListener('element:rotate-right', () => { /* TODO: implement this */ });
     window.addEventListener('element:flip-horizontal', () => { /* TODO: implement this */ });
     window.addEventListener('element:flip-vertical', () => { /* TODO: implement this */ });
+    window.addEventListener('element:translate', onElementTranslate);
 })()

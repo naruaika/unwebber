@@ -148,7 +148,7 @@ const onDictLabelBlur = (event) => {
     const _metadata = metadata[selectedNode.node.dataset.uwId];
     delete _metadata.attributes[event.target.dataset.key];
     _metadata.attributes[event.target.value] = {
-        value: value,
+        value,
         checked,
     };
     setMetadata(selectedNode.node.dataset.uwId, _metadata);
@@ -214,7 +214,7 @@ const onInputBoxBlur = (event, cachedAttribute) => {
     }
 
     // Save the attribute value
-    // TODO: push to action history
+    // TODO: push to action history or move to helpers?
     const _metadata = metadata[selectedNode.node.dataset.uwId];
     _metadata.attributes[event.target.dataset.key] = {
         value: event.target.value,

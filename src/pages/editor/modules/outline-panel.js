@@ -1556,12 +1556,20 @@ const refreshPanel = () => {
                     ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
                     : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
 
+                // Skip if the selected element is not found
+                if (! listItemButton) {
+                    return;
+                }
+
                 // Highlight the selected element
                 highlightSelectedListItem({
                     currentTarget: listItemButton,
                     stopPropagation: () => {},
                     preventDefault: () => {},
                 });
+
+                // Scroll to the selected element
+                scrollToElement(listItemButton);
             }
         });
 
@@ -1570,9 +1578,8 @@ const refreshPanel = () => {
 
         // Start observing the document tree for changes
         observer.observe(documentTree, {
-            attributes: true,
             childList: true,
-            subtree: true
+            subtree: true,
         });
     }
 

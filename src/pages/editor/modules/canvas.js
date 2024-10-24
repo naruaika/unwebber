@@ -173,13 +173,9 @@ const initializeCanvas = () => {
 
     // Create a MutationObserver to watch for changes in the body height
     const documentTree = mainFrame.contentDocument.documentElement;
-    const observer = new MutationObserver(updateMainCanvasHeight);
-
-    // Start observing the document tree for changes
-    observer.observe(documentTree, {
-        attributes: true,
+    new MutationObserver(updateMainCanvasHeight).observe(documentTree, {
         childList: true,
-        subtree: true
+        subtree: true,
     });
 
     // // Ensure the observer is disconnected when the iframe is unloaded
@@ -329,23 +325,59 @@ const panCanvas = (dx, dy) => {
 
 const zoomCanvas = (event) => {
     let newScale = currentScale;
+    let canvasOverlayBoundingRect = canvasOverlay.getBoundingClientRect();
+    let pointerX;
+    let pointerY;
+    let newTranslateX;
+    let newTranslateY;
+
+    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
+
     switch (event.detail) {
         case 'in':
-            // FIXME: the zooming should be relative to the center of the canvas
+            // Get the pointer position relative to center of the canvas overlay
+            pointerX = (canvasOverlayBoundingRect.left + canvasOverlayBoundingRect.width / 2 - mainFrameBoundingRect.left) / currentScale;
+            pointerY = (canvasOverlayBoundingRect.top + canvasOverlayBoundingRect.height / 2 - mainFrameBoundingRect.top) / currentScale;
+
+            // Calculate the new scale
             newScale = currentScale + 100 * zoomFactor * currentScale;
             newScale = Math.max(newScale, 0.01); // prevent scaling to too small
             newScale = Math.min(newScale, 10); // prevent scaling to too big
-            mainFrame.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
+
+            // Calculate the new translate
+            // FIXME: the translation is not correct when the canvas was rotated
+            newTranslateX = (currentTranslateX + pointerX * (currentScale - 1)) + pointerX * (1 - newScale);
+            newTranslateY = (currentTranslateY + pointerY * (currentScale - 1)) + pointerY * (1 - newScale);
+
+            // Apply the new transform
+            mainFrame.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
             currentScale = newScale;
+            currentTranslateX = newTranslateX;
+            currentTranslateY = newTranslateY;
+
             break;
 
         case 'out':
-            // FIXME: the zooming should be relative to the center of the canvas
+            // Get the pointer position relative to center of the canvas overlay
+            pointerX = (canvasOverlayBoundingRect.left + canvasOverlayBoundingRect.width / 2 - mainFrameBoundingRect.left) / currentScale;
+            pointerY = (canvasOverlayBoundingRect.top + canvasOverlayBoundingRect.height / 2 - mainFrameBoundingRect.top) / currentScale;
+
+            // Calculate the new scale
             newScale = currentScale - 100 * zoomFactor * currentScale;
             newScale = Math.max(newScale, 0.01); // prevent scaling to too small
             newScale = Math.min(newScale, 10); // prevent scaling to too big
-            mainFrame.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
+
+            // Calculate the new translate
+            // FIXME: the translation is not correct when the canvas was rotated
+            newTranslateX = (currentTranslateX + pointerX * (currentScale - 1)) + pointerX * (1 - newScale);
+            newTranslateY = (currentTranslateY + pointerY * (currentScale - 1)) + pointerY * (1 - newScale);
+
+            // Apply the new transform
+            mainFrame.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
             currentScale = newScale;
+            currentTranslateX = newTranslateX;
+            currentTranslateY = newTranslateY;
+
             break;
 
         case 'fit':
@@ -363,10 +395,26 @@ const zoomCanvas = (event) => {
             break;
 
         default:
-            // FIXME: the zooming should be relative to the center of the canvas
+            // Get the pointer position relative to center of the canvas overlay
+            pointerX = (canvasOverlayBoundingRect.left + canvasOverlayBoundingRect.width / 2 - mainFrameBoundingRect.left) / currentScale;
+            pointerY = (canvasOverlayBoundingRect.top + canvasOverlayBoundingRect.height / 2 - mainFrameBoundingRect.top) / currentScale;
+
+            // Get the new scale
             newScale = event.detail.scale;
-            mainFrame.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
+            newScale = Math.max(newScale, 0.01); // prevent scaling to too small
+            newScale = Math.min(newScale, 10); // prevent scaling to too big
+
+            // Calculate the new translate
+            // FIXME: the translation is not correct when the canvas was rotated
+            newTranslateX = (currentTranslateX + pointerX * (currentScale - 1)) + pointerX * (1 - newScale);
+            newTranslateY = (currentTranslateY + pointerY * (currentScale - 1)) + pointerY * (1 - newScale);
+
+            // Apply the new transform
+            mainFrame.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
             currentScale = newScale;
+            currentTranslateX = newTranslateX;
+            currentTranslateY = newTranslateY;
+
             break;
     }
 
@@ -531,10 +579,22 @@ const onHoveredBoxMouseUp = (event) => {
             ? hoveredElements.indexOf(selectedNode.node)
             : -1;
         index = (index + 1) % hoveredElements.length;
-        setHoveredNode(hoveredElements[index]);
+        setHoveredNode(
+            hoveredElements[index],
+            hoveredElements[index].parentElement
+                ? Array.prototype.indexOf.call(hoveredElements[index].parentElement.childNodes, hoveredElements[index])
+                : null,
+            hoveredElements[index].parentElement,
+        );
     } else {
         // Reset the hovered node
-        setHoveredNode(hoveredElements[0]);
+        setHoveredNode(
+            hoveredElements[0],
+            hoveredElements[0].parentElement
+                ? Array.prototype.indexOf.call(hoveredElements[0].parentElement.childNodes, hoveredElements[0])
+                : null,
+            hoveredElements[0].parentElement,
+        );
     }
 
     // Request to update the selected node
@@ -645,7 +705,7 @@ const findHoveredElements = (event) => {
         setHoveredNode(
             topMostHoveredElement,
             topMostHoveredElement.parentElement
-                ? Array.prototype.indexOf.call(topMostHoveredElement.parentElement.children, topMostHoveredElement)
+                ? Array.prototype.indexOf.call(topMostHoveredElement.parentElement.childNodes, topMostHoveredElement)
                 : null,
             topMostHoveredElement.parentElement,
         );
@@ -671,7 +731,19 @@ const showContextMenu = (event) => {
     // TODO: implement the context menu
 }
 
-const refreshPanel = () => {
+const refreshPanel = (event = {}) => {
+    // To force the selection box to be recalculated
+    // and hide the hovering box while transforming the selected node
+    if (event.detail?.transform) {
+        previousSelectedNode = null;
+        hoveredNodeBoundingRect = null;
+    }
+
+    // To hide the hovering box
+    if (event.detail?.existence) {
+        hoveredNodeBoundingRect = null;
+    }
+
     refreshCanvas();
     refreshRulers();
 

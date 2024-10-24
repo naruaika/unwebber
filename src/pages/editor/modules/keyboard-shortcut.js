@@ -51,6 +51,16 @@
             return;
         }
 
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            window.dispatchEvent(new CustomEvent('element:translate', {
+                detail: {
+                    direction: event.key.replace('Arrow', '').toLowerCase(),
+                    withShiftKey: event.shiftKey,
+                }
+            }));
+            return;
+        }
+
         // TODO: add event listener for keydown to move elements with arrow keys
     });
     document.addEventListener('cut', () => window.dispatchEvent(new CustomEvent('element:cut')));

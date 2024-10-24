@@ -105,7 +105,7 @@ const clearListItemHoveringHighlight = () => {
     panelContentContainer.querySelectorAll('button.hovered').forEach(element => element.classList.remove('hovered'));
 }
 
-const clickListItem = (event) => {
+const onListItemClick = (event) => {
     // Prevent from updating the selected element if the target element is already selected
     if (
         selectedNode.node?.dataset?.uwId === event.currentTarget.dataset.uwId ||
@@ -128,7 +128,7 @@ const clickListItem = (event) => {
     }));
 }
 
-const blurListItemLabel = (event) => {
+const onListItemLabelBlur = (event) => {
     // Get the list item element
     const listItem = event.currentTarget.parentElement.parentElement;
 
@@ -137,12 +137,11 @@ const blurListItemLabel = (event) => {
 
     // Reset the editing state
     event.target.removeAttribute('contenteditable');
-    event.target.removeEventListener('blur', blurListItemLabel);
-    event.target.removeEventListener('keydown', keydownListItemLabel);
+    event.target.removeEventListener('blur', onListItemLabelBlur);
+    event.target.removeEventListener('keydown', onListItemLabelKeydown);
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         label: event.target.dataset.text,
         container: selectedNode.parent,
         position: selectedNode.position,
@@ -185,7 +184,7 @@ const blurListItemLabel = (event) => {
     console.log(`[Editor] Change element label: @${elementId}`);
 }
 
-const keydownListItemLabel = (event) => {
+const onListItemLabelKeydown = (event) => {
     if (event.key === 'Escape') {
         // Restore the original label
         event.currentTarget.textContent = event.currentTarget.dataset.text;
@@ -204,7 +203,7 @@ const keydownListItemLabel = (event) => {
     }
 }
 
-const doubleClickListItem = (event) => {
+const onListItemDoubleClick = (event) => {
     // Get the label element
     const elementId = event.currentTarget?.dataset.uwId || event.target?.dataset.uwId;
     const parentElementId = event.currentTarget?.dataset.uwParentId || event.target?.dataset.uwParentId;
@@ -216,8 +215,8 @@ const doubleClickListItem = (event) => {
     // Setup the label for editing
     label.dataset.text = label.textContent.trim();
     label.setAttribute('contenteditable', true);
-    label.addEventListener('blur', blurListItemLabel);
-    label.addEventListener('keydown', keydownListItemLabel);
+    label.addEventListener('blur', onListItemLabelBlur);
+    label.addEventListener('keydown', onListItemLabelKeydown);
 
     // Focus the label
     label.focus();
@@ -1134,14 +1133,14 @@ const showContextMenu = (event) => {
             id: 'rename',
             label: 'Rename...',
             icon: 'edit',
-            action: () => doubleClickListItem(event),
+            action: () => onListItemDoubleClick(event),
             disabled: ! event.currentTarget.dataset.uwId,
         },
         {
             id: 'edit-text',
             label: 'Edit Text...',
             icon: 'edit',
-            action: () => doubleClickListItem(event),
+            action: () => onListItemDoubleClick(event),
             disabled: event.currentTarget.dataset.uwId,
         },
     ];
@@ -1211,7 +1210,7 @@ const showContextMenu = (event) => {
     window.dispatchEvent(customEvent);
 }
 
-const clickBreadcrumbItem = (event) => {
+const onBreadcrumbItemClick = (event) => {
     // Prevent from updating the selected element if the target element is already selected
     if (
         selectedNode.node?.dataset?.uwId === event.currentTarget.dataset.uwId ||
@@ -1234,7 +1233,7 @@ const clickBreadcrumbItem = (event) => {
     }));
 }
 
-const mouseEnterBreadcrumbItem = (event) => {
+const onBreadcrumbItemMouseEnter = (event) => {
     // Request to update the hovered element
     window.dispatchEvent(new CustomEvent('element:hover', {
         detail: {
@@ -1246,7 +1245,7 @@ const mouseEnterBreadcrumbItem = (event) => {
     }));
 }
 
-const mouseLeaveBreadcrumbItem = () => {
+const onBreadcrumbItemMouseLeave = () => {
     // Clear the hovered list item
     clearListItemHoveringHighlight();
 
@@ -1272,9 +1271,9 @@ const refreshBreadcrumb = () => {
         breadcrumbItem.dataset.uwId = currentNode.dataset?.uwId || '';
         breadcrumbItem.dataset.uwPosition = currentNode.parentElement ? Array.prototype.indexOf.call(currentNode.parentElement.childNodes, currentNode) : '';
         breadcrumbItem.dataset.uwParentId = currentNode.parentElement?.dataset.uwId || '';
-        breadcrumbItem.addEventListener('click', clickBreadcrumbItem);
-        breadcrumbItem.addEventListener('mouseenter', mouseEnterBreadcrumbItem);
-        breadcrumbItem.addEventListener('mouseleave', mouseLeaveBreadcrumbItem);
+        breadcrumbItem.addEventListener('click', onBreadcrumbItemClick);
+        breadcrumbItem.addEventListener('mouseenter', onBreadcrumbItemMouseEnter);
+        breadcrumbItem.addEventListener('mouseleave', onBreadcrumbItemMouseLeave);
         breadcrumb.insertBefore(breadcrumbItem, breadcrumb.firstChild);
         currentNode = currentNode.parentElement;
     }
@@ -1295,7 +1294,7 @@ const toggleElementVisibility = (event, button) => {
     // TODO: implement the visibility toggle action
 }
 
-const mouseEnterListItem = (event) => {
+const onListItemMouseEnter = (event) => {
     // Highlight the hovered list item
     highlightHoveredListItem(event);
 
@@ -1315,7 +1314,7 @@ const mouseEnterListItem = (event) => {
     }));
 }
 
-const mouseLeaveListItem = () => {
+const onListItemMouseLeave = () => {
     if (! hoveredNode.node) {
         return;
     }
@@ -1495,11 +1494,11 @@ const createListItem = (node, level) => {
     }
 
     // Register the event listener for the button
-    button.addEventListener('click', clickListItem);
-    button.addEventListener('dblclick', doubleClickListItem);
+    button.addEventListener('click', onListItemClick);
+    button.addEventListener('dblclick', onListItemDoubleClick);
     button.addEventListener('contextmenu', showContextMenu);
-    button.addEventListener('mouseenter', mouseEnterListItem);
-    button.addEventListener('mouseleave', mouseLeaveListItem);
+    button.addEventListener('mouseenter', onListItemMouseEnter);
+    button.addEventListener('mouseleave', onListItemMouseLeave);
     button.addEventListener('dragstart', onListItemButtonDragStart);
     button.addEventListener('dragover', (event) => event.preventDefault());
     button.addEventListener('drop', onListItemButtonDrop);
@@ -1577,7 +1576,6 @@ const refreshPanel = () => {
         });
     }
 
-    // If the selected element is found
     if (selectedNode.node) {
         // Get the list item element
         const listItemButton = selectedNode.node.dataset?.uwId
@@ -1598,6 +1596,9 @@ const refreshPanel = () => {
 
         // Scroll to the selected element
         scrollToElement(listItemButton);
+    } else {
+        // Clear the selected element
+        clearListItemSelectionHighlight();
     }
 
     // Refresh the breadcrumb
@@ -1753,7 +1754,6 @@ const onListItemButtonDrop = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: draggedElement.parentElement,
         position: Array.prototype.indexOf.call(draggedElement.parentElement.childNodes, draggedElement),
     };
@@ -1774,7 +1774,6 @@ const onListItemButtonDrop = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: draggedElement.parentElement,
         position: Array.prototype.indexOf.call(draggedElement.parentElement.childNodes, draggedElement),
     };
@@ -1814,9 +1813,9 @@ const onListItemButtonDragEnd = (event) => {
 
 (() => {
     panelContentContainer.addEventListener('drag', onPanelDrag);
-    panelContentContainer.addEventListener("dragenter", (event) => event.preventDefault());
-    panelContentContainer.addEventListener("dragover", (event) => event.preventDefault());
-    panelContentContainer.addEventListener("dragend", (event) => event.preventDefault());
+    panelContentContainer.addEventListener('dragenter', (event) => event.preventDefault());
+    panelContentContainer.addEventListener('dragover', (event) => event.preventDefault());
+    panelContentContainer.addEventListener('dragend', (event) => event.preventDefault());
 
     // Register the window message event listener
     window.addEventListener('outline:refresh', refreshPanel);

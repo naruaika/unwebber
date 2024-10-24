@@ -47,7 +47,7 @@
 
         if ((event.ctrlKey || event.metaKey) && ['1', '2', '3', '4'].includes(event.key)) {
             const scale = Math.pow(2, parseInt(event.key) - 1);
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: scale }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { scale } }));
             return;
         }
 

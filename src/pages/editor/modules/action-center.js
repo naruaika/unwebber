@@ -95,7 +95,6 @@ const onElementCut = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -226,7 +225,6 @@ const onElementPaste = () => {
 
     // Save the upcoming action state
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: nodeToPaste.node.parentElement,
         position: Array.prototype.indexOf.call(nodeToPaste.node.parentElement.childNodes, nodeToPaste.node),
     };
@@ -290,7 +288,6 @@ const onElementDelete = () => {
     }
 
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -358,7 +355,6 @@ const onElementDuplicate = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -466,7 +462,6 @@ const onElementMoveToTop = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -502,7 +497,6 @@ const onElementMoveToTop = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -555,7 +549,6 @@ const onElementMoveUp = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -591,7 +584,6 @@ const onElementMoveUp = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -644,7 +636,6 @@ const onElementMoveDown = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -680,7 +671,6 @@ const onElementMoveDown = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -721,7 +711,6 @@ const onElementMoveToBottom = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -757,7 +746,6 @@ const onElementMoveToBottom = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -802,7 +790,6 @@ const onElementOutdentUp = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -819,7 +806,6 @@ const onElementOutdentUp = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -865,7 +851,6 @@ const onElementOutdentDown = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -882,7 +867,6 @@ const onElementOutdentDown = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -933,7 +917,6 @@ const onElementIndentUp = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -950,7 +933,6 @@ const onElementIndentUp = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -1001,7 +983,6 @@ const onElementIndentDown = () => {
 
     // Save the current action state
     const previousState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };
@@ -1018,7 +999,6 @@ const onElementIndentDown = () => {
 
     // Request to save the action
     const upcomingState = {
-        // FIXME: should be the container ID instead of the container element
         container: selectedNode.parent,
         position: selectedNode.position,
     };

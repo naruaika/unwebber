@@ -101,7 +101,46 @@ const open = (_, workDir) => {
         throw error;
     }
 
-    // Attach editor files to the temporary files
+    // Remove all missing resource references from the temporary file
+    // FIXME: how to make the user aware of the missing files?
+    try {
+        const dIndexPath = path.join(workDir, dIndexRelativePath);
+        let dIndexContent = fs.readFileSync(dIndexPath, 'utf-8');
+
+        // Check for missing script files
+        const scriptTags = dIndexContent.match(/<script[^>]*src="([^"]*)"[^>]*><\/script>/g);
+        if (scriptTags) {
+            for (let i = 0; i < scriptTags.length; i++) {
+                const scriptTag = scriptTags[i];
+                const scriptPath = scriptTag.match(/<script[^>]*src="([^"]*)"[^>]*><\/script>/)[1];
+                if (! fs.existsSync(path.join(workDir, scriptPath))) {
+                    dIndexContent = dIndexContent.replace(scriptTag, '');
+                    console.debug(`Removed ${scriptPath} reference from ${dIndexPath} due to missing file`);
+                }
+            }
+        }
+
+        // Check for missing link files
+        const linkTags = dIndexContent.match(/<link[^>]*href="([^"]*)"[^>]*>/g);
+        if (linkTags) {
+            for (let i = 0; i < linkTags.length; i++) {
+                const linkTag = linkTags[i];
+                const linkPath = linkTag.match(/<link[^>]*href="([^"]*)"[^>]*>/)[1];
+                if (! fs.existsSync(path.join(workDir, linkPath))) {
+                    dIndexContent = dIndexContent.replace(linkTag, '');
+                    console.debug(`Removed ${linkPath} reference from ${dIndexPath} due to missing file`);
+                }
+            }
+        }
+
+        // Write the updated content
+        fs.writeFileSync(dIndexPath, dIndexContent);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+
+    // Attach editor files to the temporary file
     try {
         const dIndexPath = path.join(workDir, dIndexRelativePath);
         const editorJsPath = path.join(__dirname, '../debs/editor.js');

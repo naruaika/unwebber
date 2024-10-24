@@ -33,16 +33,19 @@ let currentRotate = 0;
 let currentTranslateX = 0;
 let currentTranslateY = 0;
 
-let selectedBox = null;
-let hoveredBox = null;
-
 let previousSelectedNode = null;
 let selectedNodeBoundingRect = null;
+let selectedNodeParentBoundingRect = null;
+let selectedBox = null;
+
+let hoveredElements = [];
 let hoveredNodeBoundingRect = null;
+let hoveredBox = null;
 
 let isPanning = false;
 let panningTimeout = null;
 
+let isSpacebarBeingPressed = false;
 let isPanelReady = false;
 
 const initializeRulers = () => {
@@ -151,6 +154,8 @@ const refreshRulers = () => {
 const initializeCanvas = () => {
     // Set the main iframe size
     const updateMainCanvasHeight = () => {
+        // TODO: add support for viewport width and height,
+        // in case of game or presentation slides development?
         mainFrame.style.width = defaultBreakpoints.desktop + 'px';
         mainFrame.style.height = `${mainFrame.contentDocument.body.scrollHeight}px`;
         mainFrameBoundingRect = mainFrame.getBoundingClientRect();
@@ -191,26 +196,22 @@ const refreshCanvas = () => {
     if (! hoveredBox) {
         // Initialize the hovered box
         hoveredBox = document.createElement('div');
-        hoveredBox.classList.add('hovered-box', 'helper');
-        hoveredBox.addEventListener('mouseup', (event) => {
-            event.stopImmediatePropagation();
-            // Request to update the selected node
-            window.dispatchEvent(new CustomEvent('element:select', {
-                detail: {
-                    uwId: hoveredNode.node.dataset.uwId,
-                    uwPosition: hoveredNode.position,
-                    uwParentId: hoveredNode.parent?.dataset.uwId,
-                    target: 'canvas',
-                }
-            }));
-        });
+        hoveredBox.classList.add('hovered-box');
+        hoveredBox.setAttribute('data-uw-ignore', '');
+        hoveredBox.addEventListener('mouseup', onHoveredBoxMouseUp);
         canvasOverlay.appendChild(hoveredBox);
     }
 
     if (! selectedBox) {
         // Initialize the selected box
         selectedBox = document.createElement('div');
-        selectedBox.classList.add('selected-box', 'helper');
+        selectedBox.classList.add('selected-box');
+        selectedBox.setAttribute('data-uw-ignore', '');
+        selectedBox.style.setProperty('--parent-top', '0px');
+        selectedBox.style.setProperty('--parent-left', '0px');
+        selectedBox.style.setProperty('--parent-width', '0px');
+        selectedBox.style.setProperty('--parent-height', '0px');
+        selectedBox.style.setProperty('--parent-visibility', 'hidden');
         canvasOverlay.appendChild(selectedBox);
 
         // Initialize the drag area points
@@ -222,16 +223,26 @@ const refreshCanvas = () => {
     }
 
     // Get the bounding rect of the selected node
+    // TODO: get the rects instead for non-element nodes?
     if (
         selectedNode.node &&
         selectedNode.node.nodeType === Node.ELEMENT_NODE
     ) {
         if (selectedNode !== previousSelectedNode) {
             selectedNodeBoundingRect = selectedNode.node.getBoundingClientRect();
+            if (
+                selectedNode.parent &&
+                ! ('uwIgnore' in selectedNode.parent.dataset)
+            ) {
+                selectedNodeParentBoundingRect = selectedNode.parent?.getBoundingClientRect();
+            } else {
+                selectedNodeParentBoundingRect = null;
+            }
             previousSelectedNode = selectedNode;
         }
     } else {
         selectedNodeBoundingRect = null;
+        selectedNodeParentBoundingRect = null;
         previousSelectedNode = null;
     }
 
@@ -320,6 +331,7 @@ const zoomCanvas = (event) => {
     let newScale = currentScale;
     switch (event.detail) {
         case 'in':
+            // FIXME: the zooming should be relative to the center of the canvas
             newScale = currentScale + 100 * zoomFactor * currentScale;
             newScale = Math.max(newScale, 0.01); // prevent scaling to too small
             newScale = Math.min(newScale, 10); // prevent scaling to too big
@@ -328,6 +340,7 @@ const zoomCanvas = (event) => {
             break;
 
         case 'out':
+            // FIXME: the zooming should be relative to the center of the canvas
             newScale = currentScale - 100 * zoomFactor * currentScale;
             newScale = Math.max(newScale, 0.01); // prevent scaling to too small
             newScale = Math.min(newScale, 10); // prevent scaling to too big
@@ -350,6 +363,7 @@ const zoomCanvas = (event) => {
             break;
 
         default:
+            // FIXME: the zooming should be relative to the center of the canvas
             newScale = event.detail.scale;
             mainFrame.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
             currentScale = newScale;
@@ -405,6 +419,21 @@ const refreshSelectedBox = () => {
         selectedBox.style.top = `${top}px`;
         selectedBox.style.width = `${width}px`;
         selectedBox.style.height = `${height}px`;
+
+        if (selectedNodeParentBoundingRect) {
+            let { left, top, width, height } = selectedNodeParentBoundingRect;
+            left = (left - selectedNodeBoundingRect.left) * currentScale;
+            top = (top - selectedNodeBoundingRect.top) * currentScale;
+            width = width * currentScale;
+            height = height * currentScale;
+            selectedBox.style.setProperty('--parent-top', `${top - 1}px`);
+            selectedBox.style.setProperty('--parent-left', `${left - 1}px`);
+            selectedBox.style.setProperty('--parent-width', `${width - 2}px`);
+            selectedBox.style.setProperty('--parent-height', `${height - 2}px`);
+            selectedBox.style.setProperty('--parent-visibility', 'visible');
+        } else {
+            selectedBox.style.setProperty('--parent-visibility', 'hidden');
+        }
 
         //
         const dragAreaPoints = selectedBox.querySelectorAll('.drag-area');
@@ -493,11 +522,34 @@ const refreshSelectedBox = () => {
     }
 }
 
+const onHoveredBoxMouseUp = (event) => {
+    event.stopImmediatePropagation();
+
+    // Cycle through the overlapping hovered elements
+    if (event.altKey) {
+        let index = hoveredElements.includes(selectedNode.node)
+            ? hoveredElements.indexOf(selectedNode.node)
+            : -1;
+        index = (index + 1) % hoveredElements.length;
+        setHoveredNode(hoveredElements[index]);
+    } else {
+        // Reset the hovered node
+        setHoveredNode(hoveredElements[0]);
+    }
+
+    // Request to update the selected node
+    window.dispatchEvent(new CustomEvent('element:select', {
+        detail: {
+            uwId: hoveredNode.node.dataset.uwId,
+            uwPosition: hoveredNode.position,
+            uwParentId: hoveredNode.parent?.dataset.uwId,
+            target: 'canvas',
+        }
+    }));
+}
+
 const refreshHoveredBox = () => {
-    if (
-        hoveredNodeBoundingRect &&
-        hoveredNode.node !== selectedNode.node
-    ) {
+    if (hoveredNodeBoundingRect) {
         if (panningTimeout) {
             hoveredBox.classList.add('hidden');
             return;
@@ -522,18 +574,15 @@ const refreshHoveredBox = () => {
     }
 }
 
-// TODO: do testing to see if there is any performance issues
 const findHoveredElements = (event) => {
     // Get the hovered elements
-    let hoveredElements = document.elementsFromPoint(event.clientX, event.clientY);
+    hoveredElements = document.elementsFromPoint(event.clientX, event.clientY);
 
     // Get elements that are in the canvas container
-    hoveredElements = hoveredElements.filter(element => {
-        return (
-            ! element.classList.contains('helper') &&
-            canvasContainer.contains(element)
-        );
-    });
+    hoveredElements = hoveredElements.filter(element =>
+        ! ('uwIgnore' in element.dataset) &&
+        canvasContainer.contains(element)
+    );
 
     // Get the first hovered element if any
     let topMostHoveredElement = hoveredElements[0];
@@ -564,7 +613,13 @@ const findHoveredElements = (event) => {
         const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
 
         // Replace the hovered elements with the iframe content if any
-        topMostHoveredElement = topMostHoveredElement.contentDocument.elementFromPoint(pointerX, pointerY);
+        hoveredElements = topMostHoveredElement.contentDocument.elementsFromPoint(pointerX, pointerY);
+
+        // Get elements that are not ignored
+        hoveredElements = hoveredElements.filter(element => ! ('uwIgnore' in element.dataset));
+
+        // Get the first hovered element if any
+        topMostHoveredElement = hoveredElements[0];
 
         // Skip if the current hovered element is not changing
         if (hoveredNode.node === topMostHoveredElement) {
@@ -610,12 +665,165 @@ const findHoveredElements = (event) => {
     // TODO: if () {}
 }
 
+const showContextMenu = (event) => {
+    event.preventDefault();
+
+    // TODO: implement the context menu
+}
+
 const refreshPanel = () => {
     refreshCanvas();
     refreshRulers();
 
     if (! isPanelReady) {
         isPanelReady = true;
+    }
+}
+
+// TODO: implement marquee selection, but firstly add support for multiple selection
+
+// TODO: implement the drag and drop feature
+
+const onCanvasContainerMouseUp = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (event.which === 1) { // left mouse button
+        // Request to clear the selected node
+        window.dispatchEvent(new CustomEvent('element:select', {
+            detail: { target: 'canvas' }
+        }));
+    }
+}
+
+const onCanvasOverlayMouseDown = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (
+        (isSpacebarBeingPressed && event.which === 1) || // left mouse button
+        event.which === 2 // middle mouse button
+    ) {
+        isPanning = true;
+        canvasOverlay.requestPointerLock();
+        // TODO: maybe the user want to see the cursor moving within the canvas boundary
+        // like in the Blender 3D software.
+        // See https://stackoverflow.com/a/7072718/8791891 for a reference,
+        // and https://stackoverflow.com/a/54216477/8791891
+        return;
+    }
+}
+
+const onCanvasOverlayMouseUp = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (
+        (isPanning && event.which === 1) || // left mouse button
+        event.which === 2 // middle mouse button
+    ) {
+        isPanning = false;
+        document.exitPointerLock();
+        event.stopImmediatePropagation();
+        return;
+    }
+}
+
+const onCanvasOverlayMouseMove = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (isPanning) {
+        panCanvas(event.movementX, event.movementY);
+        return;
+    }
+
+    if (isSpacebarBeingPressed) {
+        return;
+    }
+
+    // Find the hovered elements
+    findHoveredElements(event);
+}
+
+const onCanvasOverlayMouseEnter = () => {
+    // Register the key event listener on the document
+    document.addEventListener('keydown', onDocumentKeyDown);
+    document.addEventListener('keyup', onDocumentKeyUp);
+}
+
+const onCanvasOverlayMouseLeave = () => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    // Set the hovered element
+    setHoveredNode(null);
+
+    //
+    hoveredNodeBoundingRect = null;
+    refreshHoveredBox();
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('outline:hover'));
+
+    // Register the key event listener on the document
+    document.removeEventListener('keydown', onDocumentKeyDown);
+    document.removeEventListener('keyup', onDocumentKeyUp);
+}
+
+const onCanvasOverlayWheel = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    transformCanvas(event);
+    refreshRulers();
+}
+
+const onDocumentKeyDown = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (event.code === 'Space') {
+        isSpacebarBeingPressed = true;
+
+        // Clear the hovered element
+        setHoveredNode(null);
+        hoveredNodeBoundingRect = null;
+        refreshHoveredBox();
+
+        // Request panel updates
+        window.dispatchEvent(new CustomEvent('outline:hover'));
+
+        // Set the cursor style
+        canvasOverlay.style.cursor = 'grab';
+
+        event.stopImmediatePropagation();
+
+        return;
+    }
+}
+
+const onDocumentKeyUp = (event) => {
+    if (! isPanelReady) {
+        return;
+    }
+
+    if (event.code === 'Space') {
+        isSpacebarBeingPressed = false;
+
+        // Reset the cursor style
+        canvasOverlay.style.cursor = 'default';
+
+        event.stopImmediatePropagation();
+
+        return;
     }
 }
 
@@ -629,66 +837,13 @@ const onWindowResize = () => {
 
 (() => {
     // Register the mouse event listeners for the canvas overlay
-    canvasOverlay.addEventListener('mousedown', (event) => {
-        if (! isPanelReady) {
-            return;
-        }
-        if (event.which === 2) { // middle mouse button
-            isPanning = true;
-            event.preventDefault();
-        }
-    });
-    canvasOverlay.addEventListener('mousedown', (event) => {
-        if (! isPanelReady) {
-            return;
-        }
-        if (event.which === 2) { // middle mouse button
-            isPanning = true;
-            canvasOverlay.requestPointerLock();
-            event.preventDefault();
-        }
-    });
-    canvasOverlay.addEventListener('mousemove', (event) => {
-        if (! isPanelReady) {
-            return;
-        }
-        if (isPanning) {
-            const dx = event.movementX;
-            const dy = event.movementY;
-            panCanvas(dx, dy);
-            return;
-        }
-        // Find the hovered elements
-        findHoveredElements(event);
-    });
-    canvasOverlay.addEventListener('mouseleave', () => {
-        if (! isPanelReady) {
-            return;
-        }
-        // Set the hovered element
-        setHoveredNode(null);
-        //
-        hoveredNodeBoundingRect = null;
-        refreshHoveredBox();
-        // Request panel updates
-        window.dispatchEvent(new CustomEvent('outline:hover'));
-    });
-    canvasOverlay.addEventListener('mouseup', (event) => {
-        if (! isPanelReady) {
-            return;
-        }
-        if (event.which === 2) { // middle mouse button
-            isPanning = false;
-            document.exitPointerLock();
-        }
-    });
-    canvasOverlay.addEventListener('wheel', (event) => {
-        if (! isPanelReady) {
-            return;
-        }
-        transformCanvas(event);
-        refreshRulers();
-    }, { passive: true });
+    canvasContainer.addEventListener('mouseup', onCanvasContainerMouseUp);
+    canvasOverlay.addEventListener('mousedown', onCanvasOverlayMouseDown);
+    canvasOverlay.addEventListener('mouseup', onCanvasOverlayMouseUp);
+    canvasOverlay.addEventListener('mousemove', onCanvasOverlayMouseMove);
+    canvasOverlay.addEventListener('mouseenter', onCanvasOverlayMouseEnter);
+    canvasOverlay.addEventListener('mouseleave', onCanvasOverlayMouseLeave);
+    canvasOverlay.addEventListener('wheel', onCanvasOverlayWheel, { passive: true });
 
     // Register event listeners on the window
     window.addEventListener('canvas:refresh', refreshPanel);

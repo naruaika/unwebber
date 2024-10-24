@@ -81,7 +81,7 @@
                     }
 
                     .decoration {
-                        left: -40px;
+                        left: -48px;
                         transition: all 1s;
                     }
                 }
@@ -89,7 +89,7 @@
                 h2 {
                     margin: 0;
                     margin-bottom: 5px;
-                    font-size: 22px;
+                    font-size: 20px;
                 }
 
                 button {

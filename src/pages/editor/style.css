@@ -712,6 +712,18 @@
 
     .selected-box {
         pointer-events: none;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: var(--parent-top);
+            left: var(--parent-left);
+            width: var(--parent-width);
+            height: var(--parent-height);
+            visibility: var(--parent-visibility);
+            border: 1px dashed var(--color-blue);
+            pointer-events: none;
+        }
     }
 
     .hovered-box {

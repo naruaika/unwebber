@@ -279,15 +279,15 @@
                 background-color: var(--color-primary);
                 background-image: linear-gradient(
                     45deg,
-                    var(--color-gray) 25%,
+                    var(--color-primary) 25%,
                     var(--color-gray-475) 25%,
                     var(--color-gray-475) 50%,
-                    var(--color-gray) 50%,
-                    var(--color-gray) 75%,
+                    var(--color-primary) 50%,
+                    var(--color-primary) 75%,
                     var(--color-gray-475) 75%,
                     var(--color-gray-475) 100%
                 );
-                background-size: 6px 6px;
+                background-size: 5px 5px;
             }
 
             &.dragging {
@@ -679,7 +679,10 @@
     .hovered-box {
         position: absolute;
         box-sizing: border-box;
-        border: 1px solid var(--color-blue);
+        border: 2px solid var(--color-blue);
+
+        -webkit-user-select: none;
+        user-select: none;
 
         /* Make sure the element on its own layer */
         backface-visibility: hidden;
@@ -704,6 +707,9 @@
             pointer-events: all;
             z-index: 10001;
 
+            -webkit-user-select: none;
+            user-select: none;
+
             &:hover {
                 background-color: var(--color-blue);
             }
@@ -716,12 +722,13 @@
         &::before {
             content: '';
             position: absolute;
+            box-sizing: border-box;
             top: var(--parent-top);
             left: var(--parent-left);
             width: var(--parent-width);
             height: var(--parent-height);
             visibility: var(--parent-visibility);
-            border: 1px dashed var(--color-blue);
+            border: 2px dashed var(--color-blue);
             pointer-events: none;
         }
     }

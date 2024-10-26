@@ -39,6 +39,7 @@ const saveAction = (event) => {
     if (
         actionHistory[actionHistoryIndex]?.title === event.detail.title &&
         actionHistory[actionHistoryIndex]?.reference?.element === event.detail.reference.element &&
+        event.detail.signature && actionHistory[actionHistoryIndex]?.signature &&
         event.detail.signature === actionHistory[actionHistoryIndex]?.signature &&
         timestamp - actionHistory[actionHistoryIndex]?.timestamp < 500
     ) {

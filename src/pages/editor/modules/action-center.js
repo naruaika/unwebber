@@ -225,6 +225,10 @@ const onElementPaste = () => {
         mainFrame.contentDocument.body.appendChild(nodeToPaste.node);
     }
 
+    // TODO: re-position the element-to-paste if it is a positioned element;
+    // it should be re-positioned if the cursor is within the main frame,
+    // otherwise no change is needed
+
     // Save the upcoming action state
     const upcomingState = {
         container: nodeToPaste.node.parentElement,
@@ -441,7 +445,7 @@ const onElementUnwrap = () => {
     console.log(`[Editor] Unwrap element in: @${previousState.container.dataset.uwId}`);
 }
 
-const onElementMoveToTop = () => {
+const onElementMoveToTopTree = () => {
     // Skip if focusing on an input/textarea element or editing contenteditable
     if (
         ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) ||
@@ -516,7 +520,7 @@ const onElementMoveToTop = () => {
     console.log(`[Editor] Move to top element: @${elementId}`);
 }
 
-const onElementMoveUp = () => {
+const onElementMoveUpTree = () => {
     // Skip if focusing on an input/textarea element or editing contenteditable
     if (
         ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) ||
@@ -603,7 +607,7 @@ const onElementMoveUp = () => {
     console.log(`[Editor] Move up element: @${elementId}`);
 }
 
-const onElementMoveDown = () => {
+const onElementMoveDownTree = () => {
     // Skip if focusing on an input/textarea element or editing contenteditable
     if (
         ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) ||
@@ -690,7 +694,7 @@ const onElementMoveDown = () => {
     console.log(`[Editor] Move down element: @${elementId}`);
 }
 
-const onElementMoveToBottom = () => {
+const onElementMoveToBottomTree = () => {
     // Skip if focusing on an input/textarea element or editing contenteditable
     if (
         ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) ||
@@ -1138,10 +1142,10 @@ const onElementTranslate = (event) => {
     window.addEventListener('element:insert-first-child', () => { /* TODO: implement this */ });
     window.addEventListener('element:insert-last-child', () => { /* TODO: implement this */ });
     window.addEventListener('element:convert-to', () => { /* TODO: implement this */ });
-    window.addEventListener('element:move-to-top', onElementMoveToTop);
-    window.addEventListener('element:move-up', onElementMoveUp);
-    window.addEventListener('element:move-down', onElementMoveDown);
-    window.addEventListener('element:move-to-bottom', onElementMoveToBottom);
+    window.addEventListener('element:move-to-top-tree', onElementMoveToTopTree);
+    window.addEventListener('element:move-up-tree', onElementMoveUpTree);
+    window.addEventListener('element:move-down-tree', onElementMoveDownTree);
+    window.addEventListener('element:move-to-bottom-tree', onElementMoveToBottomTree);
     window.addEventListener('element:outdent-up', onElementOutdentUp);
     window.addEventListener('element:outdent-down', onElementOutdentDown);
     window.addEventListener('element:indent-up', onElementIndentUp);

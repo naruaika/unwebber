@@ -12,6 +12,11 @@
             return;
         }
 
+        if (event.key === 'Escape') {
+            window.dispatchEvent(new CustomEvent('action:interrupt'));
+            return;
+        }
+
         if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
             window.dispatchEvent(new CustomEvent('action:undo'));
             return;
@@ -26,7 +31,7 @@
         }
 
         if ((event.ctrlKey || event.metaKey) && event.altKey && event.key === '0') {
-            window.dispatchEvent(new CustomEvent('canvas:view'));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'selection' }));
             return;
         }
 

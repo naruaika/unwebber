@@ -306,7 +306,7 @@ const showContextMenu = (event) => {
         (
             (
                 previousSibling.nodeType !== Node.ELEMENT_NODE &&
-                previousSibling.textContent.trim() === ''
+                previousSibling.textContent?.trim() === ''
             ) ||
             'uwIgnore' in (previousSibling.dataset || [])
         )
@@ -356,7 +356,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same color
                 window.dispatchEvent(new CustomEvent('element:select-same-color'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -366,7 +372,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same background color
                 window.dispatchEvent(new CustomEvent('element:select-same-bgcolor'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -381,7 +393,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same border color
                 window.dispatchEvent(new CustomEvent('element:select-same-brcolor'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -391,7 +409,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same border style
                 window.dispatchEvent(new CustomEvent('element:select-same-brstyle'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -401,7 +425,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same border
                 window.dispatchEvent(new CustomEvent('element:select-same-border'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -416,7 +446,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same outline color
                 window.dispatchEvent(new CustomEvent('element:select-same-olcolor'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -426,7 +462,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same outline style
                 window.dispatchEvent(new CustomEvent('element:select-same-olstyle'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -436,7 +478,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same outline
                 window.dispatchEvent(new CustomEvent('element:select-same-outline'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -451,7 +499,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same element label
                 window.dispatchEvent(new CustomEvent('element:select-same-elabel'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -461,7 +515,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same element tag
                 window.dispatchEvent(new CustomEvent('element:select-same-etag'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -471,7 +531,13 @@ const showContextMenu = (event) => {
                 // Request to select the elements with the same color tag
                 window.dispatchEvent(new CustomEvent('element:select-same-colortag'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'select-same',
         },
         {
@@ -540,7 +606,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-inner-html'));
             },
             disabled:
-                event.currentTarget.dataset.tagName === 'html' ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -552,7 +618,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-outer-html'));
             },
             disabled:
-                event.currentTarget.dataset.tagName === 'html' ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -563,7 +629,13 @@ const showContextMenu = (event) => {
                 // Request to paste the style of the element
                 window.dispatchEvent(new CustomEvent('element:paste-style'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -581,7 +653,13 @@ const showContextMenu = (event) => {
                 // Request to paste the size of the element
                 window.dispatchEvent(new CustomEvent('element:paste-size'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -591,7 +669,13 @@ const showContextMenu = (event) => {
                 // Request to paste the width of the element
                 window.dispatchEvent(new CustomEvent('element:paste-width'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -601,7 +685,13 @@ const showContextMenu = (event) => {
                 // Request to paste the height of the element
                 window.dispatchEvent(new CustomEvent('element:paste-height'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -611,7 +701,13 @@ const showContextMenu = (event) => {
                 // Request to paste the size of the element separately
                 window.dispatchEvent(new CustomEvent('element:paste-size-separately'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -621,7 +717,13 @@ const showContextMenu = (event) => {
                 // Request to paste the width of the element separately
                 window.dispatchEvent(new CustomEvent('element:paste-width-separately'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -631,7 +733,13 @@ const showContextMenu = (event) => {
                 // Request to paste the height of the element separately
                 window.dispatchEvent(new CustomEvent('element:paste-height-separately'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'paste-special',
         },
         {
@@ -854,7 +962,7 @@ const showContextMenu = (event) => {
         {
             spacer: true,
             for: [
-                'move-to-top', 'move-to-bottom', 'move-up', 'move-down', 'outdent-up', 'outdent-down',
+                'move-to-top-tree', 'move-to-bottom-tree', 'move-up-tree', 'move-down-tree', 'outdent-up', 'outdent-down',
                 'indent-up', 'indent-down', 'align-left', 'align-center', 'align-right', 'align-top',
                 'align-middle', 'align-bottom', 'rotate-left', 'rotate-right', 'flip-horizontal', 'flip-vertical',
             ]
@@ -864,12 +972,12 @@ const showContextMenu = (event) => {
             id: 'move',
             label: 'Move',
             for: [
-                'move-to-top', 'move-to-bottom', 'move-up', 'move-down', 'outdent-up', 'outdent-down',
-                'indent-up', 'indent-down',
+                'move-to-top-tree', 'move-to-bottom-tree', 'move-up-tree', 'move-down-tree',
+                'outdent-up', 'outdent-down', 'indent-up', 'indent-down',
             ],
         },
         {
-            id: 'move-to-top',
+            id: 'move-to-top-tree',
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move to Back' : 'Move to Top',
             action: () => {
                 // Request to move the element to the top
@@ -881,7 +989,7 @@ const showContextMenu = (event) => {
             belongs: 'move',
         },
         {
-            id: 'move-up',
+            id: 'move-up-tree',
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move Backward' : 'Move Up',
             action: () => {
                 // Request to move the element up
@@ -893,7 +1001,7 @@ const showContextMenu = (event) => {
             belongs: 'move',
         },
         {
-            id: 'move-down',
+            id: 'move-down-tree',
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move Forward' : 'Move Down',
             action: () => {
                 // Request to move the element down
@@ -905,7 +1013,7 @@ const showContextMenu = (event) => {
             belongs: 'move',
         },
         {
-            id: 'move-to-bottom',
+            id: 'move-to-bottom-tree',
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move to Front' : 'Move to Bottom',
             action: () => {
                 // Request to move the element to bottom
@@ -1087,7 +1195,13 @@ const showContextMenu = (event) => {
                 // Request to rotate the element to the left
                 window.dispatchEvent(new CustomEvent('element:rotate-left'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'transform',
         },
         {
@@ -1097,7 +1211,13 @@ const showContextMenu = (event) => {
                 // Request to rotate the element to the right
                 window.dispatchEvent(new CustomEvent('element:rotate-right'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'transform',
         },
         {
@@ -1112,7 +1232,13 @@ const showContextMenu = (event) => {
                 // Request to flip the element horizontally
                 window.dispatchEvent(new CustomEvent('element:flip-horizontal'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'transform',
         },
         {
@@ -1122,7 +1248,13 @@ const showContextMenu = (event) => {
                 // Request to flip the element vertically
                 window.dispatchEvent(new CustomEvent('element:flip-vertical'));
             },
-            disabled: ! event.currentTarget.dataset.uwId,
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
             belongs: 'transform',
         },
         {
@@ -1581,6 +1713,11 @@ const refreshPanel = () => {
             childList: true,
             subtree: true,
         });
+
+        // // Ensure the observer is disconnected when the iframe is unloaded
+        // mainFrame.contentWindow.addEventListener('unload', () => {
+        //     observer.disconnect();
+        // });
     }
 
     if (selectedNode.node) {

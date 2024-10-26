@@ -25,7 +25,7 @@
             flex-wrap: wrap;
             gap: 10px;
 
-            .rounded-box {
+            .menu-box {
                 flex: 1;
 
                 z-index: 1;
@@ -38,8 +38,7 @@
                 gap: 10px;
 
                 background-color: var(--color-ternary);
-                border: var(--border-size) solid var(--color-ternary);
-                border-radius: 200px;
+                border: var(--border-size) solid transparent;
 
                 overflow: hidden;
 

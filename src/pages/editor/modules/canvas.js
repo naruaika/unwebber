@@ -4,8 +4,12 @@ import {
     selectedNode,
     hoveredNode,
     setHoveredNode,
+    metadata,
+    setMetadata,
+    setSelectedNode,
+    apiSchema,
 } from '../globals.js';
-import { hexToRgba } from '../helpers.js';
+import { hexToRgba, styleElement } from '../helpers.js';
 
 const rootContainer = document.querySelector('.main-canvas__container');
 const topRuler = rootContainer.querySelector('.top-ruler');
@@ -14,8 +18,7 @@ const canvasContainer = rootContainer.querySelector('.main-container');
 const canvasOverlay = rootContainer.querySelector('.main-canvas__overlay');
 const mainFrame = rootContainer.querySelector('.main-iframe');
 
-let documentComputedStyle = getComputedStyle(document.documentElement);
-let mainFrameBoundingRect = null;
+const documentComputedStyle = getComputedStyle(document.documentElement);
 
 const defaultBreakpoints = {
     desktop: 1200,
@@ -32,21 +35,36 @@ let currentScale = 1;
 let currentRotate = 0;
 let currentTranslateX = 0;
 let currentTranslateY = 0;
+let currentPointerX = 0;
+let currentPointerY = 0;
 
 let previousSelectedNode = null;
-let selectedNodeBoundingRect = null;
-let selectedNodeParentBoundingRect = null;
 let selectedBox = null;
 
 let hoveredElements = [];
-let hoveredNodeBoundingRect = null;
 let hoveredBox = null;
 
 let isPanning = false;
 let panningTimeout = null;
 
+let dragStartPoint = null;
+let dragStartMatrix = null;
+let dragPointerId = null;
+let dragAnimationRequestId = null;
+let isPreparedToDrag = false;
+let isDragging = false;
+let isDraggingInterrupted = false;
+let isDraggingJustDone = false;
+
+let isResizing = false;
+
 let isSpacebarBeingPressed = false;
 let isPanelReady = false;
+
+let mainFrameBoundingRect = null;
+let selectedNodeBoundingRect = null;
+let selectedNodeParentBoundingRect = null;
+let hoveredNodeBoundingRect = null;
 
 const initializeRulers = () => {
     const containerBoundingRect = mainFrame.parentElement.getBoundingClientRect();
@@ -141,39 +159,46 @@ const refreshRulers = () => {
     }
 
     // Fill the area to show the selected node position on the canvas
+    // TODO: may need to separate the render layer for the below process
+    // to prevent unnecessary re-rendering of the rulers
     if (selectedNodeBoundingRect) {
         ctx = topRuler.getContext('2d', { alpha: false });
         ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-blue') + '55');
         ctx.fillRect(currentTranslateX + selectedNodeBoundingRect.left * currentScale - rulerHeight, 0, selectedNodeBoundingRect.width * currentScale, topRuler.height);
+        ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-blue'));
+        ctx.fillRect(currentTranslateX + selectedNodeBoundingRect.left * currentScale - rulerHeight, 0, 1, topRuler.height);
+        ctx.fillRect(currentTranslateX + selectedNodeBoundingRect.left * currentScale - rulerHeight + selectedNodeBoundingRect.width * currentScale, 0, 1, topRuler.height);
         ctx = leftRuler.getContext('2d', { alpha: false });
         ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-blue') + '55');
         ctx.fillRect(0, currentTranslateY + selectedNodeBoundingRect.top * currentScale - rulerHeight, leftRuler.width, selectedNodeBoundingRect.height * currentScale);
+        ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-blue'));
+        ctx.fillRect(0, currentTranslateY + selectedNodeBoundingRect.top * currentScale - rulerHeight, leftRuler.width, 1);
+        ctx.fillRect(0, currentTranslateY + selectedNodeBoundingRect.top * currentScale - rulerHeight + selectedNodeBoundingRect.height * currentScale, leftRuler.width, 1);
     }
 }
 
-const initializeCanvas = () => {
-    // Set the main iframe size
-    const updateMainCanvasHeight = () => {
-        // TODO: add support for viewport width and height,
-        // in case of game or presentation slides development?
-        mainFrame.style.width = defaultBreakpoints.desktop + 'px';
-        mainFrame.style.height = `${mainFrame.contentDocument.body.scrollHeight}px`;
-        mainFrameBoundingRect = mainFrame.getBoundingClientRect();
-    };
+const adjustMainFrameSize = () => {
+    // TODO: add support for viewport width and height,
+    // in case of game or presentation slides development?
+    mainFrame.style.width = defaultBreakpoints.desktop + 'px';
+    mainFrame.style.height = `${mainFrame.contentDocument.body.scrollHeight}px`;
+    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
+};
 
+const initializeCanvas = () => {
     //
-    let marginLeft = rulerHeight;
+    let marginLeft = rulerHeight * 2;
     mainFrame.style.transform = `translate(${marginLeft}px, ${marginLeft}px)`;
     currentTranslateX = marginLeft;
     currentTranslateY = marginLeft;
     mainFrame.style.transformOrigin = '0px 0px';
 
-    // Set the initial height
-    updateMainCanvasHeight();
+    // Set the initial main frame size
+    adjustMainFrameSize();
 
     // Create a MutationObserver to watch for changes in the body height
     const documentTree = mainFrame.contentDocument.documentElement;
-    new MutationObserver(updateMainCanvasHeight).observe(documentTree, {
+    new MutationObserver(adjustMainFrameSize).observe(documentTree, {
         childList: true,
         subtree: true,
     });
@@ -194,7 +219,8 @@ const refreshCanvas = () => {
         hoveredBox = document.createElement('div');
         hoveredBox.classList.add('hovered-box');
         hoveredBox.setAttribute('data-uw-ignore', '');
-        hoveredBox.addEventListener('mouseup', onHoveredBoxMouseUp);
+        hoveredBox.addEventListener('pointerup', onHoveredBoxMouseUp);
+        hoveredBox.addEventListener('pointerdown', onHoveredBoxMouseDown);
         canvasOverlay.appendChild(hoveredBox);
     }
 
@@ -213,7 +239,10 @@ const refreshCanvas = () => {
         // Initialize the drag area points
         for (let index = 0; index < 8; index++) {
             const dragAreaElement = document.createElement('div');
+            dragAreaElement.setAttribute('data-uw-ignore', '');
             dragAreaElement.classList.add('drag-area');
+            dragAreaElement.addEventListener('pointerdown', () => { isResizing = true; });
+            dragAreaElement.addEventListener('pointerup', () => { isResizing = false; });
             selectedBox.appendChild(dragAreaElement);
         }
     }
@@ -222,10 +251,15 @@ const refreshCanvas = () => {
     // TODO: get the rects instead for non-element nodes?
     if (
         selectedNode.node &&
-        selectedNode.node.nodeType === Node.ELEMENT_NODE
+        selectedNode.node.nodeType === Node.ELEMENT_NODE &&
+        selectedNode.node.tagName.toLowerCase() !== 'head' &&
+        ! apiSchema.htmlElements
+            .find(element => element.tag === selectedNode.node.tagName.toLowerCase())
+            .categories
+            .includes('metadata')
     ) {
         if (selectedNode !== previousSelectedNode) {
-            selectedNodeBoundingRect = selectedNode.node.getBoundingClientRect();
+            updateSelectedNodeBoundingRect();
             if (
                 selectedNode.parent &&
                 ! ('uwIgnore' in selectedNode.parent.dataset)
@@ -250,7 +284,6 @@ const transformCanvas = (event) => {
     // Zoom in or out
     if (event.ctrlKey) {
         // Get the pointer position relative to the canvas overlay
-        mainFrameBoundingRect = mainFrame.getBoundingClientRect();
         const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
         const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
 
@@ -296,12 +329,16 @@ const transformCanvas = (event) => {
     clearTimeout(panningTimeout);
     panningTimeout = setTimeout(() => {
         panningTimeout = null;
+        updateSelectedNodeBoundingRect();
         refreshSelectedBox();
         refreshHoveredBox();
     }, 250);
 
+    refreshRulers();
     refreshSelectedBox();
     refreshHoveredBox();
+
+    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 }
 
 const panCanvas = (dx, dy) => {
@@ -314,6 +351,7 @@ const panCanvas = (dx, dy) => {
     clearTimeout(panningTimeout);
     panningTimeout = setTimeout(() => {
         panningTimeout = null;
+        updateSelectedNodeBoundingRect();
         refreshSelectedBox();
         refreshHoveredBox();
     }, 250);
@@ -321,19 +359,43 @@ const panCanvas = (dx, dy) => {
     refreshRulers();
     refreshSelectedBox();
     refreshHoveredBox();
+
+    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 };
 
 const zoomCanvas = (event) => {
     let newScale = currentScale;
-    let canvasOverlayBoundingRect = canvasOverlay.getBoundingClientRect();
     let pointerX;
     let pointerY;
     let newTranslateX;
     let newTranslateY;
 
-    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
+    const containerBoundingRect = mainFrame.parentElement.getBoundingClientRect();
+    const canvasOverlayBoundingRect = canvasOverlay.getBoundingClientRect();
 
     switch (event.detail) {
+        case 'selection':
+            if (! selectedNodeBoundingRect) {
+                return;
+            }
+
+            // Calculate the new scale to fit the selected node within the main frame
+            const scaleX = (containerBoundingRect.width - rulerHeight * 3) / selectedNodeBoundingRect.width;
+            const scaleY = (containerBoundingRect.height - rulerHeight * 3) / selectedNodeBoundingRect.height;
+            newScale = Math.min(scaleX, scaleY);
+
+            // Calculate the new translate to center the selected node within the main frame
+            newTranslateX = ((containerBoundingRect.width - rulerHeight * 3) - selectedNodeBoundingRect.width * newScale) / 2 - selectedNodeBoundingRect.left * newScale + rulerHeight * 2;
+            newTranslateY = ((containerBoundingRect.height - rulerHeight * 3) - selectedNodeBoundingRect.height * newScale) / 2 - selectedNodeBoundingRect.top * newScale + rulerHeight * 2;
+
+            // Apply the new transform
+            mainFrame.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px) scale(${newScale}) rotate(${currentRotate}deg)`;
+            currentScale = newScale;
+            currentTranslateX = newTranslateX;
+            currentTranslateY = newTranslateY;
+
+            break;
+
         case 'in':
             // Get the pointer position relative to center of the canvas overlay
             pointerX = (canvasOverlayBoundingRect.left + canvasOverlayBoundingRect.width / 2 - mainFrameBoundingRect.left) / currentScale;
@@ -381,7 +443,6 @@ const zoomCanvas = (event) => {
             break;
 
         case 'fit':
-            const containerBoundingRect = mainFrame.parentElement.getBoundingClientRect();
             if (defaultBreakpoints.desktop < (containerBoundingRect.width - rulerHeight)) {
                 mainFrame.style.transform = `translate(${rulerHeight}px, ${rulerHeight}px)`;
             } else {
@@ -421,6 +482,7 @@ const zoomCanvas = (event) => {
     clearTimeout(panningTimeout);
     panningTimeout = setTimeout(() => {
         panningTimeout = null;
+        updateSelectedNodeBoundingRect();
         refreshSelectedBox();
         refreshHoveredBox();
     }, 250);
@@ -428,26 +490,16 @@ const zoomCanvas = (event) => {
     refreshSelectedBox();
     refreshHoveredBox();
     refreshRulers();
+
+    mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 }
 
-const viewCanvas = () => {
-    // Reset the canvas transform
-    currentScale = 1;
-    currentTranslateX = rulerHeight;
-    currentTranslateY = rulerHeight;
-    currentRotate = 0;
-    mainFrame.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale}) rotate(${currentRotate}deg)`;
-
-    clearTimeout(panningTimeout);
-    panningTimeout = setTimeout(() => {
-        panningTimeout = null;
-        refreshSelectedBox();
-        refreshHoveredBox();
-    }, 250);
-
-    refreshSelectedBox();
-    refreshHoveredBox();
-    refreshRulers();
+const updateSelectedNodeBoundingRect = () => {
+    if (! selectedNode.node) {
+        selectedNodeBoundingRect = null;
+        return;
+    }
+    selectedNodeBoundingRect = selectedNode.node.getBoundingClientRect();
 }
 
 const refreshSelectedBox = () => {
@@ -468,16 +520,19 @@ const refreshSelectedBox = () => {
         selectedBox.style.width = `${width}px`;
         selectedBox.style.height = `${height}px`;
 
-        if (selectedNodeParentBoundingRect) {
+        if (
+            selectedNodeParentBoundingRect &&
+            ! isDragging
+        ) {
             let { left, top, width, height } = selectedNodeParentBoundingRect;
             left = (left - selectedNodeBoundingRect.left) * currentScale;
             top = (top - selectedNodeBoundingRect.top) * currentScale;
             width = width * currentScale;
             height = height * currentScale;
-            selectedBox.style.setProperty('--parent-top', `${top - 1}px`);
-            selectedBox.style.setProperty('--parent-left', `${left - 1}px`);
-            selectedBox.style.setProperty('--parent-width', `${width - 2}px`);
-            selectedBox.style.setProperty('--parent-height', `${height - 2}px`);
+            selectedBox.style.setProperty('--parent-top', `${top - 2}px`);
+            selectedBox.style.setProperty('--parent-left', `${left - 2}px`);
+            selectedBox.style.setProperty('--parent-width', `${width}px`);
+            selectedBox.style.setProperty('--parent-height', `${height}px`);
             selectedBox.style.setProperty('--parent-visibility', 'visible');
         } else {
             selectedBox.style.setProperty('--parent-visibility', 'hidden');
@@ -488,12 +543,12 @@ const refreshSelectedBox = () => {
         const dragAreaPositions = [
             { x: -5 - 0.5, y: -5 - 0.5, title: 'top-left', },
             { x: width / 2 - 5 - 1, y: -5 - 0.5, title: 'middle-top', },
-            { x: width - 5 - 1.5, y: -5 - 0.5, title: 'top-right', },
+            { x: width - 5 - 1, y: -5 - 0.5, title: 'top-right', },
             { x: -5 - 0.5, y: height / 2 - 5 - 1, title: 'middle-left', },
-            { x: width - 5 - 1.5, y: height / 2 - 5 - 1, title: 'middle-right', },
-            { x: -5 - 0.5, y: height - 5 - 1.5, title: 'bottom-left', },
-            { x: width / 2 - 5 - 1, y: height - 5 - 1.5, title: 'middle-bottom', },
-            { x: width - 5 - 1.5, y: height - 5 - 1.5, title: 'bottom-right', },
+            { x: width - 5 - 1, y: height / 2 - 5 - 1, title: 'middle-right', },
+            { x: -5 - 0.5, y: height - 5 - 1, title: 'bottom-left', },
+            { x: width / 2 - 5 - 1, y: height - 5 - 1, title: 'middle-bottom', },
+            { x: width - 5 - 1, y: height - 5 - 1, title: 'bottom-right', },
         ]
         dragAreaPoints.forEach((dragAreaPoint, index) => {
             dragAreaPoint.style.top = `${dragAreaPositions[index].y}px`;
@@ -524,7 +579,7 @@ const refreshSelectedBox = () => {
             dragAreaPoint.classList.remove('hidden');
 
             // Hide some drag area points if the selected element is too small either in width
-            if (selectedNodeBoundingRect.width * currentScale <= 5) {
+            if (selectedNodeBoundingRect.width * currentScale <= 10) {
                 if (
                     dragAreaPositions[index].title.startsWith('top') ||
                     dragAreaPositions[index].title.startsWith('bottom') ||
@@ -533,7 +588,7 @@ const refreshSelectedBox = () => {
                 ) {
                     dragAreaPoint.classList.add('hidden');
                 }
-            } else if (selectedNodeBoundingRect.width * currentScale <= 10) {
+            } else if (selectedNodeBoundingRect.width * currentScale <= 20) {
                 if (
                     dragAreaPositions[index].title === 'middle-top' ||
                     dragAreaPositions[index].title === 'middle-bottom'
@@ -543,7 +598,7 @@ const refreshSelectedBox = () => {
             }
 
             // Hide some drag area points if the selected element is too small either in height
-            if (selectedNodeBoundingRect.height * currentScale <= 5) {
+            if (selectedNodeBoundingRect.height * currentScale <= 10) {
                 if (
                     dragAreaPositions[index].title.startsWith('top') ||
                     dragAreaPositions[index].title.startsWith('bottom') ||
@@ -552,7 +607,7 @@ const refreshSelectedBox = () => {
                 ) {
                     dragAreaPoint.classList.add('hidden');
                 }
-            } else if (selectedNodeBoundingRect.height * currentScale <= 10) {
+            } else if (selectedNodeBoundingRect.height * currentScale <= 20) {
                 if (
                     dragAreaPositions[index].title === 'middle-left' ||
                     dragAreaPositions[index].title === 'middle-right'
@@ -573,6 +628,22 @@ const refreshSelectedBox = () => {
 const onHoveredBoxMouseUp = (event) => {
     event.stopImmediatePropagation();
 
+    if (isDraggingInterrupted) {
+        isDraggingInterrupted = false;
+        return;
+    }
+
+    if (isPreparedToDrag) {
+        // Flag to cancel dragging
+        dragStartPoint = null;
+        isPreparedToDrag = false;
+    }
+
+    // Skip if there is no hovered nodes
+    if (hoveredElements.length == 0) {
+        return;
+    }
+
     // Cycle through the overlapping hovered elements
     if (event.altKey) {
         let index = hoveredElements.includes(selectedNode.node)
@@ -586,6 +657,8 @@ const onHoveredBoxMouseUp = (event) => {
                 : null,
             hoveredElements[index].parentElement,
         );
+        hoveredNodeBoundingRect = hoveredElements[index].getBoundingClientRect();
+        refreshHoveredBox();
     } else {
         // Reset the hovered node
         setHoveredNode(
@@ -606,6 +679,23 @@ const onHoveredBoxMouseUp = (event) => {
             target: 'canvas',
         }
     }));
+}
+
+const onHoveredBoxMouseDown = (event) => {
+    if (event.which === 1) { // left mouse button
+        // Prevent from dragging non-positioned hovered element
+        // TODO: add support for dragging non-positioned hovered element
+        const _metadata = metadata[hoveredNode.node.dataset.uwId];
+        const position = _metadata.properties['position']?.value || 'static';
+        if (! ['absolute', 'fixed', 'sticky'].includes(position)) {
+            return;
+        }
+
+        // Flag to start dragging
+        dragStartPoint = { x: event.clientX, y: event.clientY };
+        isPreparedToDrag = true;
+        return;
+    }
 }
 
 const refreshHoveredBox = () => {
@@ -653,6 +743,30 @@ const findHoveredElements = (event) => {
     }
 
     if (! topMostHoveredElement) {
+        // Check if the pointer is within the selected box boundaries
+        const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+        const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+        if (
+            selectedNode.node &&
+            selectedNode.node.nodeType === Node.ELEMENT_NODE &&
+            selectedNodeBoundingRect &&
+            pointerX >= selectedNodeBoundingRect.left &&
+            pointerX <= selectedNodeBoundingRect.right &&
+            pointerY >= selectedNodeBoundingRect.top &&
+            pointerY <= selectedNodeBoundingRect.bottom
+        ) {
+            // Set the hovered element
+            setHoveredNode(selectedNode.node, selectedNode.position, selectedNode.parent);
+
+            // Set the hovered bounding rect
+            hoveredNodeBoundingRect = selectedNodeBoundingRect;
+            refreshHoveredBox();
+
+            return;
+        }
+    }
+
+    if (! topMostHoveredElement) {
         // Set the hovered element
         setHoveredNode(null);
 
@@ -668,7 +782,6 @@ const findHoveredElements = (event) => {
 
     if (topMostHoveredElement === mainFrame) {
         // Get the pointer position relative to the iframe
-        mainFrameBoundingRect = mainFrame.getBoundingClientRect();
         const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
         const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
 
@@ -714,29 +827,65 @@ const findHoveredElements = (event) => {
         hoveredNodeBoundingRect = topMostHoveredElement.getBoundingClientRect();
         refreshHoveredBox();
 
-        // if (event.altKey) {
-        //     // Request panel updates
-        //     window.dispatchEvent(new CustomEvent('outline:hover'));
-        // }
-
         return;
     }
 
     // TODO: if () {}
 }
 
-const showContextMenu = (event) => {
-    event.preventDefault();
+const moveSelectedNode = (clientX, clientY, constrained = false) => {
+    // TODO: add support for object snapping
 
-    // TODO: implement the context menu
-}
+    const previousX = dragStartPoint.x;
+    const previousY = dragStartPoint.y;
+    const upcomingX = clientX;
+    const upcomingY = clientY;
+
+    // Get the metadata of the selected node
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Apply the transformation to the element
+    matrix.e = dragStartMatrix.e + upcomingX - previousX;
+    matrix.f = dragStartMatrix.f + upcomingY - previousY;
+    if (constrained) {
+        const deltaX = upcomingX - previousX;
+        const deltaY = upcomingY - previousY;
+        const angle = Math.atan2(Math.abs(deltaY), Math.abs(deltaX)) * (180 / Math.PI);
+        const threshold = Math.min(50, 40 + Math.max(Math.abs(deltaX), Math.abs(deltaY)) / 10);
+        if (angle >= threshold - 10 && angle <= threshold + 10) {
+            const shift = Math.max(Math.abs(upcomingX - previousX), Math.abs(upcomingY - previousY));
+            matrix.e = shift * Math.sign(upcomingX - previousX) + dragStartMatrix.e;
+            matrix.f = shift * Math.sign(upcomingY - previousY) + dragStartMatrix.f;
+        } else {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                matrix.f = dragStartMatrix.f;
+            } else {
+                matrix.e = dragStartMatrix.e;
+            }
+        }
+    }
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    updateSelectedNodeBoundingRect();
+    refreshRulers();
+    refreshSelectedBox();
+};
+
+const resizeSelectedNode = (dx, dy, direction) => { /* TODO: implement this */ }
 
 const refreshPanel = (event = {}) => {
-    // To force the selection box to be recalculated
-    // and hide the hovering box while transforming the selected node
+    // To force the selection box to be recalculated,
+    // hide the hovering box while transforming the selected node,
+    // and adjust the main frame size
     if (event.detail?.transform) {
         previousSelectedNode = null;
         hoveredNodeBoundingRect = null;
+        adjustMainFrameSize();
     }
 
     // To hide the hovering box
@@ -752,22 +901,43 @@ const refreshPanel = (event = {}) => {
     }
 }
 
-// TODO: implement marquee selection, but firstly add support for multiple selection
+const showContextMenu = (event) => {
+    event.preventDefault();
 
-// TODO: implement the drag and drop feature
+    // TODO: implement this
+}
 
-const onCanvasContainerMouseUp = (event) => {
-    if (! isPanelReady) {
+const interruptAction = () => {
+    if (isDragging) {
+        // Flag to interrupt dragging
+        dragStartPoint = null;
+        isDragging = false;
+        isDraggingInterrupted = true;
+        canvasOverlay.releasePointerCapture(dragPointerId);
+
+        // Reset the transformation of the selected node
+        styleElement(selectedNode.node, 'transform', dragStartMatrix.toString(), true);
+
+        // Reset the property value
+        const _metadata = metadata[selectedNode.node.dataset.uwId];
+        _metadata.properties['transform'] = { value: dragStartMatrix.toString(), checked: true };
+        setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+        // Reset the selected box
+        updateSelectedNodeBoundingRect();
+        refreshSelectedBox();
+
+        // Show the hovered box
+        hoveredNodeBoundingRect = selectedNodeBoundingRect;
+        refreshHoveredBox();
+
+        refreshRulers();
+
         return;
     }
-
-    if (event.which === 1) { // left mouse button
-        // Request to clear the selected node
-        window.dispatchEvent(new CustomEvent('element:select', {
-            detail: { target: 'canvas' }
-        }));
-    }
 }
+
+// TODO: implement marquee selection, but firstly add support for multiple selection
 
 const onCanvasOverlayMouseDown = (event) => {
     if (! isPanelReady) {
@@ -786,9 +956,14 @@ const onCanvasOverlayMouseDown = (event) => {
         // and https://stackoverflow.com/a/54216477/8791891
         return;
     }
+
+    //
+    dragPointerId = event.pointerId;
 }
 
 const onCanvasOverlayMouseUp = (event) => {
+    event.stopImmediatePropagation();
+
     if (! isPanelReady) {
         return;
     }
@@ -799,7 +974,63 @@ const onCanvasOverlayMouseUp = (event) => {
     ) {
         isPanning = false;
         document.exitPointerLock();
-        event.stopImmediatePropagation();
+        return;
+    }
+
+    if (isDragging) {
+        // Flag to stop dragging
+        dragStartPoint = null;
+        isDragging = false;
+        isDraggingJustDone = true;
+        canvasOverlay.releasePointerCapture(dragPointerId);
+
+        // Update the main frame size
+        adjustMainFrameSize();
+
+        // Show the selected parent box
+        selectedNodeParentBoundingRect = selectedNode.parent?.getBoundingClientRect();
+        refreshSelectedBox();
+
+        // Show the hovered box
+        hoveredNodeBoundingRect = selectedNodeBoundingRect;
+        refreshHoveredBox();
+
+        // Request to save the action
+        const previousState = {
+            // container: selectedNode.parent,
+            // position: selectedNode.position,
+            style: { transform: dragStartMatrix.toString() },
+        };
+        const upcomingState = {
+            // container: selectedNode.parent,
+            // position: selectedNode.position,
+            style: { transform: metadata[selectedNode.node.dataset.uwId].properties.transform.value },
+        };
+        const actionContext = { element: selectedNode.node };
+        window.dispatchEvent(new CustomEvent('action:save', {
+            detail: {
+                title: 'element:transform',
+                previous: previousState,
+                upcoming: upcomingState,
+                reference: actionContext,
+            }
+        }));
+
+        // Reset the dragging matrix
+        dragStartMatrix = null;
+
+        return;
+    }
+
+    if (isDraggingInterrupted) {
+        return;
+    }
+
+    // Request to clear the selected node if there is no hovered nodes
+    if (hoveredElements.length == 0) {
+        window.dispatchEvent(new CustomEvent('element:select', {
+            detail: { target: 'canvas' }
+        }));
         return;
     }
 }
@@ -809,12 +1040,119 @@ const onCanvasOverlayMouseMove = (event) => {
         return;
     }
 
+    currentPointerX = event.clientX;
+    currentPointerY = event.clientY;
+
     if (isPanning) {
         panCanvas(event.movementX, event.movementY);
         return;
     }
 
     if (isSpacebarBeingPressed) {
+        return;
+    }
+
+    if (isPreparedToDrag) {
+        // Check if the drag distance is enough to start dragging
+        if (
+            Math.abs(event.clientX - dragStartPoint.x) > 5 ||
+            Math.abs(event.clientY - dragStartPoint.y) > 5
+        ) {
+            // Flag to start dragging
+            isPreparedToDrag = false;
+            isDragging = true;
+            isDraggingInterrupted = false;
+            canvasOverlay.setPointerCapture(dragPointerId);
+
+            // Request to update the selected node
+            if (selectedNode.node !== hoveredNode.node) {
+                window.dispatchEvent(new CustomEvent('element:select', {
+                    detail: {
+                        uwId: hoveredNode.node.dataset.uwId,
+                        uwPosition: hoveredNode.position,
+                        uwParentId: hoveredNode.parent?.dataset.uwId,
+                        target: 'canvas',
+                    }
+                }));
+            }
+            setSelectedNode(hoveredNode.node, hoveredNode.position, hoveredNode.parent);
+
+            // Re-calculate the dragging start point
+            dragStartPoint = {
+                x: (dragStartPoint.x - mainFrameBoundingRect.left) / currentScale,
+                y: (dragStartPoint.y - mainFrameBoundingRect.top) / currentScale,
+            };
+
+            // Get the current transformation matrix
+            dragStartMatrix = new DOMMatrix(metadata[selectedNode.node.dataset.uwId].properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+            // Hide the hovered box
+            hoveredNodeBoundingRect = null;
+            refreshHoveredBox();
+        }
+
+        return;
+    }
+
+    if (isDragging) {
+        if (! dragAnimationRequestId) {
+            const canvasOverlayRect = canvasOverlay.getBoundingClientRect();
+            if (
+                currentPointerX < canvasOverlayRect.left ||
+                currentPointerX > canvasOverlayRect.right ||
+                currentPointerY < canvasOverlayRect.top ||
+                currentPointerY > canvasOverlayRect.bottom
+            ) {
+                const lastPointerX = currentPointerX;
+                const lastPointerY = currentPointerY;
+                const continueDragging = () => {
+                    if (
+                        ! (
+                            isDragging &&
+                            (
+                                currentPointerX < canvasOverlayRect.left ||
+                                currentPointerX > canvasOverlayRect.right ||
+                                currentPointerY < canvasOverlayRect.top ||
+                                currentPointerY > canvasOverlayRect.bottom
+                            )
+                        )
+                    ) {
+                        dragAnimationRequestId = null;
+                        return;
+                    }
+                    const distanceX = currentPointerX - lastPointerX;
+                    const distanceY = currentPointerY - lastPointerY;
+                    const speedFactor = 1 / 10;
+                    if (currentPointerX < canvasOverlayRect.left || currentPointerX > canvasOverlayRect.right) {
+                        panCanvas(-distanceX * speedFactor, 0);
+                    }
+                    if (currentPointerY < canvasOverlayRect.top || currentPointerY > canvasOverlayRect.bottom) {
+                        panCanvas(0, -distanceY * speedFactor);
+                    }
+                    dragAnimationRequestId = requestAnimationFrame(continueDragging);
+                    const clientX = (currentPointerX - mainFrameBoundingRect.left) / currentScale;
+                    const clientY = (currentPointerY - mainFrameBoundingRect.top) / currentScale;
+                    moveSelectedNode(clientX, clientY, event.shiftKey);
+                };
+                dragAnimationRequestId = requestAnimationFrame(continueDragging);
+                return;
+            }
+        }
+
+        const clientX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+        const clientY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+        moveSelectedNode(clientX, clientY, event.shiftKey);
+
+        return;
+    }
+
+    if (isDraggingJustDone) {
+        isDraggingJustDone = false;
+        return;
+    }
+
+    if (isDraggingInterrupted) {
+        isDraggingInterrupted = false;
         return;
     }
 
@@ -853,8 +1191,11 @@ const onCanvasOverlayWheel = (event) => {
         return;
     }
 
+    if (isPanning) {
+        return;
+    }
+
     transformCanvas(event);
-    refreshRulers();
 }
 
 const onDocumentKeyDown = (event) => {
@@ -909,17 +1250,16 @@ const onWindowResize = () => {
 
 (() => {
     // Register the mouse event listeners for the canvas overlay
-    canvasContainer.addEventListener('mouseup', onCanvasContainerMouseUp);
-    canvasOverlay.addEventListener('mousedown', onCanvasOverlayMouseDown);
-    canvasOverlay.addEventListener('mouseup', onCanvasOverlayMouseUp);
-    canvasOverlay.addEventListener('mousemove', onCanvasOverlayMouseMove);
+    canvasOverlay.addEventListener('pointerdown', onCanvasOverlayMouseDown);
+    canvasOverlay.addEventListener('pointerup', onCanvasOverlayMouseUp);
+    canvasOverlay.addEventListener('pointermove', onCanvasOverlayMouseMove);
     canvasOverlay.addEventListener('mouseenter', onCanvasOverlayMouseEnter);
     canvasOverlay.addEventListener('mouseleave', onCanvasOverlayMouseLeave);
     canvasOverlay.addEventListener('wheel', onCanvasOverlayWheel, { passive: true });
 
     // Register event listeners on the window
+    window.addEventListener('action:interrupt', interruptAction);
     window.addEventListener('canvas:refresh', refreshPanel);
     window.addEventListener('canvas:zoom', zoomCanvas);
-    window.addEventListener('canvas:view', viewCanvas);
     window.addEventListener('resize', onWindowResize);
 })()

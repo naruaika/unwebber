@@ -148,9 +148,14 @@ const showMenu = (event) => {
     console.log(`[Editor] Show context menu: ${event.uwTarget}`);
 }
 
-const hideMenu = () => {
+const hideMenu = (event) => {
+    // Hide the context menu
     container.classList.add('hidden');
     menu.classList.remove('show');
+
+    // Dispatch a custom event to inform the other components
+    const customEvent = new MouseEvent('contextmenu:hide', event);
+    window.dispatchEvent(customEvent);
 }
 
 const onMouseOverGroupMenuItem = (event, group, childMenu) => {
@@ -256,15 +261,15 @@ const onMenuDrag = (event) => {
 
 (() => {
     // Register the element event listener
-    container.addEventListener('mousedown', hideMenu);
-    container.addEventListener("dragover", (event) => event.preventDefault());
-    container.addEventListener("dragenter", (event) => event.preventDefault());
-    menu.addEventListener('mousedown', onMenuMouseDown);
+    container.addEventListener('pointerdown', hideMenu);
+    container.addEventListener('dragover', (event) => event.preventDefault());
+    container.addEventListener('dragenter', (event) => event.preventDefault());
+    menu.addEventListener('pointerdown', onMenuMouseDown);
     menu.addEventListener('dragstart', onMenuDragStart);
     menu.addEventListener('drag', onMenuDrag);
-    menu.addEventListener("dragenter", (event) => event.preventDefault());
-    menu.addEventListener("dragover", (event) => event.preventDefault());
-    menu.addEventListener("dragend", (event) => event.preventDefault());
+    menu.addEventListener('dragenter', (event) => event.preventDefault());
+    menu.addEventListener('dragover', (event) => event.preventDefault());
+    menu.addEventListener('dragend', (event) => event.preventDefault());
 
     // Register the window message event listener
     window.addEventListener('contextmenu:show', showMenu);

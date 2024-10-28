@@ -239,7 +239,6 @@ const setElementColorTag = (color) => {
     };
 
     // Apply the new color tag
-    // TODO: move to action-center?
     button.dataset.color = color;
     setMetadata(button.dataset.uwId, {
         ...metadata[button.dataset.uwId],
@@ -358,7 +357,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -374,7 +373,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -395,7 +394,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -411,7 +410,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -427,7 +426,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -448,7 +447,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -464,7 +463,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -480,7 +479,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -501,7 +500,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -517,7 +516,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -533,7 +532,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -552,7 +551,7 @@ const showContextMenu = (event) => {
                 // Request to cut the element
                 window.dispatchEvent(new CustomEvent('element:cut'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             shortcut: 'Ctrl+X',
         },
         {
@@ -563,7 +562,7 @@ const showContextMenu = (event) => {
                 // Request to copy the element
                 window.dispatchEvent(new CustomEvent('element:copy'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             shortcut: 'Ctrl+C',
         },
         {
@@ -606,7 +605,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-inner-html'));
             },
             disabled:
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -618,7 +617,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-outer-html'));
             },
             disabled:
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -631,7 +630,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -655,7 +654,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -671,7 +670,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -687,7 +686,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -703,7 +702,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -719,7 +718,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -735,7 +734,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -755,7 +754,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-before'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -767,7 +766,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:paste-after'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'paste-special',
         },
@@ -808,7 +807,7 @@ const showContextMenu = (event) => {
                 // Request to delete the element
                 window.dispatchEvent(new CustomEvent('element:delete'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             shortcut: 'Delete',
         },
         {
@@ -822,7 +821,7 @@ const showContextMenu = (event) => {
                 // Request to duplicate the element
                 window.dispatchEvent(new CustomEvent('element:duplicate'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             shortcut: 'Ctrl+D',
         },
         {
@@ -839,7 +838,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:create-clone'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'clone',
         },
@@ -852,7 +851,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 // TODO: disable if the element is not a clone
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'clone',
         },
@@ -865,7 +864,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 // TODO: disable if the element is not a clone
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! event.currentTarget.dataset.uwId,
             belongs: 'clone',
         },
@@ -880,7 +879,7 @@ const showContextMenu = (event) => {
                 // Request to wrap the element
                 window.dispatchEvent(new CustomEvent('element:wrap'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
         },
         {
             id: 'unwrap',
@@ -889,7 +888,7 @@ const showContextMenu = (event) => {
                 // Request to unwrap the element
                 window.dispatchEvent(new CustomEvent('element:unwrap'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
         },
         {
             spacer: true,
@@ -908,7 +907,7 @@ const showContextMenu = (event) => {
                 // Request to insert an element before the element
                 window.dispatchEvent(new CustomEvent('element:insert-before'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             belongs: 'insert',
         },
         {
@@ -918,7 +917,7 @@ const showContextMenu = (event) => {
                 // Request to insert an element after the element
                 window.dispatchEvent(new CustomEvent('element:insert-after'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
             belongs: 'insert',
         },
         {
@@ -957,7 +956,7 @@ const showContextMenu = (event) => {
                 // Request to convert the element to another element
                 window.dispatchEvent(new CustomEvent('element:convert-to'));
             },
-            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName),
+            disabled: ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()),
         },
         {
             spacer: true,
@@ -981,10 +980,10 @@ const showContextMenu = (event) => {
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move to Back' : 'Move to Top',
             action: () => {
                 // Request to move the element to the top
-                window.dispatchEvent(new CustomEvent('element:move-to-top'));
+                window.dispatchEvent(new CustomEvent('element:move-to-top-tree'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasPreviousSibling,
             belongs: 'move',
         },
@@ -993,10 +992,10 @@ const showContextMenu = (event) => {
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move Backward' : 'Move Up',
             action: () => {
                 // Request to move the element up
-                window.dispatchEvent(new CustomEvent('element:move-up'));
+                window.dispatchEvent(new CustomEvent('element:move-up-tree'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasPreviousSibling,
             belongs: 'move',
         },
@@ -1005,10 +1004,10 @@ const showContextMenu = (event) => {
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move Forward' : 'Move Down',
             action: () => {
                 // Request to move the element down
-                window.dispatchEvent(new CustomEvent('element:move-down'));
+                window.dispatchEvent(new CustomEvent('element:move-down-tree'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasNextSibling,
             belongs: 'move',
         },
@@ -1017,10 +1016,10 @@ const showContextMenu = (event) => {
             label: ['absolute', 'fixed'].includes(stylePosition) ? 'Move to Front' : 'Move to Bottom',
             action: () => {
                 // Request to move the element to bottom
-                window.dispatchEvent(new CustomEvent('element:move-to-bottom'));
+                window.dispatchEvent(new CustomEvent('element:move-to-bottom-tree'));
             },
             disabled:
-                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasNextSibling,
             belongs: 'move',
         },
@@ -1037,7 +1036,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:outdent-up'));
             },
             disabled:
-                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ['head', 'body'].includes(selectedNode.parent.tagName.toLowerCase()),
             belongs: 'move',
         },
@@ -1049,7 +1048,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:outdent-down'));
             },
             disabled:
-                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ['head', 'body'].includes(selectedNode.parent.tagName.toLowerCase()),
             belongs: 'move',
         },
@@ -1066,7 +1065,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:indent-up'));
             },
             disabled:
-                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! selectedNode.node.previousElementSibling ||
                 (
                     selectedNode.node.previousElementSibling &&
@@ -1082,7 +1081,7 @@ const showContextMenu = (event) => {
                 window.dispatchEvent(new CustomEvent('element:indent-down'));
             },
             disabled:
-                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head', 'body', 'meta', 'title', 'link', 'base'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! selectedNode.node.nextElementSibling ||
                 (
                     selectedNode.node.nextElementSibling &&
@@ -1197,7 +1196,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -1213,7 +1212,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -1234,7 +1233,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -1250,7 +1249,7 @@ const showContextMenu = (event) => {
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName) ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 apiSchema.htmlElements
                     .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
                     .categories
@@ -1259,7 +1258,7 @@ const showContextMenu = (event) => {
         },
         {
             spacer: true,
-            for: ['rename'],
+            for: ['rename', 'edit-text'],
         },
         {
             id: 'rename',
@@ -1470,16 +1469,16 @@ const createListItem = (node, level) => {
     // Check if the element has children excluding empty text nodes
     let hasChild = false;
     if (node.childNodes?.length > 0) {
-        hasChild = [...node.childNodes].some(child => {
-            return true &&
-                ! child.hasAttribute?.('data-uw-ignore') &&
-                (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim());
-        });
+        hasChild = [...node.childNodes].some(child =>
+            ! child.hasAttribute?.('data-uw-ignore') &&
+            (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim())
+        );
     }
 
     // Add the button element
     const button = document.createElement('button');
     button.dataset.tagName = node.tagName ? node.tagName.toLowerCase() : 'text';
+    button.dataset.id = node.id || '';
     button.dataset.uwId = node.dataset?.uwId || '';
     button.dataset.uwPosition = node.parentElement ? Array.prototype.indexOf.call(node.parentElement.childNodes, node) : '';
     button.dataset.uwParentId = node.parentElement?.dataset.uwId || '';
@@ -1491,10 +1490,12 @@ const createListItem = (node, level) => {
                 .categories
                 .includes('void')
         : false;
+    button.dataset.label = '';
     button.style.paddingLeft = `${8 + level * 15}px`;
-    if (!['html', 'head', 'body'].includes(node.tagName?.toLowerCase())) {
+    if (! ['html', 'head', 'body'].includes(node.tagName?.toLowerCase())) {
         button.draggable = true;
     }
+    button.classList.add('list-item');
     listItem.appendChild(button);
 
     // Add icon(s) to the button element
@@ -1534,11 +1535,13 @@ const createListItem = (node, level) => {
                     : ''
         );
     buttonLabel.append(buttonLabelContent);
+    button.dataset.label += buttonLabelContent.textContent;
     if (node.tagName) {
         // add a span for the element tag name
         buttonLabelContent = document.createElement('span');
         buttonLabelContent.classList.add('element-tagname');
         buttonLabelContent.textContent = node.tagName?.toLowerCase();
+        button.dataset.label += ' ' + buttonLabelContent.textContent;
         buttonLabel.append(buttonLabelContent);
         // add a span for the element id
         buttonLabelContent = document.createElement('span');
@@ -1549,6 +1552,7 @@ const createListItem = (node, level) => {
                 : node.dataset?.uwId
                     ? '@' + node.dataset.uwId
                     : '';
+        button.dataset.label += buttonLabelContent.textContent;
         buttonLabel.append(buttonLabelContent);
     }
     // append the label to the button
@@ -1661,14 +1665,65 @@ const refreshPanel = () => {
     //
     console.log('[Editor] Refreshing outline panel...');
 
-    // TODO: add search input to filter elements by tag name, id, and label
-
     if (! isPanelReady) {
         const documentTree = mainFrame.contentDocument.documentElement;
 
         const populateListItemTree = () => {
             // Remove all the existing elements from the panel
             panelContentContainer.innerHTML = '';
+
+            // Add search input to the outline panel
+            const searchInputContainer = document.createElement('div');
+            searchInputContainer.classList.add('panel__search-container');
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search outline...';
+            searchInput.classList.add('panel__search');
+
+            // Add event listeners to the search input
+            searchInput.addEventListener('input', (event) => {
+                // Clear the highlighted flag from all list items
+                panelContentContainer.querySelectorAll('.highlighted, .highlighted-parent').forEach(element => {
+                    element.classList.remove('highlighted', 'highlighted-parent');
+                });
+                if (! event.target.value) {
+                    return;
+                }
+                // Filter the list item based on the search input value
+                panelContentContainer.querySelectorAll('.list-item').forEach(element => {
+                    const query = event.target.value.toLowerCase();
+                    const searchIn = element.dataset.label.toLowerCase();
+                    if (searchIn.includes(query)) {
+                        let _listItemButton = element;
+                        while (
+                            _listItemButton.parentElement?.parentElement?.parentElement &&
+                            _listItemButton.parentElement?.parentElement?.tagName.toLowerCase() === 'ul'
+                        ) {
+                            _listItemButton.parentElement.querySelector('.list-item').classList.add('highlighted-parent');
+                            _listItemButton = _listItemButton.parentElement.parentElement;
+                        }
+                        element.classList.add('highlighted');
+                    }
+                });
+            });
+            searchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    // Clear the search input
+                    event.target.value = '';
+                    event.target.dispatchEvent(new Event('input'));
+                    return;
+                }
+            });
+            searchInput.addEventListener('drop', (event) => {
+                searchInput.value = event.dataTransfer.getData('text/plain');
+                searchInput.dispatchEvent(new Event('input'));
+            });
+
+            // Append the search input to the search container
+            searchInputContainer.append(searchInput);
+
+            // Append the search container to the list container
+            panelContentContainer.append(searchInputContainer);
 
             // Populate the outline panel with the document tree
             const unorderedList = document.createElement('ul');
@@ -1784,7 +1839,7 @@ const onPanelDrag = (event) => {
     // Initialize the drag guide element
     if (! nodeDragGuide) {
         nodeDragGuide = document.createElement('div');
-        nodeDragGuide.classList.add('element-drag-guide');
+        nodeDragGuide.classList.add('node-drag-guide');
         panelContentContainer.appendChild(nodeDragGuide);
     }
 
@@ -1793,6 +1848,7 @@ const onPanelDrag = (event) => {
 
     // Skip if the target element is not found
     if (! target) {
+        nodeDragGuide.classList.add('hidden');
         nodeDragTarget = null;
         nodeDragPosition = null;
         return;
@@ -1807,14 +1863,6 @@ const onPanelDrag = (event) => {
     }
     nodeDragTarget = target;
 
-    // Prevent from dragging outside the HTML element
-    if (! event.target.closest('li[data-tag-name="html"]').querySelector(`[data-uw-id="${target.dataset.uwId}"]`)) {
-        nodeDragGuide.classList.add('hidden');
-        nodeDragTarget = null;
-        nodeDragPosition = null;
-        return
-    }
-
     // Prevent from dragging the element within itself
     if (event.target.parentElement.contains(target)) {
         nodeDragGuide.classList.add('hidden');
@@ -1824,14 +1872,11 @@ const onPanelDrag = (event) => {
     }
 
     // Show the drag guide element
-    // TODO: improve the accuracy of the drag guide position
     const panelRect = panelContentContainer.getBoundingClientRect();
     const targetBoundingRect = target.getBoundingClientRect();
     const targetMidPoint = targetBoundingRect.top + targetBoundingRect.height / 2;
     const isAboveMidPoint = event.clientY < targetMidPoint;
-    const isBelowMidPoint = event.clientY > targetMidPoint;
-    const isBelowTwoThird = event.clientY > targetBoundingRect.top + targetBoundingRect.height * 2 / 3;
-    const hasChild = target.dataset.hasChild === 'true';
+    const isBelowFourFifth = event.clientY > targetBoundingRect.top + targetBoundingRect.height * 4 / 5;
     const canHaveChild = target.dataset.canHaveChild === 'true';
     if (isAboveMidPoint) {
         nodeDragGuide.style.top = `${targetBoundingRect.top - panelRect.top + panelContentContainer.scrollTop - 1}px`;
@@ -1842,22 +1887,30 @@ const onPanelDrag = (event) => {
     }
     if (
         event.target !== target &&
-        (
-            (isBelowMidPoint && hasChild) ||
-            (isBelowTwoThird && canHaveChild)
-        )
+        (isBelowFourFifth && canHaveChild)
     ) {
         nodeDragGuide.style.left = `calc(${target.style.paddingLeft} + 15px)`;
         nodeDragPosition = 'first-child';
     } else {
         nodeDragGuide.style.left = `${target.style.paddingLeft}`;
     }
+
+    // Prevent from dragging outside the HTML element
+    if (target.dataset.tagName === 'html' && ['before', 'after'].includes(nodeDragPosition)) {
+        nodeDragGuide.classList.add('hidden');
+        nodeDragTarget = null;
+        nodeDragPosition = null;
+        return;
+    }
+
+    // Show the drag guide element
     nodeDragGuide.classList.remove('hidden');
 }
 
 const onListItemButtonDragStart = (event) => {
     //
     event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.setData('text/plain', event.target.dataset.id || event.target.dataset.uwId);
     event.target.classList.add('dragging');
     nodeToDrag = event.target;
 
@@ -1903,7 +1956,6 @@ const onListItemButtonDrop = () => {
     };
 
     // Apply the new parent
-    // TODO: move to action-center?
     switch (nodeDragPosition) {
         case 'before':
             targetElement.parentNode.insertBefore(draggedElement, targetElement);
@@ -1932,7 +1984,7 @@ const onListItemButtonDrop = () => {
     }));
 
     //
-    const elementId = actionContext.uwId || `${actionContext.uwParentId}[${actionContext.uwPosition}]`;
+    const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move element: @${elementId}`);
 
     // Request to update the selected element

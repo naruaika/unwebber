@@ -70,6 +70,9 @@ const undoAction = () => {
 
     const actionState = actionHistory[actionHistoryIndex];
 
+    //
+    console.log(`[Editor] Undo action: ${actionState.title}`);
+
     switch (actionState.title) {
         case 'element:label':
             // Find the element by the id
@@ -227,8 +230,18 @@ const undoAction = () => {
 
             // Put the moved element back to the previous position
             const movedParentElement = actionState.previous.container;
-            const movedPositionIndex = actionState.previous.position;
-            movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
+            let movedPositionIndex = parseInt(actionState.previous.position);
+            if (
+                actionState.previous.container === actionState.upcoming.container &&
+                actionState.previous.position > actionState.upcoming.position
+            ) {
+                movedPositionIndex += 1;
+            }
+            if (movedPositionIndex >= movedParentElement.childNodes.length) {
+                movedParentElement.appendChild(movedElement);
+            } else {
+                movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
+            }
 
             // Set the selected element to the moved element
             setSelectedNode(movedElement, movedPositionIndex, movedParentElement);
@@ -260,9 +273,6 @@ const undoAction = () => {
     }
 
     actionHistoryIndex -= 1;
-
-    //
-    console.log(`[Editor] Undo action: ${actionState.title}`);
 }
 
 const redoAction = () => {
@@ -273,6 +283,9 @@ const redoAction = () => {
     actionHistoryIndex += 1;
 
     const actionState = actionHistory[actionHistoryIndex];
+
+    //
+    console.log(`[Editor] Redo action: ${actionState.title}`);
 
     switch (actionState.title) {
         case 'element:label':
@@ -434,8 +447,18 @@ const redoAction = () => {
 
             // Put the moved element back to the upcoming position
             const movedParentElement = actionState.upcoming.container;
-            const movedPositionIndex = actionState.upcoming.position;
-            movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
+            let movedPositionIndex = parseInt(actionState.upcoming.position);
+            if (
+                actionState.previous.container === actionState.upcoming.container &&
+                actionState.previous.position < actionState.upcoming.position
+            ) {
+                movedPositionIndex += 1;
+            }
+            if (movedPositionIndex >= movedParentElement.childNodes.length) {
+                movedParentElement.appendChild(movedElement);
+            } else {
+                movedParentElement.insertBefore(movedElement, movedParentElement.childNodes[movedPositionIndex]);
+            }
 
             // Set the selected element to the moved element
             setSelectedNode(movedElement, movedPositionIndex, movedParentElement);
@@ -464,9 +487,6 @@ const redoAction = () => {
 
             break;
     }
-
-    //
-    console.log(`[Editor] Redo action: ${actionState.title}`);
 }
 
 (() => {

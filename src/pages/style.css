@@ -22,6 +22,8 @@
     --color-blue-475: #4D9EFF;
     --color-blue: #0099FF;
     --color-blue-600: #0066CC;
+    --color-purple-400: #B366FF;
+    --color-purple: #9932CC;
     --color-green: #89D185;
     --color-green-600: #16825D;
     --color-yellow: #FFCC00;
@@ -427,7 +429,6 @@ canvas {
                                 /* Make sure the overlay on its own layer */
                                 backface-visibility: hidden;
                                 will-change: transform;
-                                transform: translateZ(0);
                                 isolation: isolate;
                                 -webkit-font-smoothing: subpixel-antialiased;
                             }
@@ -545,8 +546,6 @@ canvas {
             }
 
             > .content__container {
-                flex: 1;
-
                 padding: 8px;
                 display: none;
 
@@ -628,6 +627,7 @@ canvas {
 
     .panel__search-container {
         position: sticky;
+        box-sizing: border-box;
         top: -8px;
         width: 100%;
         padding-top: 8px;

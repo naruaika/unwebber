@@ -173,13 +173,24 @@
         padding: 0;
         align-items: start;
 
-        > ul > li {
-            padding: 0;
-            min-width: 100%;
+        &:has(.panel__search:not(:placeholder-shown)) .list-item:not(.highlighted):not(.highlighted-parent) {
+            display: none !important;
+        }
+
+        .panel__search-container {
+            margin-bottom: 0px;
+            padding: 8px;
+            padding-top: 16px;
+            z-index: 3;
         }
 
         .placeholder {
             padding: 8px;
+        }
+
+        > ul > li {
+            padding: 0;
+            min-width: 100%;
         }
 
         ul {
@@ -193,6 +204,10 @@
 
             &.collapsed {
                 display: none;
+
+                &:has(.list-item.highlighted) {
+                    display: flex;
+                }
             }
         }
 
@@ -216,7 +231,7 @@
             }
         }
 
-        button {
+        .list-item {
             position: relative;
             padding: 6px 8px;
 
@@ -246,19 +261,23 @@
                 z-index: 1;
             }
 
-            &[data-color=red]::before { background: #cc0000; }
-            &[data-color=orange]::before { background: #cc6600; }
-            &[data-color=yellow]::before { background: #cc9900; }
+            &[data-color=red]::before { background: #CC0000; }
+            &[data-color=orange]::before { background: #CC6600; }
+            &[data-color=yellow]::before { background: #CC9900; }
             &[data-color=green]::before { background: #339933; }
-            &[data-color=blue]::before { background: #0055cc; }
-            &[data-color=purple]::before { background: #4b0082; }
-            &[data-color=gray]::before { background: #aaaaaa; }
+            &[data-color=blue]::before { background: #0055CC; }
+            &[data-color=purple]::before { background: #4B0082; }
+            &[data-color=gray]::before { background: #AAAAAA; }
+
+            &.highlighted {
+                background: #FFCC0022;
+            }
 
             &:hover,
             &.hovered {
-                background: var(--color-gray);
+                background: var(--color-gray) !important;
 
-                &:has(.icon-chevron-down) + ul button {
+                &:has(.icon-chevron-down) + ul button:not(.highlighted) {
                     background: var(--color-gray-475);
                 }
             }
@@ -266,7 +285,7 @@
             &.selected {
                 background: var(--color-gray-400) !important;
 
-                &:has(.icon-chevron-down) + ul button {
+                &:has(.icon-chevron-down) + ul button:not(.highlighted) {
                     background: var(--color-gray) !important;
 
                     &:hover {
@@ -405,6 +424,16 @@
                 margin: 0;
                 margin-left: 4px;
             }
+        }
+
+        .node-drag-guide {
+            position: absolute;
+            box-sizing: border-box;
+            display: block;
+            left: 0;
+            right: 0;
+            border-top: 2px solid var(--color-blue);
+            pointer-events: none;
         }
     }
 
@@ -675,21 +704,25 @@
 }
 
 .main-canvas__overlay {
+    /* Make sure the element on its own layer */
+    backface-visibility: hidden;
+    will-change: transform;
+    transform: translateZ(0);
+    isolation: isolate;
+    -webkit-font-smoothing: subpixel-antialiased;
+
     .selected-box,
     .hovered-box {
         position: absolute;
         box-sizing: border-box;
-        border: 2px solid var(--color-blue);
+        border: var(--border-size) solid var(--color-blue);
 
         -webkit-user-select: none;
         user-select: none;
 
-        /* Make sure the element on its own layer */
-        backface-visibility: hidden;
-        will-change: transform;
-        transform: translateZ(0);
-        isolation: isolate;
-        -webkit-font-smoothing: subpixel-antialiased;
+        &.is-layout {
+            border-color: var(--color-purple);
+        }
 
         &.editable {
             border: 1px solid var(--color-orange) !important;
@@ -702,7 +735,7 @@
             height: 9px;
             box-sizing: border-box;
             background-color: var(--color-base);
-            border: 1px solid var(--color-blue);
+            border: var(--border-size) solid var(--color-blue);
             border-radius: 50%;
             pointer-events: all;
             z-index: 10001;
@@ -712,6 +745,14 @@
 
             &:hover {
                 background-color: var(--color-blue);
+            }
+        }
+
+        &.is-layout .drag-area {
+            border-color: var(--color-purple);
+
+            &:hover {
+                background-color: var(--color-purple);
             }
         }
     }
@@ -728,14 +769,67 @@
             width: var(--parent-width);
             height: var(--parent-height);
             visibility: var(--parent-visibility);
-            border: 2px dashed var(--color-blue);
+            border: var(--border-size) dashed var(--color-blue);
             pointer-events: none;
+        }
+
+        &.is-layout::before {
+            border-color: var(--color-purple);
         }
     }
 
     .hovered-box {
         border-color: var(--color-blue-400);
+
+        &.is-layout {
+            border-color: var(--color-purple-400);
+        }
     }
+
+    .dragged-box {
+        position: absolute;
+        box-sizing: border-box;
+        background-color: color-mix(in srgb, var(--color-purple-400) 25%, transparent);
+        border: var(--border-size) solid var(--color-purple);
+    }
+
+    .dragging-line {
+        position: absolute;
+        box-sizing: border-box;
+        display: block;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        background-color: var(--color-purple);
+        pointer-events: none;
+
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            box-sizing: border-box;
+            width: 9px;
+            height: 9px;
+            box-sizing: border-box;
+            background-color: var(--color-base);
+            border: var(--border-size) solid var(--color-purple);
+            border-radius: 50%;
+            pointer-events: all;
+            z-index: 10001;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        &::before {
+            top: -4.5px;
+            left: -4.5px;
+        }
+        &::after {
+            bottom: -3px;
+            right: -3px;
+        }
+    }
+
 }
 
 #context-menu__container {
@@ -773,14 +867,4 @@
             }
         }
     }
-}
-
-.element-drag-guide {
-    box-sizing: border-box;
-    position: absolute;
-    display: block;
-    left: 0;
-    right: 0;
-    border-top: 2px solid var(--color-blue);
-    pointer-events: none;
 }

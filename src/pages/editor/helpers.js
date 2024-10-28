@@ -9,6 +9,59 @@ export const isObjectEmpty = (obj) => {
     return true;
 }
 
+export const isElementTextable = (element) => {
+    if (! element) {
+        return false;
+    }
+
+    // Check if the element has no text node
+    if (! Array
+            .from(element.childNodes)
+            .some(child =>
+                child.nodeType === Node.TEXT_NODE &&
+                child.textContent.trim() !== ''
+            )
+    ) {
+        return false;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    const tagSpecs = apiSchema.htmlElements?.find(htmlElement => htmlElement.tag === tagName);
+
+    //
+    if (
+        tagName !== 'html' &&
+        tagName !== 'body' &&
+        ! tagSpecs?.categories.includes('void') &&
+        ! tagSpecs?.categories.includes('embedded') &&
+        ! element.classList.contains('uw-ignore')
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+export const isElementVoid = (element) => {
+    if (! element) {
+        return false;
+    }
+
+    // Check if the element is a text node
+    if (element.nodeType === Node.TEXT_NODE) {
+        return true;
+    }
+
+    const tagName = element.tagName.toLowerCase();
+    const tagSpecs = apiSchema.htmlElements?.find(htmlElement => htmlElement.tag === tagName);
+
+    if (tagSpecs?.categories.includes('void')) {
+        return true;
+    }
+
+    return false;
+}
+
 export const convertCamelToKebab = (camel) => camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
 export const convertKebabToCamel = (kebab) => kebab.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());

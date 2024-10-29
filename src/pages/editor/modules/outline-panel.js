@@ -7,6 +7,7 @@ import {
     apiSchema,
     setMetadata,
 } from '../globals.js';
+import { debounce } from '../helpers.js';
 
 const mainFrame = document.getElementById('main-iframe');
 const panelContentContainer = document.querySelector('#outline-panel .content__container');
@@ -40,7 +41,7 @@ const toggleListItemTree = (event, listItem, force = true) => {
 
 const scrollToElement = (listItemButton) => {
     // Skip if the selected element is already visible
-    const listItemRect = listItemButton.getBoundingClientRect();
+    let listItemRect = listItemButton.getBoundingClientRect();
     const panelRect = panelContentContainer.getBoundingClientRect();
     if (
         listItemRect.top >= panelRect.top &&
@@ -63,16 +64,19 @@ const scrollToElement = (listItemButton) => {
         _listItemButton = _listItemButton.parentElement.parentElement;
     }
 
-    // Scroll to the selected element
-    const isNearTop = listItemRect.top < panelRect.top + 50;
-    const isNearBottom = listItemRect.bottom > panelRect.bottom - 50;
-    if (isNearTop) {
-        listItemButton.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (isNearBottom) {
-        listItemButton.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    } else {
-        listItemButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    setTimeout(() => {
+        // Scroll to the selected element
+        listItemRect = listItemButton.getBoundingClientRect();
+        const isNearTop = listItemRect.top < panelRect.top + 50;
+        const isNearBottom = listItemRect.bottom > panelRect.bottom - 50;
+        if (isNearTop) {
+            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (isNearBottom) {
+            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else {
+            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 50);
 }
 
 const highlightSelectedListItem = (event) => {
@@ -164,6 +168,7 @@ const onListItemLabelBlur = (event) => {
             label: upcomingState.label,
         });
     } else {
+        // TODO: add support for HTML comments
         selectedNode.node.textContent = upcomingState.label;
     }
     event.target.dataset.text = upcomingState.label;
@@ -210,7 +215,7 @@ const onListItemDoubleClick = (event) => {
     const position = event.currentTarget?.dataset.uwPosition || event.target?.dataset.uwPosition;
     const label = elementId
         ? panelContentContainer.querySelector(`[data-uw-id="${elementId}"] .element-label`)
-        : panelContentContainer.querySelector(`[data-uw-id="${parentElementId}"] ul`).childNodes[position].querySelector('.element-label');
+        : panelContentContainer.querySelector(`[data-uw-parent-id="${parentElementId}"][data-uw-position="${position}"] .element-label`);
 
     // Setup the label for editing
     label.dataset.text = label.textContent.trim();
@@ -1457,9 +1462,10 @@ const onListItemMouseLeave = () => {
     window.dispatchEvent(new CustomEvent('element:hover', { detail: {} }));
 }
 
-const createListItem = (node, level) => {
+const createListItem = (node, level, isPanelReady = true) => {
     // Create the list item element
     const listItem = document.createElement('li');
+    listItem.dataset.level = level;
     listItem.dataset.tagName = node.tagName ? node.tagName.toLowerCase() : 'text';
     listItem.dataset.uwId = node.dataset?.uwId || '';
     listItem.dataset.uwPosition = node.parentElement ? Array.prototype.indexOf.call(node.parentElement.childNodes, node) : '';
@@ -1467,28 +1473,25 @@ const createListItem = (node, level) => {
     listItem.style.setProperty('--guide-size', `${14 + level * 15}px`);
 
     // Check if the element has children excluding empty text nodes
-    let hasChild = false;
-    if (node.childNodes?.length > 0) {
-        hasChild = [...node.childNodes].some(child =>
-            ! child.hasAttribute?.('data-uw-ignore') &&
-            (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim())
-        );
-    }
+    let hasChild = [...node.childNodes].some(child =>
+        ! child.hasAttribute?.('data-uw-ignore') &&
+        (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim())
+    );
 
     // Add the button element
     const button = document.createElement('button');
     button.dataset.tagName = node.tagName ? node.tagName.toLowerCase() : 'text';
     button.dataset.id = node.id || '';
-    button.dataset.uwId = node.dataset?.uwId || '';
-    button.dataset.uwPosition = node.parentElement ? Array.prototype.indexOf.call(node.parentElement.childNodes, node) : '';
-    button.dataset.uwParentId = node.parentElement?.dataset.uwId || '';
+    button.dataset.uwId = listItem.dataset.uwId;
+    button.dataset.uwPosition = listItem.dataset.uwPosition;
+    button.dataset.uwParentId = listItem.dataset.uwParentId;
     button.dataset.color = metadata[node.dataset?.uwId]?.color || 'transparent';
     button.dataset.hasChild = hasChild ? 'true' : 'false';
     button.dataset.canHaveChild = node.tagName
         ? ! apiSchema.htmlElements
-                .find(element => element.tag === node.tagName.toLowerCase())
-                .categories
-                .includes('void')
+            .find(element => element.tag === node.tagName.toLowerCase())
+            .categories
+            .includes('void')
         : false;
     button.dataset.label = '';
     button.style.paddingLeft = `${8 + level * 15}px`;
@@ -1618,13 +1621,13 @@ const createListItem = (node, level) => {
                 child.hasAttribute?.('data-uw-ignore') ||
                 (
                     child.nodeType !== Node.ELEMENT_NODE &&
-                    ! child.textContent.trim()
+                    child.textContent.trim() === ''
                 )
             ) {
                 return;
             }
             // Create the list item for the child element
-            unorderedList.appendChild(createListItem(child, level + 1));
+            unorderedList.appendChild(createListItem(child, level + 1, isPanelReady));
         });
         listItem.appendChild(unorderedList);
     }
@@ -1668,30 +1671,34 @@ const refreshPanel = () => {
     if (! isPanelReady) {
         const documentTree = mainFrame.contentDocument.documentElement;
 
-        const populateListItemTree = () => {
-            // Remove all the existing elements from the panel
-            panelContentContainer.innerHTML = '';
+        // Add search input to the outline panel
+        const searchInputContainer = document.createElement('div');
+        searchInputContainer.classList.add('panel__search-container');
+        if (panelContentContainer.classList.contains('expanded')) {
+            searchInputContainer.classList.add('expanded');
+        }
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search outline...';
+        searchInput.classList.add('panel__search');
 
-            // Add search input to the outline panel
-            const searchInputContainer = document.createElement('div');
-            searchInputContainer.classList.add('panel__search-container');
-            const searchInput = document.createElement('input');
-            searchInput.type = 'text';
-            searchInput.placeholder = 'Search outline...';
-            searchInput.classList.add('panel__search');
-
-            // Add event listeners to the search input
-            searchInput.addEventListener('input', (event) => {
+        // Add event listeners to the search input
+        // FIXME: get rid of the "glitch" when performing the initial search
+        const filterListItems = (event) => {
+            const query = event.target.value.toLowerCase();
+            requestAnimationFrame(() => {
                 // Clear the highlighted flag from all list items
                 panelContentContainer.querySelectorAll('.highlighted, .highlighted-parent').forEach(element => {
+                    if (query !== '' && element.dataset.label.includes(query)) {
+                        return;
+                    }
                     element.classList.remove('highlighted', 'highlighted-parent');
                 });
-                if (! event.target.value) {
+                if (query === '') {
                     return;
                 }
                 // Filter the list item based on the search input value
                 panelContentContainer.querySelectorAll('.list-item').forEach(element => {
-                    const query = event.target.value.toLowerCase();
                     const searchIn = element.dataset.label.toLowerCase();
                     if (searchIn.includes(query)) {
                         let _listItemButton = element;
@@ -1706,35 +1713,99 @@ const refreshPanel = () => {
                     }
                 });
             });
-            searchInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    // Clear the search input
-                    event.target.value = '';
-                    event.target.dispatchEvent(new Event('input'));
-                    return;
-                }
-            });
-            searchInput.addEventListener('drop', (event) => {
-                searchInput.value = event.dataTransfer.getData('text/plain');
-                searchInput.dispatchEvent(new Event('input'));
-            });
+        };
+        searchInput.addEventListener('input', debounce(filterListItems, 250));
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                // Clear the search input
+                event.target.value = '';
+                event.target.dispatchEvent(new Event('input'));
+                return;
+            }
+        });
+        searchInput.addEventListener('drop', (event) => {
+            searchInput.value = event.dataTransfer.getData('text/plain');
+            searchInput.dispatchEvent(new Event('input'));
+        });
 
-            // Append the search input to the search container
-            searchInputContainer.append(searchInput);
+        // Append the search input to the search container
+        searchInputContainer.append(searchInput);
 
-            // Append the search container to the list container
-            panelContentContainer.append(searchInputContainer);
+        // Insert the search container before the panel content container
+        panelContentContainer.parentElement.insertBefore(searchInputContainer, panelContentContainer);
 
-            // Populate the outline panel with the document tree
+        // Populate the outline panel with the document tree
+        setTimeout(() => {
+            panelContentContainer.innerHTML = '';
             const unorderedList = document.createElement('ul');
-            unorderedList.appendChild(createListItem(documentTree, 0));
+            unorderedList.appendChild(createListItem(documentTree, 0, false));
             panelContentContainer.appendChild(unorderedList);
-        }
+        }, 50);
 
         // Use MutationObserver to watch for DOM changes
-        const observer = new MutationObserver(() => {
+        new MutationObserver((records) => {
             // Repopulate the outline panel if there are changes
-            populateListItemTree();
+            // TODO: add support for multi-selection
+            records.forEach(record => {
+                if (record.removedNodes.length > 0) {
+                    // Remove the list item
+                    if (record.removedNodes[0].nodeType === Node.ELEMENT_NODE) {
+                        panelContentContainer.querySelector(`li[data-uw-id="${record.removedNodes[0].dataset.uwId}"]`).remove();
+                    } else {
+                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                        parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                    }
+                }
+                if (record.addedNodes.length > 0) {
+                    // Add a new list item
+                    if (record.addedNodes[0].nodeType === Node.ELEMENT_NODE) {
+                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                        const childNodes = Array.from(record.target.childNodes).filter(child =>
+                            ! (
+                                child.hasAttribute?.('data-uw-ignore') ||
+                                (
+                                    child.nodeType !== Node.ELEMENT_NODE &&
+                                    child.textContent.trim() === ''
+                                )
+                            )
+                        );
+                        const position = childNodes.indexOf(record.addedNodes[0]);
+                        const parentListItemUl = parentListItem.querySelector('ul');
+                        if (parentListItemUl) {
+                            parentListItemUl.insertBefore(createListItem(record.addedNodes[0], parseInt(parentListItem.dataset.level) + 1), parentListItemUl.children[position]);
+                        } else {
+                            const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                            parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                        }
+                    } else {
+                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                        parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                    }
+                }
+                // Recalculate the dataset position of targeted list item children
+                let listItems = Array.from(panelContentContainer.querySelectorAll(`li[data-uw-parent-id="${record.target.dataset.uwId}"]`));
+                let listItemIndex = 0;
+                Array.from(record.target.childNodes).forEach(child => {
+                    if (
+                        child.hasAttribute?.('data-uw-ignore') ||
+                        (
+                            child.nodeType !== Node.ELEMENT_NODE &&
+                            child.textContent.trim() === ''
+                        )
+                    ) {
+                        return;
+                    }
+                    const listItem = listItems[listItemIndex];
+                    if (! listItem) {
+                        // Sometimes the child nodes order is not the same as the list items order
+                        // due to there are some comment nodes in between
+                        return;
+                    }
+                    listItem.dataset.uwPosition = Array.prototype.indexOf.call(record.target.childNodes, child);
+                    listItem.querySelector('button').dataset.uwPosition = listItem.dataset.uwPosition;
+                    listItemIndex++;
+                });
+            });
 
             // If the selected element is found
             if (selectedNode.node) {
@@ -1758,22 +1829,17 @@ const refreshPanel = () => {
                 // Scroll to the selected element
                 scrollToElement(listItemButton);
             }
-        });
-
-        // Populate the outline panel with the document tree
-        populateListItemTree();
-
-        // Start observing the document tree for changes
-        observer.observe(documentTree, {
+        }).observe(documentTree, {
             childList: true,
             subtree: true,
         });
 
-        // // Ensure the observer is disconnected when the iframe is unloaded
-        // mainFrame.contentWindow.addEventListener('unload', () => {
-        //     observer.disconnect();
-        // });
+        // Set the panel ready flag
+        isPanelReady = true;
     }
+
+    // Refresh the breadcrumb
+    refreshBreadcrumb();
 
     if (selectedNode.node) {
         // Get the list item element
@@ -1799,12 +1865,6 @@ const refreshPanel = () => {
         // Clear the selected element
         clearListItemSelectionHighlight();
     }
-
-    // Refresh the breadcrumb
-    refreshBreadcrumb();
-
-    // Set the panel ready flag
-    isPanelReady = true;
 
     //
     console.log('[Editor] Refreshing outline panel... [DONE]');

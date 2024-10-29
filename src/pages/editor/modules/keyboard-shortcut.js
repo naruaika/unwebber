@@ -18,7 +18,14 @@
         }
 
         if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
+            if (
+                ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+                document.activeElement.getAttribute('contenteditable') === 'true'
+            ) {
+                return;
+            }
             window.dispatchEvent(new CustomEvent('action:undo'));
+            event.preventDefault();
             return;
         }
 
@@ -26,7 +33,14 @@
             ((event.ctrlKey || event.metaKey) && event.key === 'y') ||
             ((event.ctrlKey || event.metaKey) && event.shiftKey && event.code === 'KeyZ')
         ) {
+            if (
+                ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+                document.activeElement.getAttribute('contenteditable') === 'true'
+            ) {
+                return;
+            }
             window.dispatchEvent(new CustomEvent('action:redo'));
+            event.preventDefault();
             return;
         }
 

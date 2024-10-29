@@ -217,11 +217,6 @@ const initializeCanvas = () => {
         childList: true,
         subtree: true,
     });
-
-    // // Ensure the observer is disconnected when the iframe is unloaded
-    // mainFrame.contentWindow.addEventListener('unload', () => {
-    //     observer.disconnect();
-    // });
 }
 
 const refreshCanvas = () => {
@@ -1953,6 +1948,29 @@ const findHoveredElements = (event, force = false) => {
         return;
     }
 
+    // Do not change the hovered element if the selected node is under the pointer
+    const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+    const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+    if (
+        event.altKey &&
+        selectedNode.node &&
+        selectedNode.node.nodeType === Node.ELEMENT_NODE &&
+        selectedNodeBoundingRect &&
+        pointerX >= selectedNodeBoundingRect.left &&
+        pointerX <= selectedNodeBoundingRect.right &&
+        pointerY >= selectedNodeBoundingRect.top &&
+        pointerY <= selectedNodeBoundingRect.bottom
+    ) {
+        // Set the hovered element
+        setHoveredNode(selectedNode.node, selectedNode.position, selectedNode.parent);
+
+        // Set the hovered bounding rect
+        hoveredNodeBoundingRect = selectedNodeBoundingRect;
+        refreshHoveredBox();
+
+        return;
+    }
+
     // Get the hovered elements
     hoveredElements = document.elementsFromPoint(event.clientX, event.clientY);
 
@@ -1972,8 +1990,6 @@ const findHoveredElements = (event, force = false) => {
 
     if (! topMostHoveredElement) {
         // Check if the pointer is within the selected box boundaries
-        const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
-        const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
         if (
             selectedNode.node &&
             selectedNode.node.nodeType === Node.ELEMENT_NODE &&
@@ -2002,9 +2018,6 @@ const findHoveredElements = (event, force = false) => {
         hoveredNodeBoundingRect = null;
         refreshHoveredBox();
 
-        // Request panel updates
-        window.dispatchEvent(new CustomEvent('outline:hover'));
-
         return;
     }
 
@@ -2018,23 +2031,6 @@ const findHoveredElements = (event, force = false) => {
 
         // Get elements that are not ignored
         hoveredElements = hoveredElements.filter(element => ! ('uwIgnore' in element.dataset));
-
-        // Do not change the hovered element if the selected node is under the pointer
-        if (event.altKey && hoveredElements.includes(selectedNode.node)) {
-            setHoveredNode(
-                selectedNode.node,
-                selectedNode.parent
-                    ? Array.prototype.indexOf.call(selectedNode.parent.childNodes, selectedNode.node)
-                    : null,
-                selectedNode.parent,
-            );
-
-            //
-            hoveredNodeBoundingRect = selectedNodeBoundingRect;
-            refreshHoveredBox();
-
-            return;
-        }
 
         // Get the first hovered element if any
         topMostHoveredElement = hoveredElements[0];
@@ -2051,9 +2047,6 @@ const findHoveredElements = (event, force = false) => {
             //
             hoveredNodeBoundingRect = null;
             refreshHoveredBox();
-
-            // Request panel updates
-            window.dispatchEvent(new CustomEvent('outline:hover'));
 
             return;
         }
@@ -2296,9 +2289,6 @@ const onCanvasOverlayMouseUp = (event) => {
                         reference: actionContext,
                     }
                 }));
-
-                // Request panel updates
-                window.dispatchEvent(new CustomEvent('outline:refresh'));
             }
 
             // Remove the dragged box
@@ -2447,6 +2437,8 @@ const onCanvasOverlayMouseMove = (event) => {
                         )
                     ) {
                         dragAnimationRequestId = null;
+                        mainFrame.style.willChange = 'unset'; // force repaint
+                        setTimeout(() => mainFrame.style.willChange = 'transform', 250);
                         return;
                     }
                     const speedFactor = 1 / 10;
@@ -2525,9 +2517,6 @@ const onCanvasOverlayMouseLeave = () => {
     hoveredNodeBoundingRect = null;
     refreshHoveredBox();
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:hover'));
-
     // Register the key event listener on the document
     document.removeEventListener('keydown', onDocumentKeyDown);
     document.removeEventListener('keyup', onDocumentKeyUp);
@@ -2580,9 +2569,6 @@ const onDocumentKeyDown = (event) => {
         setHoveredNode(null);
         hoveredNodeBoundingRect = null;
         refreshHoveredBox();
-
-        // Request panel updates
-        window.dispatchEvent(new CustomEvent('outline:hover'));
 
         // Set the cursor style
         canvasOverlay.style.cursor = 'grab';

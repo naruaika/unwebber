@@ -10,12 +10,12 @@ const refreshPanel = () => {
     // Get the content container of the templates panel
     const panelContentContainer = document.querySelector('#templates-panel .content__container');
 
-    // Remove all the existing elements from the panel
-    panelContentContainer.innerHTML = '';
-
     // Add search input to the templates panel
     const searchInputContainer = document.createElement('div');
     searchInputContainer.classList.add('panel__search-container');
+    if (panelContentContainer.classList.contains('expanded')) {
+        searchInputContainer.classList.add('expanded');
+    }
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.placeholder = 'Search templates...';
@@ -42,8 +42,11 @@ const refreshPanel = () => {
     // Append the search input to the search container
     searchInputContainer.append(searchInput);
 
-    // Append the search container to the list container
-    panelContentContainer.append(searchInputContainer);
+    // Insert the search container before the panel content container
+    panelContentContainer.parentElement.insertBefore(searchInputContainer, panelContentContainer);
+
+    // Create a DocumentFragment to hold the new elements
+    const fragment = document.createDocumentFragment();
 
     // Populate template options
     apiSchema.htmlElements
@@ -70,8 +73,14 @@ const refreshPanel = () => {
             contentOption.dataset.tagName = template.tag;
             contentOption.innerHTML = `${template.name} &lt;${template.tag}&gt;`;
             contentOption.title = template.description;
-            panelContentContainer.appendChild(contentOption);
+            fragment.appendChild(contentOption);
         });
+
+    // Remove all the existing elements from the panel
+    panelContentContainer.innerHTML = '';
+
+    // Append the fragment to the panel content container
+    panelContentContainer.appendChild(fragment);
 
     //
     console.log('[Editor] Refreshing templates panel... [DONE]');

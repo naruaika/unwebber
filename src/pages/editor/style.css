@@ -167,22 +167,15 @@
 }
 
 #outline-panel {
+    &:has(.panel__search:not(:placeholder-shown)) .list-item:not(:is(.highlighted, .highlighted-parent)) {
+        display: none !important;
+    }
+
     .content__container {
         position: relative;
         flex: 1;
         padding: 0;
         align-items: start;
-
-        &:has(.panel__search:not(:placeholder-shown)) .list-item:not(.highlighted):not(.highlighted-parent) {
-            display: none !important;
-        }
-
-        .panel__search-container {
-            margin-bottom: 0px;
-            padding: 8px;
-            padding-top: 16px;
-            z-index: 3;
-        }
 
         .placeholder {
             padding: 8px;

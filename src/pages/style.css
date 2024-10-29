@@ -545,6 +545,23 @@ canvas {
                 border-top: var(--default-border);
             }
 
+            .panel__search-container {
+                display: none;
+                box-sizing: border-box;
+                width: 100%;
+                padding: 8px;
+                background: var(--color-primary);
+
+                &.expanded {
+                    display: block;
+                }
+
+                .panel__search {
+                    width: 100%;
+                    font-size: 11px;
+                }
+            }
+
             > .content__container {
                 padding: 8px;
                 display: none;
@@ -622,23 +639,6 @@ canvas {
 
         &.preview {
             background-color: var(--color-orange);
-        }
-    }
-
-    .panel__search-container {
-        position: sticky;
-        box-sizing: border-box;
-        top: -8px;
-        width: 100%;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        margin-top: -8px;
-        margin-bottom: -4px;
-        background: var(--color-primary);
-
-        .panel__search {
-            width: 100%;
-            font-size: 11px;
         }
     }
 

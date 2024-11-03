@@ -225,8 +225,8 @@ const onElementPaste = () => {
         mainFrame.contentDocument.body.appendChild(nodeToPaste.node);
     }
 
-    // TODO: re-position the element-to-paste if it is a positioned element;
-    // it should be re-positioned if the cursor is within the main frame,
+    // TODO: reposition the element-to-paste if it is a positioned element;
+    // it should be repositioned if the cursor is within the main frame,
     // otherwise no change is needed
 
     // Save the upcoming action state
@@ -238,8 +238,12 @@ const onElementPaste = () => {
     if (nodeToPaste.node.dataset?.uwId) {
         // Cache the element-to-paste
         setupDocument(nodeToPaste.node, ! hasCutNode);
-        // Flag the element-to-paste as a new element
+
+        // Flag the element-to-paste and its children as a new element
         nodeToPaste.node.dataset.uwNew = true;
+        Array.from(nodeToPaste.node.querySelectorAll('[data-uw-id]')).forEach(element => {
+            element.dataset.uwNew = true;
+        });
     }
 
     // Clear the element-to-paste and the cut element flag
@@ -348,8 +352,12 @@ const onElementDuplicate = () => {
     if (duplicatedElement.dataset?.uwId) {
         // Cache the duplicated element
         setupDocument(duplicatedElement);
-        // Flag the duplicated element as a new element
+
+        // Flag the duplicated element and its children as a new element
         duplicatedElement.dataset.uwNew = true;
+        Array.from(duplicatedElement.querySelectorAll('[data-uw-id]')).forEach(element => {
+            element.dataset.uwNew = true;
+        });
     }
 
     // Select the duplicated element
@@ -481,7 +489,7 @@ const onElementMoveToTopTree = () => {
                 previousSibling.nodeType !== Node.ELEMENT_NODE &&
                 previousSibling.textContent.trim() === ''
             ) ||
-            'uwIgnore' in previousSibling.dataset
+            'uwIgnore' in (previousSibling.dataset || [])
         )
     ) {
         previousSibling = previousSibling.previousSibling;
@@ -495,11 +503,11 @@ const onElementMoveToTopTree = () => {
     selectedNode.parent.insertBefore(selectedNode.node, selectedNode.parent.firstChild);
 
     // Select the moved-to-top element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.parent,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -518,6 +526,9 @@ const onElementMoveToTopTree = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move to top element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementMoveUpTree = () => {
@@ -568,7 +579,7 @@ const onElementMoveUpTree = () => {
                 previousSibling.nodeType !== Node.ELEMENT_NODE &&
                 previousSibling.textContent.trim() === ''
             ) ||
-            'uwIgnore' in previousSibling.dataset
+            'uwIgnore' in (previousSibling.dataset || [])
         )
     ) {
         previousSibling = previousSibling.previousSibling;
@@ -582,11 +593,11 @@ const onElementMoveUpTree = () => {
     selectedNode.parent.insertBefore(selectedNode.node, previousSibling);
 
     // Select the moved-up element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.parent,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -605,6 +616,9 @@ const onElementMoveUpTree = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move up element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementMoveDownTree = () => {
@@ -669,11 +683,11 @@ const onElementMoveDownTree = () => {
     selectedNode.parent.insertBefore(selectedNode.node, nextSibling.nextSibling);
 
     // Select the moved-down element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.parent,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -692,6 +706,9 @@ const onElementMoveDownTree = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move down element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementMoveToBottomTree = () => {
@@ -744,11 +761,11 @@ const onElementMoveToBottomTree = () => {
     selectedNode.parent.appendChild(selectedNode.node);
 
     // Select the moved-to-bottom element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.parent,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -767,6 +784,9 @@ const onElementMoveToBottomTree = () => {
     //
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move to bottom element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementOutdentUp = () => {
@@ -804,11 +824,11 @@ const onElementOutdentUp = () => {
     selectedNode.parent.parentElement.insertBefore(selectedNode.node, selectedNode.parent);
 
     // Select the moved-out-up element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.node.parentElement,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -828,6 +848,9 @@ const onElementOutdentUp = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementOutdentDown = () => {
@@ -865,11 +888,11 @@ const onElementOutdentDown = () => {
     selectedNode.parent.parentElement.insertBefore(selectedNode.node, selectedNode.parent.nextSibling);
 
     // Select the moved-out-down element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset?.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.node.parentElement,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -889,6 +912,9 @@ const onElementOutdentDown = () => {
     //
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementIndentUp = () => {
@@ -931,11 +957,11 @@ const onElementIndentUp = () => {
     selectedNode.node.previousElementSibling.appendChild(selectedNode.node);
 
     // Select the indented-up element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.node.parentElement,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -955,6 +981,9 @@ const onElementIndentUp = () => {
     //
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent up element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
 }
 
 const onElementIndentDown = () => {
@@ -997,11 +1026,11 @@ const onElementIndentDown = () => {
     selectedNode.node.nextElementSibling.appendChild(selectedNode.node);
 
     // Select the indented-down element
-    onElementSelect({ detail: {
-        uwId: selectedNode.node.dataset.uwId,
-        uwPosition: Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
-        uwParentId: selectedNode.node.parentElement.dataset.uwId,
-    } });
+    setSelectedNode(
+        selectedNode.node,
+        Array.prototype.indexOf.call(selectedNode.node.parentElement.childNodes, selectedNode.node),
+        selectedNode.node.parentElement,
+    );
 
     // Request to save the action
     const upcomingState = {
@@ -1021,6 +1050,261 @@ const onElementIndentDown = () => {
     //
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent down element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+}
+
+const onElementFlipHorizontal = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
+    // Skip if there is no selected element
+    if (! selectedNode.node) {
+        console.log('[Editor] Cannot flip element: no element selected');
+        return;
+    }
+
+    // Skip if the selected node is non-element node
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
+        console.log('[Editor] Cannot flip element: not an element node');
+        return;
+    }
+
+    // Get the properties of the selected element
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Save the current action state
+    const previousState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+
+    // Apply the transformation of the element by flipping horizontally
+    matrix.a *= -1;
+    matrix.c *= -1;
+    matrix.e *= -1;
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+    const actionContext = { element: selectedNode.node };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:transform',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+        }
+    }));
+
+    //
+    const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
+    console.log(`[Editor] Flip horizontal element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+}
+
+const onElementFlipVertical = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
+    // Skip if there is no selected element
+    if (! selectedNode.node) {
+        console.log('[Editor] Cannot flip element: no element selected');
+        return;
+    }
+
+    // Skip if the selected node is non-element node
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
+        console.log('[Editor] Cannot flip element: not an element node');
+        return;
+    }
+
+    // Get the properties of the selected element
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Save the current action state
+    const previousState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+
+    // Apply the transformation of the element by flipping vertically
+    matrix.b *= -1;
+    matrix.d *= -1;
+    matrix.f *= -1;
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+    const actionContext = { element: selectedNode.node };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:transform',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+        }
+    }));
+
+    //
+    const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
+    console.log(`[Editor] Flip vertical element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+}
+
+const onElementRotateLeft = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
+    // Skip if there is no selected element
+    if (! selectedNode.node) {
+        console.log('[Editor] Cannot rotate element: no element selected');
+        return;
+    }
+
+    // Skip if the selected node is non-element node
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
+        console.log('[Editor] Cannot rotate element: not an element node');
+        return;
+    }
+
+    // Get the properties of the selected element
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Save the current action state
+    const previousState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+
+    // Apply the transformation of the element
+    matrix.rotateSelf(-45);
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+    const actionContext = { element: selectedNode.node };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:transform',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+        }
+    }));
+
+    //
+    const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
+    console.log(`[Editor] Rotate left element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+}
+
+const onElementRotateRight = () => {
+    // Skip if focusing on an input/textarea element or editing contenteditable
+    if (
+        ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+        document.activeElement.isContentEditable
+    ) {
+        return;
+    }
+
+    // Skip if there is no selected element
+    if (! selectedNode.node) {
+        console.log('[Editor] Cannot rotate element: no element selected');
+        return;
+    }
+
+    // Skip if the selected node is non-element node
+    if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
+        console.log('[Editor] Cannot rotate element: not an element node');
+        return;
+    }
+
+    // Get the properties of the selected element
+    const _metadata = metadata[selectedNode.node.dataset.uwId];
+    const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+
+    // Save the current action state
+    const previousState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+
+    // Apply the transformation of the element
+    matrix.rotateSelf(45);
+    styleElement(selectedNode.node, 'transform', matrix.toString(), true);
+
+    // Save the property value
+    _metadata.properties['transform'] = { value: matrix.toString(), checked: true };
+    setMetadata(selectedNode.node.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        container: selectedNode.parent,
+        style: { transform: matrix.toString() },
+    };
+    const actionContext = { element: selectedNode.node };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:transform',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+        }
+    }));
+
+    //
+    const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
+    console.log(`[Editor] Rotate right element: @${elementId}`);
+
+    // Request panel updates
+    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
 }
 
 const onElementTranslate = (event) => {
@@ -1156,9 +1440,9 @@ const onElementTranslate = (event) => {
     window.addEventListener('element:align-top', () => { /* TODO: implement this */ });
     window.addEventListener('element:align-middle', () => { /* TODO: implement this */ });
     window.addEventListener('element:align-bottom', () => { /* TODO: implement this */ });
-    window.addEventListener('element:rotate-left', () => { /* TODO: implement this */ });
-    window.addEventListener('element:rotate-right', () => { /* TODO: implement this */ });
-    window.addEventListener('element:flip-horizontal', () => { /* TODO: implement this */ });
-    window.addEventListener('element:flip-vertical', () => { /* TODO: implement this */ });
+    window.addEventListener('element:flip-horizontal', onElementFlipHorizontal);
+    window.addEventListener('element:flip-vertical', onElementFlipVertical);
+    window.addEventListener('element:rotate-left', onElementRotateLeft);
+    window.addEventListener('element:rotate-right', onElementRotateRight);
     window.addEventListener('element:translate', onElementTranslate);
 })()

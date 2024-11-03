@@ -1,7 +1,7 @@
 @import url('../style.css');
 
 :focus-visible:not(.icon) {
-    background: var(--color-gray) !important;
+    background-color: var(--color-gray) !important;
 }
 
 .field-container {
@@ -20,7 +20,7 @@
 
     &:active,
     &:hover {
-        background: var(--color-gray);
+        background-color: var(--color-gray);
     }
 
     .field-checkbox {
@@ -117,7 +117,7 @@
 
         .dropdown-item {
             padding: 4px 6px;
-            background: var(--color-gray-primary);
+            background-color: var(--color-primary);
             cursor: pointer;
 
             &:hover {
@@ -138,13 +138,13 @@
 
         border: none;
         color: var(--color-base);
-        background: var(--color-base);
+        background-color: var(--color-base);
         mask-size: cover;
 
         z-index: 2;
 
         &:hover {
-            background: var(--color-blue);
+            background-color: var(--color-blue);
         }
     }
 
@@ -268,21 +268,21 @@
 
             &:hover,
             &.hovered {
-                background: var(--color-gray) !important;
+                background-color: var(--color-gray) !important;
 
                 &:has(.icon-chevron-down) + ul button:not(.highlighted) {
-                    background: var(--color-gray-475);
+                    background-color: var(--color-gray-475);
                 }
             }
 
             &.selected {
-                background: var(--color-gray-400) !important;
+                background-color: var(--color-gray-400) !important;
 
                 &:has(.icon-chevron-down) + ul button:not(.highlighted) {
-                    background: var(--color-gray) !important;
+                    background-color: var(--color-gray) !important;
 
                     &:hover {
-                        background: var(--color-gray-475) !important;
+                        background-color: var(--color-gray-475) !important;
                     }
                 }
             }
@@ -316,7 +316,7 @@
                 background-size: 6px 6px !important;
 
                 .icon {
-                    background: var(--color-primary) !important;
+                    background-color: var(--color-primary) !important;
                 }
 
                 .label span {
@@ -335,7 +335,7 @@
                 margin-right: 3px;
                 height: 12px;
                 width: 12px;
-                background: var(--color-base);
+                background-color: var(--color-base);
                 mask-size: cover;
                 pointer-events: none;
 
@@ -345,7 +345,7 @@
                     pointer-events: all;
 
                     &:hover {
-                        background: var(--color-blue-400);
+                        background-color: var(--color-blue-400);
                     }
 
                     &.collapsed {
@@ -443,7 +443,7 @@
         font-weight: 300;
         white-space: nowrap;
 
-        background: var(--color-primary);
+        background-color: var(--color-primary);
         color: var(--color-gray-300);
         border-top: var(--default-border);
 
@@ -487,7 +487,7 @@
         .field-container {
             margin: 0 8px;
             padding: 2px 0;
-            background: var(--color-primary);
+            background-color: var(--color-primary);
             border-bottom: var(--border-size) solid var(--color-gray-475);
             column-gap: 0;
             row-gap: 2px;
@@ -567,7 +567,7 @@
 
             input:not([type='checkbox']),
             textarea {
-                background: var(--color-primary);
+                background-color: var(--color-primary);
             }
         }
 
@@ -581,11 +581,11 @@
             font-weight: 600;
             text-transform: uppercase;
             color: var(--color-base);
-            background: var(--color-gray-475);
+            background-color: var(--color-gray-475);
             border: 0;
 
             &:hover {
-                background: var(--color-gray-400);
+                background-color: var(--color-gray-400);
             }
         }
     }
@@ -612,7 +612,7 @@
             }
 
             &:hover {
-                background: var(--color-gray);
+                background-color: var(--color-gray);
             }
 
             .property-checkbox {
@@ -650,7 +650,7 @@
                     box-sizing: border-box;
                     padding: 3px 6px;
 
-                    background: var(--color-primary);
+                    background-color: var(--color-primary);
                     border: var(--border-size) solid var(--color-gray);
                     border-radius: 4px;
 
@@ -683,12 +683,12 @@
             border-width: 2px;
 
             &:hover {
-                background: var(--color-gray-400);
+                background-color: var(--color-gray-400);
                 border-color: var(--color-gray-400);
             }
 
             &:active {
-                background: var(--color-base);
+                background-color: var(--color-base);
                 color: var(--color-gray);
                 border-color: var(--color-base);
             }
@@ -721,15 +721,14 @@
             border: 1px solid var(--color-orange) !important;
         }
 
-        .drag-area {
+        .transform-area {
             position: absolute;
             box-sizing: border-box;
-            width: 9px;
-            height: 9px;
+            width: 8px;
+            height: 8px;
             box-sizing: border-box;
             background-color: var(--color-base);
             border: var(--border-size) solid var(--color-blue);
-            border-radius: 50%;
             pointer-events: all;
             z-index: 10001;
 
@@ -738,14 +737,116 @@
 
             &:hover {
                 background-color: var(--color-blue);
+                border-color: var(--color-primary);
+            }
+
+            &:is(.rotator, .shearer) {
+                background-color: transparent;
+                border-color: transparent;
+
+                &:hover {
+                    background-color: var(--color-green);
+                    border-color: var(--color-primary);
+                }
+            }
+
+            &.resizer {
+                &.top-left {
+                    left: -4px;
+                    top: -4px;
+                }
+                &.middle-top {
+                    left: calc(50% - 4px);
+                    top: -4px;
+                }
+                &.top-right {
+                    left: calc(100% - 4px);
+                    top: -4px;
+                }
+                &.middle-left {
+                    left: -4px;
+                    top: calc(50% - 4px);
+                }
+                &.middle-right {
+                    left: calc(100% - 4px);
+                    top: calc(50% - 4px);
+                }
+                &.bottom-left {
+                    left: -4px;
+                    top: calc(100% - 4px);
+                }
+                &.middle-bottom {
+                    left: calc(50% - 4px);
+                    top: calc(100% - 4px);
+                }
+                &.bottom-right {
+                    left: calc(100% - 4px);
+                    top: calc(100% - 4px);
+                }
+            }
+            &.rotator {
+                border-radius: 50%;
+                &.top-left {
+                    left: -11px;
+                    top: -11px;
+                }
+                &.top-right {
+                    left: calc(100% + 3px);
+                    top: -11px;
+                }
+                &.bottom-left {
+                    left: -11px;
+                    top: calc(100% + 3px);
+                }
+                &.bottom-right {
+                    left: calc(100% + 3px);
+                    top: calc(100% + 3px);
+                }
+            }
+            &.shearer {
+                &.middle-left {
+                    left: -9px;
+                    top: calc(50% - 10px);
+                    width: 4px;
+                    height: 20px;
+                }
+                &.middle-right {
+                    left: calc(100% + 5px);
+                    top: calc(50% - 10px);
+                    width: 4px;
+                    height: 20px;
+                }
+                &.middle-top {
+                    left: calc(50% - 10px);
+                    top: -9px;
+                    width: 20px;
+                    height: 4px;
+                }
+                &.middle-bottom {
+                    left: calc(50% - 10px);
+                    top: calc(100% + 5px);
+                    width: 20px;
+                    height: 4px;
+                }
             }
         }
 
-        &.is-layout .drag-area {
+        &.is-layout .transform-area {
             border-color: var(--color-purple);
 
             &:hover {
                 background-color: var(--color-purple);
+                border-color: var(--color-primary);
+            }
+
+            &:is(.rotator, .shearer) {
+                background-color: transparent;
+                border-color: transparent;
+
+                &:hover {
+                    background-color: var(--color-green);
+                    border-color: var(--color-primary);
+                }
             }
         }
     }
@@ -757,11 +858,11 @@
             content: '';
             position: absolute;
             box-sizing: border-box;
-            top: var(--parent-top);
-            left: var(--parent-left);
-            width: var(--parent-width);
-            height: var(--parent-height);
-            visibility: var(--parent-visibility);
+            top: var(--original-top);
+            left: var(--original-left);
+            width: var(--original-width);
+            height: var(--original-height);
+            visibility: var(--original-visibility);
             border: var(--border-size) dashed var(--color-blue);
             pointer-events: none;
         }
@@ -823,6 +924,23 @@
         }
     }
 
+    .dragging-constraint {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 10002;
+    }
+
+    .snapping-box {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 10002;
+    }
 }
 
 #context-menu__container {

@@ -39,6 +39,7 @@
 
                 background-color: var(--color-ternary);
                 border: var(--border-size) solid transparent;
+                border-radius: 5px;
 
                 overflow: hidden;
 

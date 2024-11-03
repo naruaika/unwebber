@@ -55,7 +55,7 @@ const filterDropdownItems = (attribute, container, inputBox, dropdownList) => {
     // Calculate the best position for the dropdown list
     // if the dropdown list nears the bottom of the container
     // then position it above the input box, otherwise below
-    const isNearBottom = container.getBoundingClientRect().bottom + dropdownList.offsetHeight > panelContentContainer.offsetHeight;
+    const isNearBottom = container.getBoundingClientRect().bottom + dropdownList.offsetHeight > panelContentContainer.getBoundingClientRect().bottom;
     dropdownList.classList.toggle('bottom', isNearBottom);
     dropdownList.classList.toggle('top', ! isNearBottom);
 }
@@ -448,7 +448,7 @@ const refreshPanel = () => {
     // Create a placeholder element if no node is selected
     if (! selectedNode.node) {
         const placeholder = document.createElement('span');
-        placeholder.innerText = 'No nodes selected.';
+        placeholder.innerText = 'No selection.';
         placeholder.classList.add('placeholder');
         panelContentContainer.appendChild(placeholder);
         return;

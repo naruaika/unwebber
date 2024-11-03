@@ -70,11 +70,11 @@ const scrollToElement = (listItemButton) => {
         const isNearTop = listItemRect.top < panelRect.top + 50;
         const isNearBottom = listItemRect.bottom > panelRect.bottom - 50;
         if (isNearTop) {
-            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            listItemButton.scrollIntoView({ behavior: 'instant', block: 'start' });
         } else if (isNearBottom) {
-            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            listItemButton.scrollIntoView({ behavior: 'instant', block: 'end' });
         } else {
-            listItemButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            listItemButton.scrollIntoView({ behavior: 'instant', block: 'center' });
         }
     }, 50);
 }
@@ -968,7 +968,7 @@ const showContextMenu = (event) => {
             for: [
                 'move-to-top-tree', 'move-to-bottom-tree', 'move-up-tree', 'move-down-tree', 'outdent-up', 'outdent-down',
                 'indent-up', 'indent-down', 'align-left', 'align-center', 'align-right', 'align-top',
-                'align-middle', 'align-bottom', 'rotate-left', 'rotate-right', 'flip-horizontal', 'flip-vertical',
+                'align-middle', 'align-bottom', 'flip-horizontal', 'flip-vertical', 'rotate-left', 'rotate-right'
             ]
         },
         {
@@ -991,6 +991,7 @@ const showContextMenu = (event) => {
                 ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasPreviousSibling,
             belongs: 'move',
+            shortcut: 'Ctrl+Shift+]',
         },
         {
             id: 'move-up-tree',
@@ -1003,6 +1004,7 @@ const showContextMenu = (event) => {
                 ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasPreviousSibling,
             belongs: 'move',
+            shortcut: 'Ctrl+]',
         },
         {
             id: 'move-down-tree',
@@ -1015,6 +1017,7 @@ const showContextMenu = (event) => {
                 ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasNextSibling,
             belongs: 'move',
+            shortcut: 'Ctrl+[',
         },
         {
             id: 'move-to-bottom-tree',
@@ -1027,6 +1030,7 @@ const showContextMenu = (event) => {
                 ['html', 'head', 'body'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
                 ! hasNextSibling,
             belongs: 'move',
+            shortcut: 'Ctrl+Shift+[',
         },
         {
             spacer: true,
@@ -1190,44 +1194,7 @@ const showContextMenu = (event) => {
             group: true,
             id: 'transform',
             label: 'Transform',
-            for: ['rotate-left', 'rotate-right', 'flip-horizontal', 'flip-vertical'],
-        },
-        {
-            id: 'rotate-left',
-            label: 'Rotate Left',
-            action: () => {
-                // Request to rotate the element to the left
-                window.dispatchEvent(new CustomEvent('element:rotate-left'));
-            },
-            disabled:
-                ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
-                apiSchema.htmlElements
-                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
-                    .categories
-                    .includes('metadata'),
-            belongs: 'transform',
-        },
-        {
-            id: 'rotate-right',
-            label: 'Rotate Right',
-            action: () => {
-                // Request to rotate the element to the right
-                window.dispatchEvent(new CustomEvent('element:rotate-right'));
-            },
-            disabled:
-                ! event.currentTarget.dataset.uwId ||
-                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
-                apiSchema.htmlElements
-                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
-                    .categories
-                    .includes('metadata'),
-            belongs: 'transform',
-        },
-        {
-            spacer: true,
-            for: ['flip-horizontal', 'flip-vertical'],
-            belongs: 'transform',
+            for: ['flip-horizontal', 'flip-vertical', 'rotate-left', 'rotate-right'],
         },
         {
             id: 'flip-horizontal',
@@ -1251,6 +1218,43 @@ const showContextMenu = (event) => {
             action: () => {
                 // Request to flip the element vertically
                 window.dispatchEvent(new CustomEvent('element:flip-vertical'));
+            },
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
+            belongs: 'transform',
+        },
+        {
+            spacer: true,
+            for: ['rotate-left', 'rotate-right'],
+            belongs: 'transform',
+        },
+        {
+            id: 'rotate-left',
+            label: 'Rotate Left',
+            action: () => {
+                // Request to rotate the element to the left
+                window.dispatchEvent(new CustomEvent('element:rotate-left'));
+            },
+            disabled:
+                ! event.currentTarget.dataset.uwId ||
+                ['html', 'head'].includes(event.currentTarget.dataset.tagName.toLowerCase()) ||
+                apiSchema.htmlElements
+                    .find(element => element.tag === event.currentTarget.dataset.tagName.toLowerCase())
+                    .categories
+                    .includes('metadata'),
+            belongs: 'transform',
+        },
+        {
+            id: 'rotate-right',
+            label: 'Rotate Right',
+            action: () => {
+                // Request to rotate the element to the right
+                window.dispatchEvent(new CustomEvent('element:rotate-right'));
             },
             disabled:
                 ! event.currentTarget.dataset.uwId ||
@@ -1650,10 +1654,10 @@ const createListItem = (node, level, isPanelReady = true) => {
         (! isPanelReady || node.dataset?.uwNew) &&
         hasChild && level > 1
     ) {
-        if (node.dataset?.uwNew) {
-            node.removeAttribute('data-uw-new');
-        }
         collapsedListItems.push(node.dataset.uwId);
+    }
+    if (node.dataset?.uwNew) {
+        node.removeAttribute('data-uw-new');
     }
 
     // Collapse the list item if it is in the collapsed list
@@ -1664,178 +1668,182 @@ const createListItem = (node, level, isPanelReady = true) => {
     return listItem;
 }
 
+const initializePanel = () => {
+    const documentTree = mainFrame.contentDocument.documentElement;
+
+    // Add search input to the outline panel
+    const searchInputContainer = document.createElement('div');
+    searchInputContainer.classList.add('panel__search-container');
+    if (panelContentContainer.classList.contains('expanded')) {
+        searchInputContainer.classList.add('expanded');
+    }
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search outline...';
+    searchInput.classList.add('panel__search');
+
+    // Add event listeners to the search input
+    // FIXME: get rid of the "glitch" when performing the initial search
+    const filterListItems = (event) => {
+        const query = event.target.value.toLowerCase();
+        requestAnimationFrame(() => {
+            // Clear the highlighted flag from all list items
+            panelContentContainer.querySelectorAll('.highlighted, .highlighted-parent').forEach(element => {
+                if (query !== '' && element.dataset.label.includes(query)) {
+                    return;
+                }
+                element.classList.remove('highlighted', 'highlighted-parent');
+            });
+            if (query === '') {
+                return;
+            }
+            // Filter the list item based on the search input value
+            panelContentContainer.querySelectorAll('.list-item').forEach(element => {
+                const searchIn = element.dataset.label.toLowerCase();
+                if (searchIn.includes(query)) {
+                    let _listItemButton = element;
+                    while (
+                        _listItemButton.parentElement?.parentElement?.parentElement &&
+                        _listItemButton.parentElement?.parentElement?.tagName.toLowerCase() === 'ul'
+                    ) {
+                        _listItemButton.parentElement.querySelector('.list-item').classList.add('highlighted-parent');
+                        _listItemButton = _listItemButton.parentElement.parentElement;
+                    }
+                    element.classList.add('highlighted');
+                }
+            });
+        });
+    };
+    searchInput.addEventListener('input', debounce(filterListItems, 250));
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            // Clear the search input
+            event.target.value = '';
+            event.target.dispatchEvent(new Event('input'));
+            return;
+        }
+    });
+    searchInput.addEventListener('drop', (event) => {
+        searchInput.value = event.dataTransfer.getData('text/plain');
+        searchInput.dispatchEvent(new Event('input'));
+    });
+
+    // Append the search input to the search container
+    searchInputContainer.append(searchInput);
+
+    // Insert the search container before the panel content container
+    panelContentContainer.parentElement.insertBefore(searchInputContainer, panelContentContainer);
+
+    // Populate the outline panel with the document tree
+    setTimeout(() => {
+        panelContentContainer.innerHTML = '';
+        const unorderedList = document.createElement('ul');
+        unorderedList.appendChild(createListItem(documentTree, 0, false));
+        panelContentContainer.appendChild(unorderedList);
+    }, 50);
+
+    // Use MutationObserver to watch for DOM changes
+    new MutationObserver((records) => {
+        // Repopulate the outline panel if there are changes
+        // TODO: add support for multi-selection
+        records.forEach(record => {
+            if (record.removedNodes.length > 0) {
+                // Remove the list item
+                if (record.removedNodes[0].nodeType === Node.ELEMENT_NODE) {
+                    panelContentContainer.querySelector(`li[data-uw-id="${record.removedNodes[0].dataset.uwId}"]`).remove();
+                } else {
+                    const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                    parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                }
+            }
+            if (record.addedNodes.length > 0) {
+                // Add a new list item
+                if (record.addedNodes[0].nodeType === Node.ELEMENT_NODE) {
+                    const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                    const childNodes = Array.from(record.target.childNodes).filter(child =>
+                        ! (
+                            child.hasAttribute?.('data-uw-ignore') ||
+                            (
+                                child.nodeType !== Node.ELEMENT_NODE &&
+                                child.textContent.trim() === ''
+                            )
+                        )
+                    );
+                    const position = childNodes.indexOf(record.addedNodes[0]);
+                    const parentListItemUl = parentListItem.querySelector('ul');
+                    if (parentListItemUl) {
+                        parentListItemUl.insertBefore(createListItem(record.addedNodes[0], parseInt(parentListItem.dataset.level) + 1), parentListItemUl.children[position]);
+                    } else {
+                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                        parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                    }
+                } else {
+                    const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
+                    parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
+                }
+            }
+            // Recalculate the dataset position of targeted list item children
+            let listItems = Array.from(panelContentContainer.querySelectorAll(`li[data-uw-parent-id="${record.target.dataset.uwId}"]`));
+            let listItemIndex = 0;
+            Array.from(record.target.childNodes).forEach(child => {
+                if (
+                    child.hasAttribute?.('data-uw-ignore') ||
+                    (
+                        child.nodeType !== Node.ELEMENT_NODE &&
+                        child.textContent.trim() === ''
+                    )
+                ) {
+                    return;
+                }
+                const listItem = listItems[listItemIndex];
+                if (! listItem) {
+                    // Sometimes the child nodes order is not the same as the list items order
+                    // due to there are some comment nodes in between
+                    return;
+                }
+                listItem.dataset.uwPosition = Array.prototype.indexOf.call(record.target.childNodes, child);
+                listItem.querySelector('button').dataset.uwPosition = listItem.dataset.uwPosition;
+                listItemIndex++;
+            });
+        });
+
+        // If the selected element is found
+        if (selectedNode.node) {
+            // Get the list item element
+            const listItemButton = selectedNode.node.dataset?.uwId
+                ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
+                : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
+
+            // Skip if the selected element is not found
+            if (! listItemButton) {
+                return;
+            }
+
+            // Highlight the selected element
+            highlightSelectedListItem({
+                currentTarget: listItemButton,
+                stopPropagation: () => {},
+                preventDefault: () => {},
+            });
+
+            // Scroll to the selected element
+            scrollToElement(listItemButton);
+        }
+    }).observe(documentTree, {
+        childList: true,
+        subtree: true,
+    });
+
+    // Set the panel ready flag
+    isPanelReady = true;
+}
+
 const refreshPanel = () => {
     //
     console.log('[Editor] Refreshing outline panel...');
 
     if (! isPanelReady) {
-        const documentTree = mainFrame.contentDocument.documentElement;
-
-        // Add search input to the outline panel
-        const searchInputContainer = document.createElement('div');
-        searchInputContainer.classList.add('panel__search-container');
-        if (panelContentContainer.classList.contains('expanded')) {
-            searchInputContainer.classList.add('expanded');
-        }
-        const searchInput = document.createElement('input');
-        searchInput.type = 'text';
-        searchInput.placeholder = 'Search outline...';
-        searchInput.classList.add('panel__search');
-
-        // Add event listeners to the search input
-        // FIXME: get rid of the "glitch" when performing the initial search
-        const filterListItems = (event) => {
-            const query = event.target.value.toLowerCase();
-            requestAnimationFrame(() => {
-                // Clear the highlighted flag from all list items
-                panelContentContainer.querySelectorAll('.highlighted, .highlighted-parent').forEach(element => {
-                    if (query !== '' && element.dataset.label.includes(query)) {
-                        return;
-                    }
-                    element.classList.remove('highlighted', 'highlighted-parent');
-                });
-                if (query === '') {
-                    return;
-                }
-                // Filter the list item based on the search input value
-                panelContentContainer.querySelectorAll('.list-item').forEach(element => {
-                    const searchIn = element.dataset.label.toLowerCase();
-                    if (searchIn.includes(query)) {
-                        let _listItemButton = element;
-                        while (
-                            _listItemButton.parentElement?.parentElement?.parentElement &&
-                            _listItemButton.parentElement?.parentElement?.tagName.toLowerCase() === 'ul'
-                        ) {
-                            _listItemButton.parentElement.querySelector('.list-item').classList.add('highlighted-parent');
-                            _listItemButton = _listItemButton.parentElement.parentElement;
-                        }
-                        element.classList.add('highlighted');
-                    }
-                });
-            });
-        };
-        searchInput.addEventListener('input', debounce(filterListItems, 250));
-        searchInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                // Clear the search input
-                event.target.value = '';
-                event.target.dispatchEvent(new Event('input'));
-                return;
-            }
-        });
-        searchInput.addEventListener('drop', (event) => {
-            searchInput.value = event.dataTransfer.getData('text/plain');
-            searchInput.dispatchEvent(new Event('input'));
-        });
-
-        // Append the search input to the search container
-        searchInputContainer.append(searchInput);
-
-        // Insert the search container before the panel content container
-        panelContentContainer.parentElement.insertBefore(searchInputContainer, panelContentContainer);
-
-        // Populate the outline panel with the document tree
-        setTimeout(() => {
-            panelContentContainer.innerHTML = '';
-            const unorderedList = document.createElement('ul');
-            unorderedList.appendChild(createListItem(documentTree, 0, false));
-            panelContentContainer.appendChild(unorderedList);
-        }, 50);
-
-        // Use MutationObserver to watch for DOM changes
-        new MutationObserver((records) => {
-            // Repopulate the outline panel if there are changes
-            // TODO: add support for multi-selection
-            records.forEach(record => {
-                if (record.removedNodes.length > 0) {
-                    // Remove the list item
-                    if (record.removedNodes[0].nodeType === Node.ELEMENT_NODE) {
-                        panelContentContainer.querySelector(`li[data-uw-id="${record.removedNodes[0].dataset.uwId}"]`).remove();
-                    } else {
-                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
-                        parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
-                    }
-                }
-                if (record.addedNodes.length > 0) {
-                    // Add a new list item
-                    if (record.addedNodes[0].nodeType === Node.ELEMENT_NODE) {
-                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
-                        const childNodes = Array.from(record.target.childNodes).filter(child =>
-                            ! (
-                                child.hasAttribute?.('data-uw-ignore') ||
-                                (
-                                    child.nodeType !== Node.ELEMENT_NODE &&
-                                    child.textContent.trim() === ''
-                                )
-                            )
-                        );
-                        const position = childNodes.indexOf(record.addedNodes[0]);
-                        const parentListItemUl = parentListItem.querySelector('ul');
-                        if (parentListItemUl) {
-                            parentListItemUl.insertBefore(createListItem(record.addedNodes[0], parseInt(parentListItem.dataset.level) + 1), parentListItemUl.children[position]);
-                        } else {
-                            const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
-                            parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
-                        }
-                    } else {
-                        const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
-                        parentListItem.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
-                    }
-                }
-                // Recalculate the dataset position of targeted list item children
-                let listItems = Array.from(panelContentContainer.querySelectorAll(`li[data-uw-parent-id="${record.target.dataset.uwId}"]`));
-                let listItemIndex = 0;
-                Array.from(record.target.childNodes).forEach(child => {
-                    if (
-                        child.hasAttribute?.('data-uw-ignore') ||
-                        (
-                            child.nodeType !== Node.ELEMENT_NODE &&
-                            child.textContent.trim() === ''
-                        )
-                    ) {
-                        return;
-                    }
-                    const listItem = listItems[listItemIndex];
-                    if (! listItem) {
-                        // Sometimes the child nodes order is not the same as the list items order
-                        // due to there are some comment nodes in between
-                        return;
-                    }
-                    listItem.dataset.uwPosition = Array.prototype.indexOf.call(record.target.childNodes, child);
-                    listItem.querySelector('button').dataset.uwPosition = listItem.dataset.uwPosition;
-                    listItemIndex++;
-                });
-            });
-
-            // If the selected element is found
-            if (selectedNode.node) {
-                // Get the list item element
-                const listItemButton = selectedNode.node.dataset?.uwId
-                    ? panelContentContainer.querySelector(`button[data-uw-id="${selectedNode.node.dataset.uwId}"]`)
-                    : panelContentContainer.querySelector(`li[data-uw-id="${selectedNode.parent.dataset.uwId}"] ul button[data-uw-position="${selectedNode.position}"]`);
-
-                // Skip if the selected element is not found
-                if (! listItemButton) {
-                    return;
-                }
-
-                // Highlight the selected element
-                highlightSelectedListItem({
-                    currentTarget: listItemButton,
-                    stopPropagation: () => {},
-                    preventDefault: () => {},
-                });
-
-                // Scroll to the selected element
-                scrollToElement(listItemButton);
-            }
-        }).observe(documentTree, {
-            childList: true,
-            subtree: true,
-        });
-
-        // Set the panel ready flag
-        isPanelReady = true;
+        initializePanel();
     }
 
     // Refresh the breadcrumb

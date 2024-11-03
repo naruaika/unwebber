@@ -50,12 +50,127 @@
         </div>
     </div>
 
-    <!-- TODO: add control toolbar -->
-
-    <!-- TODO: add context toolbar -->
-
     <!-- Main Content -->
     <div class="main-content__container">
+
+        <!-- Main Control Bar -->
+        <div class="main-controlbar">
+
+            <!-- -->
+            <div class="group">
+                <button class="button" id="move-to-bottom-button">
+                    <div class="icon icon-move-to-bottom"></div>
+                </button
+                ><button class="button" id="move-down-button">
+                    <div class="icon icon-move-down"></div>
+                </button
+                ><button class="button" id="move-up-button">
+                    <div class="icon icon-move-up"></div>
+                </button
+                ><button class="button" id="move-to-top-button">
+                    <div class="icon icon-move-to-top"></div>
+                </button
+                ><button class="button" id="moving-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!--  -->
+            <div class="group">
+                <button class="button" id="align-left-button">
+                    <div class="icon icon-align-left"></div>
+                </button
+                ><button class="button" id="align-center-button">
+                    <div class="icon icon-align-center"></div>
+                </button
+                ><button class="button" id="align-right-button">
+                    <div class="icon icon-align-right"></div>
+                </button
+                ><button class="button" id="align-top-button">
+                    <div class="icon icon-align-top"></div>
+                </button
+                ><button class="button" id="align-middle-button">
+                    <div class="icon icon-align-middle"></div>
+                </button
+                ><button class="button" id="align-bottom-button">
+                    <div class="icon icon-align-bottom"></div>
+                </button
+                ><button class="button" id="alignment-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!-- -->
+            <div class="group">
+                <button class="button" id="flip-horizontal-button">
+                    <div class="icon icon-flip-horizontal"></div>
+                </button
+                ><button class="button" id="flip-vertical-button">
+                    <div class="icon icon-flip-vertical"></div>
+                </button
+                ><button class="button" id="flipping-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!-- -->
+            <div class="group">
+                <button class="button" id="rotate-left-button">
+                    <div class="icon icon-rotate-left"></div>
+                </button
+                ><button class="button" id="rotate-right-button">
+                    <div class="icon icon-rotate-right"></div>
+                </button
+                ><button class="button" id="rotation-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!--  -->
+            <div class="group">
+                <fieldset tabindex="1" class="button">
+                    <!-- TODO: make it unchecked by default -->
+                    <input type="checkbox" id="snapping-toggle-button" checked />
+                    <label for="snapping-toggle-button">
+                        <div class="icon icon-toggle-snapping"></div>
+                    </label>
+                </fieldset
+                ><button class="button" id="snapping-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!--  -->
+            <div class="group">
+                <button class="button" id="grid-toggle-button">Grid</button
+                ><button class="button" id="grid-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!--  -->
+            <div class="group">
+                <button class="button" id="gutter-toggle-button">Gutter</button
+                ><button class="button" id="gutter-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+
+            <!--  -->
+            <div class="group">
+                <button class="button" id="margin-toggle-button">Margin</button
+                ><button class="button" id="margin-options-button">
+                    <div class="icon icon-chevron-down"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Context Bar -->
+        <div class="main-context-bar">
+            <div>No Selection</div>
+        </div>
+
+        <!-- Main Content -->
         <div class="main-content">
 
             <!-- Main Toolbar -->
@@ -63,7 +178,7 @@
 
                 <!-- Move Edit Button -->
                 <fieldset tabindex="1">
-                    <input type="radio" name="edit-mode" value="move" class="main-tool__edit" id="edit-move-button" />
+                    <input type="radio" name="edit-mode" value="move" id="edit-move-button" />
                     <label for="edit-move-button" class="button">
                         <div class="icon icon-mouse-pointer"></div>
                     </label>
@@ -71,7 +186,7 @@
 
                 <!-- Node Edit Button -->
                 <fieldset tabindex="1">
-                    <input type="radio" name="edit-mode" value="node" class="main-tool__edit" id="edit-node-button" />
+                    <input type="radio" name="edit-mode" value="node" id="edit-node-button" />
                     <label for="edit-node-button" class="button">
                         <div class="icon icon-pen-tool"></div>
                     </label>
@@ -79,7 +194,7 @@
 
                 <!-- Code Edit Button -->
                 <fieldset tabindex="1">
-                    <input type="radio" name="edit-mode" value="code" class="main-tool__edit" id="edit-code-button" />
+                    <input type="radio" name="edit-mode" value="code" id="edit-code-button" />
                     <label for="edit-code-button" class="button">
                         <div class="icon icon-code"></div>
                     </label>
@@ -89,7 +204,7 @@
 
                 <!-- Live Edit Button -->
                 <fieldset tabindex="1">
-                    <input type="radio" name="edit-mode" value="live" class="main-tool__edit" id="edit-live-button" />
+                    <input type="radio" name="edit-mode" value="live" id="edit-live-button" />
                     <label for="edit-live-button" class="button">
                         <div class="icon icon-play"></div>
                     </label>
@@ -199,7 +314,7 @@
                     </button>
                     <div class="content__container scrollable">
                         <!-- NOTE: The contents are dynamically generated. -->
-                        <span class="placeholder">No nodes selected.</span>
+                        <span class="placeholder">No selection.</span>
                     </div>
                 </div>
 
@@ -210,7 +325,7 @@
                         <div class="icon icon-chevron-down"></div>
                     </button>
                     <div class="content__container scrollable">
-                        <span class="placeholder">No nodes selected.</span>
+                        <span class="placeholder">No selection.</span>
 
                         <!-- Spacing -->
                         <div class="panel__section hidden" id="spacing-section">

@@ -4,7 +4,8 @@ import './modules/action-center.js';
 import './modules/action-history.js';
 import './modules/context-menu.js';
 import './modules/keyboard-shortcut.js';
-import * as topbar from './modules/topbar.js';
+import * as controlbar from './modules/controlbar.js';
+import * as toolbar from './modules/toolbar.js';
 import * as canvas from './modules/canvas.js';
 import * as sidebar from './modules/sidebar.js';
 import * as statusbar from './modules/status-bar.js';
@@ -46,7 +47,7 @@ const onWindowMessage = (event) => {
     fetch(filePath).then(_ => mainFrame.src = filePath)
 
     // Select the default edit tool
-    topbar.setMode(topbar.Mode.MOVE);
+    toolbar.setMode(toolbar.Mode.MOVE);
 
     // Open the default sidebar panels
     sidebar.toggleExpansion(sidebar.Panel.PROPERTIES);

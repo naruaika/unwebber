@@ -705,7 +705,8 @@
     -webkit-font-smoothing: subpixel-antialiased;
 
     .selected-box,
-    .hovered-box {
+    .hovered-box,
+    .grid-box {
         position: absolute;
         box-sizing: border-box;
         border: var(--border-size) solid var(--color-blue);
@@ -878,6 +879,19 @@
         &.is-layout {
             border-color: var(--color-purple-400);
         }
+    }
+
+    .grid-box {
+        border: none;
+        transform-origin: 0 0;
+        pointer-events: none;
+
+        /* Make sure the element on its own layer */
+        backface-visibility: hidden;
+        will-change: transform;
+        transform: translateZ(0);
+        isolation: isolate;
+        -webkit-font-smoothing: subpixel-antialiased;
     }
 
     .dragged-box {

@@ -118,11 +118,11 @@ export const searchInText = (query, text) => {
 }
 
 export const getAppliedStyleRules = (element) => {
-    var appliedStyleRules = [];
+    let appliedStyleRules = [];
 
     // Get CSS style rules from all stylesheets applied to the element
     const mainFrame = document.getElementById('main-iframe');
-    var cssStyleRules = Array.from(mainFrame.contentDocument.styleSheets)
+    let cssStyleRules = Array.from(mainFrame.contentDocument.styleSheets)
         .slice(0, -1)
         .flatMap(styleSheet => Array.from(styleSheet.cssRules))
         .filter(cssRule => element.matches(cssRule.selectorText));

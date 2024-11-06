@@ -1,12 +1,14 @@
 'use strict';
 
+let _spaceKeyState = null;
 let _shiftKeyState = null;
 let _ctrlKeyState = null;
 let _altKeyState = null;
 
-export const shiftKeyState = () => _shiftKeyState;
-export const ctrlKeyState = () => _ctrlKeyState;
-export const altKeyState = () => _altKeyState;
+export const getSpaceKeyState = () => _spaceKeyState;
+export const getShiftKeyState = () => _shiftKeyState;
+export const getCtrlKeyState = () => _ctrlKeyState;
+export const getAltKeyState = () => _altKeyState;
 
 (() => {
     // TODO: refactor this to use a map of key combinations to actions
@@ -54,28 +56,28 @@ export const altKeyState = () => _altKeyState;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.altKey && event.code === 'Digit0') {
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'selection' }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { zoom: 'selection' } }));
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'Equal') {
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'in' }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { zoom: 'in' } }));
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'Minus') {
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'out' }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { zoom: 'out' } }));
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'Digit0') {
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: 'fit' }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { zoom: 'fit' } }));
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && ['1', '2', '3', '4'].includes(event.key)) {
             const scale = Math.pow(2, parseInt(event.key) - 1);
-            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { scale } }));
+            window.dispatchEvent(new CustomEvent('canvas:zoom', { detail: { zoom: scale } }));
             return;
         }
 
@@ -109,50 +111,64 @@ export const altKeyState = () => _altKeyState;
             return;
         }
 
+        if (event.code === 'Space') {
+            if (_spaceKeyState === true) {
+                return;
+            }
+            _spaceKeyState = true;
+            window.dispatchEvent(new CustomEvent('editor:space', { detail: { state: true } }));
+        }
         if (event.key === 'Shift') {
             if (_shiftKeyState === true) {
                 return;
             }
             _shiftKeyState = true;
-            window.dispatchEvent(new CustomEvent('editor:shift', { detail: true }));
+            window.dispatchEvent(new CustomEvent('editor:shift', { detail: { state: true } }));
         }
         if (event.key === 'Control') {
             if (_ctrlKeyState === true) {
                 return;
             }
             _ctrlKeyState = true;
-            window.dispatchEvent(new CustomEvent('editor:ctrl', { detail: true }));
+            window.dispatchEvent(new CustomEvent('editor:ctrl', { detail: { state: true } }));
         }
         if (event.key === 'Alt') {
             if (_altKeyState === true) {
                 return;
             }
             _altKeyState = true;
-            window.dispatchEvent(new CustomEvent('editor:alt', { detail: true }));
+            window.dispatchEvent(new CustomEvent('editor:alt', { detail: { state: true } }));
         }
     });
 
     document.addEventListener('keyup', (event) => {
+        if (event.code === 'Space') {
+            if (_spaceKeyState === false) {
+                return;
+            }
+            _spaceKeyState = false;
+            window.dispatchEvent(new CustomEvent('editor:space', { detail: { state: false } }));
+        }
         if (event.key === 'Shift') {
             if (_shiftKeyState === false) {
                 return;
             }
             _shiftKeyState = false;
-            window.dispatchEvent(new CustomEvent('editor:shift', { detail: false }));
+            window.dispatchEvent(new CustomEvent('editor:shift', { detail: { state: false } }));
         }
         if (event.key === 'Control') {
             if (_ctrlKeyState === false) {
                 return;
             }
             _ctrlKeyState = false;
-            window.dispatchEvent(new CustomEvent('editor:ctrl', { detail: false }));
+            window.dispatchEvent(new CustomEvent('editor:ctrl', { detail: { state: false } }));
         }
         if (event.key === 'Alt') {
             if (_altKeyState === false) {
                 return;
             }
             _altKeyState = false;
-            window.dispatchEvent(new CustomEvent('editor:alt', { detail: false }));
+            window.dispatchEvent(new CustomEvent('editor:alt', { detail: { state: false } }));
         }
     });
 

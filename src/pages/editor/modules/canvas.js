@@ -14,27 +14,30 @@ import {
     isElementVoid,
     styleElement,
 } from '../helpers.js';
-import { shiftKeyState } from './keyboard-shortcut.js';
+import { getGridCheckState, getSnapCheckState } from './controlbar.js';
+import { getSpaceKeyState, getShiftKeyState } from './keyboard-shortcut.js';
 
 const rootContainer = document.querySelector('.main-canvas__container');
 const topRuler = rootContainer.querySelector('.top-ruler');
 const leftRuler = rootContainer.querySelector('.left-ruler');
 const canvasContainer = rootContainer.querySelector('.main-container');
-const canvasOverlay = rootContainer.querySelector('.main-canvas__overlay');
 const mainFrame = rootContainer.querySelector('.main-iframe');
+const canvasOverlay = rootContainer.querySelector('.main-canvas__overlay');
+const canvasGrid = rootContainer.querySelector('.main-canvas__grid');
 
 const documentComputedStyle = getComputedStyle(document.documentElement);
 
 const defaultBreakpoints = {
-    desktop: 1200, // in pixels
-    tablet: 810, // in pixels
-    mobile: 390, // in pixels
+    desktop: 1200,
+    tablet: 810,
+    mobile: 390,
 };
 
 const rulerHeight = 20;
 const scrollFactor = 0.25;
 const zoomFactor = 0.0005;
 const rotateFactor = 15;
+const snapFactor = 5;
 
 let currentScale = 1;
 let currentRotate = 0;
@@ -43,54 +46,57 @@ let currentTranslateY = 0;
 let currentPointerX = 0;
 let currentPointerY = 0;
 
-let previousSelectedNode = null; // { node, position, parent }
-let selectedBox = null; // HTMLElement
+let previousSelectedNode;
+let selectedBox;
 
-let hoveredElements = []; // array of HTMLElement
-let hoveredBox = null; // HTMLElement
+let hoveredElements = [];
+let hoveredBox;
 
-let isPanning = false; // boolean
-let panningTimeout = null; // integer
+let canvasContainerBoundingRect;
+let mainFrameBoundingRect;
+let selectedNodeBoundingRect;
+let selectedNodeParentBoundingRect;
+let hoveredNodeBoundingRect;
 
-let dragStartPoint = null; // { x, y }
-let dragStartMatrix = null; // DOMMatrix
-let dragStartBoundingRect = null; // { x, y }
-let dragObjectMode = null; // 'free' || 'layout'
-let dragTargetObject = null; // HTMLElement
-let dragTargetPosition = null; // 'beforebegin' || 'afterbegin' || 'beforeend' || 'afterend'
-let dragPointerId = null; // integer
-let dragAnimationRequestId = null; // integer
-let draggingBox = null; // HTMLElement
-let draggingLine = null; // HTMLElement
-let draggingConstraint = null; // SVGElement
-let isPreparedToDrag = false; // boolean
-let isDragging = false; // boolean
-let isDraggingInterrupted = false; // boolean
-let isDraggingJustDone = false; // boolean
+let isPanning = false;
+let panningTimeout;
 
-let isResizing = false; // boolean
-let isRotating = false; // boolean
-let isShearing = false; // boolean
+let dragStartPoint;
+let dragStartMatrix;
+let dragStartBoundingRect;
+let dragTargetNode;
+let dragTargetPosition;
+let dragPositionMode;
+let dragPointerId;
+let dragAnimationRequestId;
+let draggingBox;
+let draggingLine;
+let draggingConstraint;
+let isPreparedToDrag = false;
+let isDragging = false;
+let isDraggingInterrupted = false;
+let isDraggingJustDone = false;
 
-let visibleInViewportElements = []; // array of HTMLElement
-let snapLastMatrix = null; // DOMMatrix
-let snappingBox = null; // SVGElement
-let isSnapping = true; // boolean, TODO: make it false by default
+let isResizing = false;
+let isRotating = false;
+let isShearing = false;
 
-let isSpacebarBeingPressed = false; // boolean
-let isPanelReady = false; // boolean
+let visibleInViewportElements = [];
+let snappingBox;
 
-let mainFrameBoundingRect = null;
-let selectedNodeBoundingRect = null;
-let selectedNodeParentBoundingRect = null;
-let hoveredNodeBoundingRect = null;
+let gridSpacing = 100;
+let gridDivisor = 5;
+let gridAppliedSpacing = 20;
+let isGridRendered = false;
+
+let isPanelInFocus = false;
+let isPanelReady = false;
 
 const updateRulerSize = () => {
-    const containerBoundingRect = mainFrame.parentElement.getBoundingClientRect();
-    topRuler.width = containerBoundingRect.width - rulerHeight;
+    topRuler.width = canvasContainerBoundingRect.width - rulerHeight;
     topRuler.height = rulerHeight;
     leftRuler.width = rulerHeight;
-    leftRuler.height = containerBoundingRect.height - rulerHeight;
+    leftRuler.height = canvasContainerBoundingRect.height - rulerHeight;
 }
 
 const refreshRulers = () => {
@@ -98,19 +104,17 @@ const refreshRulers = () => {
         updateRulerSize();
     }
 
-    // Get the current transform values
+    // Get the current canvas size
     const canvasWidth = parseInt(mainFrame.style.width, 10);
     const canvasHeight = parseInt(mainFrame.style.height, 10);
 
     // Prepare the top ruler
     let ctx = topRuler.getContext('2d', { alpha: false });
-    ctx.clearRect(0, 0, topRuler.width + rulerHeight, topRuler.height);
     ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-gray-600'));
     ctx.fillRect(0, 0, topRuler.width + rulerHeight, topRuler.height);
 
     // Prepare the left ruler
     ctx = leftRuler.getContext('2d', { alpha: false });
-    ctx.clearRect(0, 0, leftRuler.width, leftRuler.height);
     ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-gray-600'));
     ctx.fillRect(0, 0, leftRuler.width, leftRuler.height);
 
@@ -195,10 +199,86 @@ const refreshRulers = () => {
     }
 }
 
+const updateGridSize = () => {
+    canvasGrid.width = canvasContainerBoundingRect.width;
+    canvasGrid.height = canvasContainerBoundingRect.height;
+}
+
+const refreshGrid = () => {
+    if (! isPanelReady) {
+        updateGridSize();
+    }
+
+    if (! getGridCheckState()) {
+        if (isGridRendered) {
+            const ctx = canvasGrid.getContext('2d', { alpha: true });
+            ctx.clearRect(0, 0, canvasGrid.width, canvasGrid.height);
+        }
+        return;
+    }
+
+    // Skip if the main frame is out of the viewport
+    if (
+        mainFrameBoundingRect.left > canvasContainerBoundingRect.right ||
+        mainFrameBoundingRect.right < canvasContainerBoundingRect.left ||
+        mainFrameBoundingRect.top > canvasContainerBoundingRect.bottom ||
+        mainFrameBoundingRect.bottom < canvasContainerBoundingRect.top
+    ) {
+        return;
+    }
+
+    // Get the current canvas size
+    const canvasWidth = parseInt(mainFrame.style.width, 10);
+    const canvasHeight = parseInt(mainFrame.style.height, 10);
+
+    // Prepare the grid canvas
+    const ctx = canvasGrid.getContext('2d', { alpha: true });
+    ctx.clearRect(0, 0, canvasGrid.width, canvasGrid.height);
+    isGridRendered = false;
+
+    // Define grid spacing
+    let gridStepMajor = gridSpacing;
+    let gridStepMinor = gridStepMajor / gridDivisor;
+    // redefine the grid step if the distance between two minor grids is too small
+    if (gridStepMinor * currentScale < 5) {
+        gridStepMinor = gridStepMinor * Math.ceil(5 / (gridStepMinor * currentScale));
+        gridStepMajor = gridStepMinor * gridDivisor;
+    }
+    // redefine the grid step if the distance between two minor grids is too large
+    if (gridStepMinor * currentScale > 10) {
+        gridStepMinor = gridStepMinor / Math.ceil((gridStepMinor * currentScale) / 10);
+        gridStepMinor = gridStepMinor < 2 ? 1 : gridStepMinor; // Prevent from being less than 1
+        gridStepMajor = gridStepMinor * gridDivisor;
+    }
+    gridAppliedSpacing = gridStepMinor;
+
+    // Draw the grid lines
+    let startX = Math.floor(Math.max(-currentTranslateX / currentScale, 0) / gridStepMinor) * gridStepMinor;
+    let endX = Math.min((canvasGrid.width - currentTranslateX) / currentScale + rulerHeight, canvasWidth);
+    let startY = Math.max(currentTranslateY, 0);
+    let endY = Math.min(canvasHeight * currentScale + Math.min(currentTranslateY, 0), canvasGrid.height - Math.min(currentTranslateY, 0));
+    for (let i = startX; i <= endX; i += gridStepMinor) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${i % gridStepMajor === 0 ? 0.2 : 0.1})`;
+        ctx.fillRect(currentTranslateX + i * currentScale, startY, 1, endY);
+    }
+    startX = Math.max(currentTranslateX, 0);
+    endX = Math.min(canvasWidth * currentScale + Math.min(currentTranslateX, 0), canvasGrid.width - Math.min(currentTranslateX, 0));
+    startY = Math.floor(Math.max(-currentTranslateY / currentScale, 0) / gridStepMinor) * gridStepMinor;
+    endY = Math.min((canvasGrid.height - currentTranslateY) / currentScale + rulerHeight, canvasHeight);
+    for (let i = startY; i <= endY; i += gridStepMinor) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${i % gridStepMajor === 0 ? 0.2 : 0.1})`;
+        ctx.fillRect(startX, currentTranslateY + i * currentScale, endX, 1);
+    }
+
+    //
+    isGridRendered = true;
+}
+
 const adjustMainFrameSize = () => {
     // TODO: add support for viewport width and height,
     // in case of game or presentation slides development?
-    mainFrame.style.width = defaultBreakpoints.desktop + 'px';
+    canvasContainerBoundingRect = canvasContainer.getBoundingClientRect();
+    mainFrame.style.width = `${defaultBreakpoints.desktop}px`;
     mainFrame.style.height = `${mainFrame.contentDocument.body.scrollHeight}px`;
     mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 };
@@ -209,15 +289,16 @@ const initializeCanvas = () => {
     mainFrame.style.transform = `translate3d(${marginLeft}px, ${marginLeft}px, 0)`;
     currentTranslateX = marginLeft;
     currentTranslateY = marginLeft;
-    mainFrame.style.transformOrigin = '0px 0px';
 
     // Set the initial main frame size
     adjustMainFrameSize();
 
     // Create a IntersectionObserver to watch for elements in the viewport
     const intersectionObserver = new IntersectionObserver(updateVisibleInViewportElements);
-    mainFrame.contentDocument.querySelectorAll('body [data-uw-id]').forEach(element => {
-        intersectionObserver.observe(element);
+    mainFrame.contentDocument.querySelectorAll('body, body [data-uw-id]').forEach(element => {
+        if (! element.hasAttribute('data-uw-ignore')) {
+            intersectionObserver.observe(element);
+        }
     });
 
     // Create a MutationObserver to watch for changes in the document tree
@@ -226,7 +307,10 @@ const initializeCanvas = () => {
         adjustMainFrameSize();
         records.forEach(record => {
             record.addedNodes.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
+                if (
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    ! node.hasAttribute('data-uw-ignore')
+                ) {
                     intersectionObserver.observe(node);
                 }
             });
@@ -351,7 +435,7 @@ const transformCanvas = (event) => {
 
         // Calculate the new scale
         // TODO: snap to 100% zoom if close enough
-        let newScale = currentScale - event.deltaY * zoomFactor * currentScale;
+        let newScale = currentScale - (event.deltaY || event.deltaX) * zoomFactor * currentScale;
         newScale = Math.max(newScale, 0.01); // prevent scaling to too small
         newScale = Math.min(newScale, 10); // prevent scaling to too big
 
@@ -369,21 +453,21 @@ const transformCanvas = (event) => {
 
     // // Rotate
     // else if (event.altKey) {
-    //     let newRotate = currentRotate + rotateFactor * Math.sign(event.deltaY);
+    //     let newRotate = currentRotate + rotateFactor * Math.sign((event.deltaY || event.deltaX));
     //     mainFrame.style.transform = `translate3d(${currentTranslateX}px, ${currentTranslateY}px, 0) scale(${currentScale}) rotate(${newRotate}deg)`;
     //     currentRotate = newRotate;
     // }
 
     // Scroll horizontally
-    else if (event.shiftKey) {
-        let newTranslateX = currentTranslateX - event.deltaY * scrollFactor / (currentScale >= 1 ? currentScale ** 0.05 : currentScale ** 0.000005);
+    else if (event.shiftKey || event.deltaX) {
+        let newTranslateX = currentTranslateX - (event.deltaY || event.deltaX) * scrollFactor / (currentScale >= 1 ? currentScale ** 0.05 : currentScale ** 0.000005);
         mainFrame.style.transform = `translate3d(${newTranslateX}px, ${currentTranslateY}px, 0) scale(${currentScale}) rotate(${currentRotate}deg)`;
         currentTranslateX = newTranslateX;
     }
 
     // Scroll vertically
     else {
-        let newTranslateY = currentTranslateY - event.deltaY * scrollFactor / (currentScale >= 1 ? currentScale ** 0.05 : currentScale ** 0.000005);
+        let newTranslateY = currentTranslateY - (event.deltaY || event.deltaX) * scrollFactor / (currentScale >= 1 ? currentScale ** 0.05 : currentScale ** 0.000005);
         mainFrame.style.transform = `translate3d(${currentTranslateX}px, ${newTranslateY}px, 0) scale(${currentScale}) rotate(${currentRotate}deg)`;
         currentTranslateY = newTranslateY;
     }
@@ -394,16 +478,19 @@ const transformCanvas = (event) => {
         updateSelectedNodeBoundingRect();
         refreshSelectedBox();
         refreshHoveredBox();
-        refreshDraggingConstraint(shiftKeyState);
+        refreshDraggingConstraint(getShiftKeyState());
         mainFrame.style.willChange = 'unset'; // force repaint
         setTimeout(() => mainFrame.style.willChange = 'transform', 250);
     }, 250);
 
-    refreshRulers();
+    setTimeout(() => {
+        refreshRulers();
+        refreshGrid();
+    }, 0);
     refreshSelectedBox();
     refreshHoveredBox();
     refreshDraggingBox();
-    refreshDraggingConstraint(shiftKeyState);
+    refreshDraggingConstraint(getShiftKeyState());
 
     mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 }
@@ -423,7 +510,10 @@ const panCanvas = (dx, dy) => {
         refreshHoveredBox();
     }, 250);
 
-    refreshRulers();
+    setTimeout(() => {
+        refreshRulers();
+        refreshGrid();
+    }, 0);
     refreshSelectedBox();
     refreshHoveredBox();
 
@@ -437,23 +527,22 @@ const zoomCanvas = (event) => {
     let newTranslateX;
     let newTranslateY;
 
-    const containerBoundingRect = mainFrame.parentElement.getBoundingClientRect();
     const canvasOverlayBoundingRect = canvasOverlay.getBoundingClientRect();
 
-    switch (event.detail) {
+    switch (event.detail.zoom) {
         case 'selection':
             if (! selectedNodeBoundingRect) {
                 return;
             }
 
             // Calculate the new scale to fit the selected node within the main frame
-            const scaleX = (containerBoundingRect.width - rulerHeight * 3) / selectedNodeBoundingRect.width;
-            const scaleY = (containerBoundingRect.height - rulerHeight * 3) / selectedNodeBoundingRect.height;
+            const scaleX = (canvasContainerBoundingRect.width - rulerHeight * 3) / selectedNodeBoundingRect.width;
+            const scaleY = (canvasContainerBoundingRect.height - rulerHeight * 3) / selectedNodeBoundingRect.height;
             newScale = Math.min(scaleX, scaleY);
 
             // Calculate the new translate to center the selected node within the main frame
-            newTranslateX = ((containerBoundingRect.width - rulerHeight * 3) - selectedNodeBoundingRect.width * newScale) / 2 - selectedNodeBoundingRect.left * newScale + rulerHeight * 2;
-            newTranslateY = ((containerBoundingRect.height - rulerHeight * 3) - selectedNodeBoundingRect.height * newScale) / 2 - selectedNodeBoundingRect.top * newScale + rulerHeight * 2;
+            newTranslateX = ((canvasContainerBoundingRect.width - rulerHeight * 3) - selectedNodeBoundingRect.width * newScale) / 2 - selectedNodeBoundingRect.left * newScale + rulerHeight * 2;
+            newTranslateY = ((canvasContainerBoundingRect.height - rulerHeight * 3) - selectedNodeBoundingRect.height * newScale) / 2 - selectedNodeBoundingRect.top * newScale + rulerHeight * 2;
 
             // Apply the new transform
             mainFrame.style.transform = `translate3d(${newTranslateX}px, ${newTranslateY}px, 0) scale(${newScale}) rotate(${currentRotate}deg)`;
@@ -510,10 +599,10 @@ const zoomCanvas = (event) => {
             break;
 
         case 'fit':
-            if (defaultBreakpoints.desktop < (containerBoundingRect.width - rulerHeight)) {
+            if (defaultBreakpoints.desktop < (canvasContainerBoundingRect.width - rulerHeight)) {
                 mainFrame.style.transform = `translate3d(${rulerHeight}px, ${rulerHeight}px, 0)`;
             } else {
-                const newScale = (containerBoundingRect.width - rulerHeight) / defaultBreakpoints.desktop;
+                const newScale = (canvasContainerBoundingRect.width - rulerHeight) / defaultBreakpoints.desktop;
                 mainFrame.style.transform = `translate3d(${rulerHeight}px, ${rulerHeight}px, 0) scale(${newScale})`;
                 currentScale = newScale;
             }
@@ -528,7 +617,7 @@ const zoomCanvas = (event) => {
             pointerY = (canvasOverlayBoundingRect.top + canvasOverlayBoundingRect.height / 2 - mainFrameBoundingRect.top) / currentScale;
 
             // Get the new scale
-            newScale = event.detail.scale;
+            newScale = event.detail.zoom;
             newScale = Math.max(newScale, 0.01); // prevent scaling to too small
             newScale = Math.min(newScale, 10); // prevent scaling to too big
 
@@ -556,7 +645,10 @@ const zoomCanvas = (event) => {
         setTimeout(() => mainFrame.style.willChange = 'transform', 250);
     }, 250);
 
-    refreshRulers();
+    setTimeout(() => {
+        refreshRulers();
+        refreshGrid();
+    }, 0);
     refreshSelectedBox();
     refreshHoveredBox();
 
@@ -585,7 +677,7 @@ const updateSelectedNodeBoundingRect = () => {
 }
 
 const refreshSelectedBox = () => {
-    if (isDragging && dragObjectMode === 'layout') {
+    if (isDragging && dragPositionMode === 'layout') {
         // Hide the hovered box
         selectedBox.classList.add('hidden');
         return;
@@ -637,21 +729,43 @@ const refreshSelectedBox = () => {
         // Get the original position and size of the selected node
         // before considering the offset of the positioned element
         if (
-            _metadata.properties['left'] ||
-            _metadata.properties['top'] ||
-            _metadata.properties['margin-left'] ||
-            _metadata.properties['margin-top']
+            Object.keys(_metadata.properties).some(property =>
+                [
+                    'left',
+                    'right',
+                    'top',
+                    'bottom',
+                    'margin-left',
+                    'margin-right',
+                    'margin-top',
+                    'margin-bottom',
+                ].includes(property)
+            )
         ) {
             let left = 0;
             left -= parseFloat(_metadata.properties['left']?.value || 0);
             left -= parseFloat(_metadata.properties['margin-left']?.value || 0);
             left *= currentScale;
+
+            let right = 0;
+            right += parseFloat(_metadata.properties['right']?.value || 0);
+            right += parseFloat(_metadata.properties['margin-right']?.value || 0);
+            right *= currentScale;
+
             let top = 0;
             top -= parseFloat(_metadata.properties['top']?.value || 0);
             top -= parseFloat(_metadata.properties['margin-top']?.value || 0);
             top *= currentScale;
+
+            let bottom = 0;
+            bottom += parseFloat(_metadata.properties['bottom']?.value || 0);
+            bottom += parseFloat(_metadata.properties['margin-bottom']?.value || 0);
+            bottom *= currentScale;
+
             selectedBox.style.setProperty('--original-top', `${top - 1}px`);
             selectedBox.style.setProperty('--original-left', `${left - 1}px`);
+            selectedBox.style.setProperty('--original-right', `${right - 1}px`);
+            selectedBox.style.setProperty('--original-bottom', `${bottom - 1}px`);
             selectedBox.style.setProperty('--original-width', `${width}px`);
             selectedBox.style.setProperty('--original-height', `${height}px`);
             selectedBox.style.setProperty('--original-visibility', 'visible');
@@ -792,7 +906,7 @@ const refreshDraggingLine = () => {
     // Skip if there is no hovered nodes
     if (hoveredElements.length == 0) {
         draggingLine.classList.add('hidden');
-        dragTargetObject = null;
+        dragTargetNode = null;
         dragTargetPosition = null;
         return;
     }
@@ -804,7 +918,7 @@ const refreshDraggingLine = () => {
         selectedNode.node.contains(hoveredNode.node)
     ) {
         draggingLine.classList.add('hidden');
-        dragTargetObject = null;
+        dragTargetNode = null;
         dragTargetPosition = null;
         return;
     }
@@ -813,7 +927,7 @@ const refreshDraggingLine = () => {
     const clientY = (currentPointerY - mainFrameBoundingRect.top) / currentScale;
 
     // Get the bounding rect of the hovered node
-    dragTargetObject = hoveredNode.node;
+    dragTargetNode = hoveredNode.node;
     hoveredNodeBoundingRect = hoveredNode.node.getBoundingClientRect();
 
     // Initialize the position and size of the dragging line
@@ -892,7 +1006,7 @@ const refreshDraggingConstraint = (constrained) => {
         return;
     }
 
-    if (dragObjectMode !== 'free') {
+    if (dragPositionMode !== 'free') {
         return;
     }
 
@@ -901,111 +1015,163 @@ const refreshDraggingConstraint = (constrained) => {
         return;
     }
 
-    // Create the dragging constraint if not exists
-    // or remove it if exists but not needed
-    if (constrained) {
-        if (! draggingConstraint) {
-            draggingConstraint = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            draggingConstraint.classList.add('dragging-constraint');
-            draggingConstraint.setAttribute('data-uw-ignore', '');
-            // create a crosshair indicating the start position
-            const startCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            startCrosshair.classList.add('start-crosshair');
-            startCrosshair.setAttribute('cx', currentTranslateX + dragStartBoundingRect.x * currentScale + dragStartBoundingRect.width * currentScale / 2);
-            startCrosshair.setAttribute('cy', currentTranslateY + dragStartBoundingRect.y * currentScale + dragStartBoundingRect.height * currentScale / 2);
-            startCrosshair.setAttribute('r', 4);
-            startCrosshair.setAttribute('fill', 'var(--color-yellow)');
-            draggingConstraint.appendChild(startCrosshair);
-            // create another crosshair indicating the end position
-            const endCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            endCrosshair.classList.add('end-crosshair');
-            endCrosshair.setAttribute('cx', currentTranslateX + selectedNodeBoundingRect.x * currentScale + selectedNodeBoundingRect.width * currentScale / 2);
-            endCrosshair.setAttribute('cy', currentTranslateY + selectedNodeBoundingRect.y * currentScale + selectedNodeBoundingRect.height * currentScale / 2);
-            endCrosshair.setAttribute('r', 4);
-            endCrosshair.setAttribute('fill', 'var(--color-yellow)');
-            draggingConstraint.appendChild(endCrosshair);
-            // create a line connecting the two crosshairs
-            const connectingLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            connectingLine.classList.add('connecting-line');
-            connectingLine.setAttribute('x1', startCrosshair.getAttribute('cx'));
-            connectingLine.setAttribute('y1', startCrosshair.getAttribute('cy'));
-            connectingLine.setAttribute('x2', endCrosshair.getAttribute('cx'));
-            connectingLine.setAttribute('y2', endCrosshair.getAttribute('cy'));
-            connectingLine.setAttribute('stroke', 'var(--color-yellow)');
-            connectingLine.setAttribute('shape-rendering', 'crispEdges');
-            draggingConstraint.appendChild(connectingLine);
-            canvasOverlay.appendChild(draggingConstraint);
-        } else {
-            const startCrosshair = draggingConstraint.querySelector('.start-crosshair');
-            const endCrosshair = draggingConstraint.querySelector('.end-crosshair');
-            const connectingLine = draggingConstraint.querySelector('.connecting-line');
-            startCrosshair.setAttribute('cx', currentTranslateX + dragStartBoundingRect.x * currentScale + dragStartBoundingRect.width * currentScale / 2);
-            startCrosshair.setAttribute('cy', currentTranslateY + dragStartBoundingRect.y * currentScale + dragStartBoundingRect.height * currentScale / 2);
-            endCrosshair.setAttribute('cx', currentTranslateX + selectedNodeBoundingRect.x * currentScale + selectedNodeBoundingRect.width * currentScale / 2);
-            endCrosshair.setAttribute('cy', currentTranslateY + selectedNodeBoundingRect.y * currentScale + selectedNodeBoundingRect.height * currentScale / 2);
-            connectingLine.setAttribute('x1', startCrosshair.getAttribute('cx'));
-            connectingLine.setAttribute('y1', startCrosshair.getAttribute('cy'));
-            connectingLine.setAttribute('x2', endCrosshair.getAttribute('cx'));
-            connectingLine.setAttribute('y2', endCrosshair.getAttribute('cy'));
-        }
-        draggingConstraint.classList.remove('hidden');
-    } else {
+    if (! constrained) {
         draggingConstraint?.remove();
         draggingConstraint = null;
+        return;
     }
+
+    // Create the dragging constraint if not exists
+    if (! draggingConstraint) {
+        draggingConstraint = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        draggingConstraint.classList.add('dragging-constraint', 'hidden');
+        draggingConstraint.setAttribute('data-uw-ignore', '');
+
+        // Crosshair indicating the start position
+        const startCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        startCrosshair.classList.add('start-crosshair');
+        startCrosshair.setAttribute('r', 4);
+        startCrosshair.setAttribute('fill', 'var(--color-blue)');
+        draggingConstraint.appendChild(startCrosshair);
+
+        // Crosshair indicating the end position
+        const endCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        endCrosshair.classList.add('end-crosshair');
+        endCrosshair.setAttribute('r', 4);
+        endCrosshair.setAttribute('fill', 'var(--color-blue)');
+        draggingConstraint.appendChild(endCrosshair);
+
+        // Line connecting the two crosshairs
+        const connectingLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        connectingLine.classList.add('connecting-line');
+        connectingLine.setAttribute('stroke', 'var(--color-blue)');
+        connectingLine.setAttribute('stroke-width', '2');
+        connectingLine.setAttribute('shape-rendering', 'crispEdges');
+        draggingConstraint.appendChild(connectingLine);
+        canvasOverlay.appendChild(draggingConstraint);
+    }
+
+    // Update the crosshair which indicates the start position
+    const startCrosshair = draggingConstraint.querySelector('.start-crosshair');
+    startCrosshair.setAttribute('cx', currentTranslateX + (dragStartBoundingRect.x + dragStartBoundingRect.width / 2) * currentScale);
+    startCrosshair.setAttribute('cy', currentTranslateY + (dragStartBoundingRect.y + dragStartBoundingRect.height / 2) * currentScale);
+
+    // Update the crosshair which indicates the end position
+    const endCrosshair = draggingConstraint.querySelector('.end-crosshair');
+    endCrosshair.setAttribute('cx', currentTranslateX + (selectedNodeBoundingRect.x + selectedNodeBoundingRect.width / 2) * currentScale);
+    endCrosshair.setAttribute('cy', currentTranslateY + (selectedNodeBoundingRect.y + selectedNodeBoundingRect.height / 2) * currentScale);
+
+    // Update the line connecting the two crosshairs
+    const connectingLine = draggingConstraint.querySelector('.connecting-line');
+    connectingLine.setAttribute('x1', startCrosshair.getAttribute('cx'));
+    connectingLine.setAttribute('y1', startCrosshair.getAttribute('cy'));
+    connectingLine.setAttribute('x2', endCrosshair.getAttribute('cx'));
+    connectingLine.setAttribute('y2', endCrosshair.getAttribute('cy'));
+
+    // Show the dragging constraint
+    draggingConstraint.classList.remove('hidden');
 }
 
-const refreshSnappingBox = (elementEdge, snappingPoint) => {
+const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
     // Create a snapping box if not exists
     if (! snappingBox) {
         snappingBox = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         snappingBox.classList.add('snapping-box');
 
-        // Vertical line
-        const verticalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        verticalLine.classList.add('vertical-line');
-        verticalLine.setAttribute('y1', 0);
-        verticalLine.setAttribute('y2', canvasOverlay.clientHeight);
-        verticalLine.setAttribute('stroke', 'var(--color-green-600)');
-        verticalLine.setAttribute('stroke-width', '1');
-        verticalLine.setAttribute('stroke-dasharray', '3');
-        verticalLine.setAttribute('shape-rendering', 'crispEdges');
+        // Vertical lines
+        for (let index = 0; index < 3; index++) {
+            const verticalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            verticalLine.classList.add('vertical-line');
+            verticalLine.setAttribute('y1', 0);
+            verticalLine.setAttribute('y2', canvasOverlay.clientHeight);
+            verticalLine.setAttribute('stroke', 'var(--color-blue)');
+            verticalLine.setAttribute('stroke-width', '2');
+            verticalLine.setAttribute('shape-rendering', 'crispEdges');
+            verticalLine.classList.add('hidden');
+            snappingBox.appendChild(verticalLine);
+        }
 
-        // Horizontal line
-        const horizontalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        horizontalLine.classList.add('horizontal-line');
-        horizontalLine.setAttribute('x1', 0);
-        horizontalLine.setAttribute('x2', canvasOverlay.clientWidth);
-        horizontalLine.setAttribute('stroke', 'var(--color-red-600)');
-        horizontalLine.setAttribute('stroke-width', '1');
-        horizontalLine.setAttribute('stroke-dasharray', '3');
-        horizontalLine.setAttribute('shape-rendering', 'crispEdges');
-
-        snappingBox.appendChild(verticalLine);
-        snappingBox.appendChild(horizontalLine);
-        canvasOverlay.appendChild(snappingBox);
+        // Horizontal lines
+        for (let index = 0; index < 3; index++) {
+            const horizontalLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            horizontalLine.classList.add('horizontal-line');
+            horizontalLine.setAttribute('x1', 0);
+            horizontalLine.setAttribute('x2', canvasOverlay.clientWidth);
+            horizontalLine.setAttribute('stroke', 'var(--color-blue)');
+            horizontalLine.setAttribute('stroke-width', '2');
+            horizontalLine.setAttribute('shape-rendering', 'crispEdges');
+            horizontalLine.classList.add('hidden');
+            snappingBox.appendChild(horizontalLine);
+        }
     }
 
-    // Update line positions based on corner
-    const vLine = snappingBox.querySelector('.vertical-line');
-    const hLine = snappingBox.querySelector('.horizontal-line');
+    // Hide the snapping box
+    snappingBox.remove();
 
-    let vLineOffsetX = snappingPoint.x + currentTranslateX;
-    if (elementEdge.label.endsWith('left')) {
-        vLineOffsetX += 1;
+    if (elementCorners[0].x === null && elementCorners[0].y === null) {
+        return;
     }
-    vLine.setAttribute('x1', vLineOffsetX);
-    vLine.setAttribute('x2', vLineOffsetX);
 
-    let vLineOffsetY = snappingPoint.y + currentTranslateY;
-    if (elementEdge.label.endsWith('top')) {
-        vLineOffsetY += 1;
+    // Update line positions
+    const verticalLines = snappingBox.querySelectorAll('.vertical-line');
+    const horizontalLines = snappingBox.querySelectorAll('.horizontal-line');
+
+    if (elementCorners[0].x) {
+        const corners = elementCorners.filter(corner => corner.x);
+        verticalLines.forEach((line, index) => {
+            if (typeof corners[index] === 'undefined') {
+                line.classList.add('hidden');
+                return;
+            }
+            let offset = offsetX * currentScale + currentTranslateX;
+            if (corners[index].label.endsWith('left')) {
+                offset += 1;
+            }
+            if (corners[index].label.endsWith('center')) {
+                offset += selectedNodeBoundingRect.width / 2 * currentScale;
+            }
+            if (corners[index].label.endsWith('right')) {
+                offset += selectedNodeBoundingRect.width * currentScale;
+            }
+            line.setAttribute('x1', offset);
+            line.setAttribute('x2', offset);
+            line.classList.remove('hidden');
+        });
+    } else {
+        verticalLines.forEach(line => {
+            line.classList.add('hidden');
+        });
     }
-    hLine.setAttribute('y1', vLineOffsetY);
-    hLine.setAttribute('y2', vLineOffsetY);
+
+    if (elementCorners[0].y) {
+        const corners = elementCorners.filter(corner => corner.y);
+        horizontalLines.forEach((line, index) => {
+            if (typeof corners[index] === 'undefined') {
+                line.classList.add('hidden');
+                return;
+            }
+            let offset = offsetY * currentScale + currentTranslateY;
+            if (corners[index].label.startsWith('top')) {
+                offset += 1;
+            }
+            if (corners[index].label.startsWith('middle')) {
+                offset += selectedNodeBoundingRect.height / 2 * currentScale;
+            }
+            if (corners[index].label.startsWith('bottom')) {
+                offset += selectedNodeBoundingRect.height * currentScale;
+            }
+            line.setAttribute('y1', offset);
+            line.setAttribute('y2', offset);
+            line.classList.remove('hidden');
+        });
+    } else {
+        horizontalLines.forEach(line => {
+            line.classList.add('hidden');
+        });
+    }
 
     // Show the snapping box
-    snappingBox.classList.remove('hidden');
+    canvasOverlay.appendChild(snappingBox);
 }
 
 const onHoveredBoxMouseUp = (event) => {
@@ -1092,10 +1258,10 @@ const onHoveredBoxMouseDown = (event) => {
             return;
         }
 
-        // Specify the drag object mode
+        // Specify the drag position mode
         const _metadata = metadata[hoveredNode.node.dataset.uwId];
         const position = _metadata.properties['position']?.value || 'static';
-        dragObjectMode = ['absolute', 'fixed', 'sticky'].includes(position) ? 'free' : 'layout';
+        dragPositionMode = ['absolute', 'fixed', 'sticky'].includes(position) ? 'free' : 'layout';
 
         // Flag to start dragging
         dragStartPoint = { x: event.clientX, y: event.clientY };
@@ -2283,126 +2449,357 @@ const updateVisibleInViewportElements = (entries) => {
     });
 }
 
-const moveSelectedNode = (clientX, clientY, constrained = false) => {
-    const previousX = dragStartPoint.x;
-    const previousY = dragStartPoint.y;
-    const upcomingX = clientX;
-    const upcomingY = clientY;
-
+const moveSelectedNode = (clientX, clientY) => {
     // Get the metadata of the selected node
     const _metadata = metadata[selectedNode.node.dataset.uwId];
     const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
 
     // Apply the transformation to the element
-    matrix.e = dragStartMatrix.e + upcomingX - previousX;
-    matrix.f = dragStartMatrix.f + upcomingY - previousY;
+    matrix.e = dragStartMatrix.e + clientX - dragStartPoint.x;
+    matrix.f = dragStartMatrix.f + clientY - dragStartPoint.y;
 
     // Reposition if the element is constrained
-    let constraintAxis = null;
-    if (constrained) {
-        const deltaX = upcomingX - previousX;
-        const deltaY = upcomingY - previousY;
+    let constraintDirection = null;
+    if (getShiftKeyState()) {
+        const deltaX = clientX - dragStartPoint.x;
+        const deltaY = clientY - dragStartPoint.y;
         const angle = Math.atan2(Math.abs(deltaY), Math.abs(deltaX)) * (180 / Math.PI);
-        const threshold = Math.min(50, 40 + Math.max(Math.abs(deltaX), Math.abs(deltaY)) / 10);
-        if (angle >= threshold - 10 && angle <= threshold + 10) {
-            const shift = Math.max(Math.abs(upcomingX - previousX), Math.abs(upcomingY - previousY));
-            matrix.e = shift * Math.sign(upcomingX - previousX) + dragStartMatrix.e;
-            matrix.f = shift * Math.sign(upcomingY - previousY) + dragStartMatrix.f;
-            constraintAxis = 'diagonal';
+        if (angle >= 45 - 10 && angle <= 45 + 10) {
+            const shift = Math.max(Math.abs(clientX - dragStartPoint.x), Math.abs(clientY - dragStartPoint.y));
+            matrix.e = shift * Math.sign(clientX - dragStartPoint.x) + dragStartMatrix.e;
+            matrix.f = shift * Math.sign(clientY - dragStartPoint.y) + dragStartMatrix.f;
+            constraintDirection = 'diagonal';
         } else {
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 matrix.f = dragStartMatrix.f;
-                constraintAxis = 'horizontal';
+                constraintDirection = 'horizontal';
             } else {
                 matrix.e = dragStartMatrix.e;
-                constraintAxis = 'vertical';
+                constraintDirection = 'vertical';
             }
         }
     }
 
     // Reposition if there is a snapping point nearby
-    if (isSnapping) {
-        // Find the nearest corner of the selected node bounding rect relative to the pointer
-        const getClosestPoint = (value, point1, point2) => Math.abs(point1 - value) < Math.abs(point2 - value) ? point1 : point2;
-        const snappingOffsetX = (snapLastMatrix?.e || matrix.e) - matrix.e;
-        const snappingOffsetY = (snapLastMatrix?.f || matrix.f) - matrix.f;
-        const nearestElementEdge = {
-            x: getClosestPoint(upcomingX, selectedNodeBoundingRect.left - snappingOffsetX, selectedNodeBoundingRect.right - snappingOffsetX),
-            y: getClosestPoint(upcomingY, selectedNodeBoundingRect.top - snappingOffsetY, selectedNodeBoundingRect.bottom - snappingOffsetY),
-            label: null,
-        }
-        nearestElementEdge.label =
-            (nearestElementEdge.y === selectedNodeBoundingRect.top - snappingOffsetY ? 'top' : 'bottom') + '-' +
-            (nearestElementEdge.x === selectedNodeBoundingRect.left - snappingOffsetX ? 'left' : 'right');
+    if (getSnapCheckState()) {
+        let nearestElementCorners = [ { x: null, y: null, label: '' } ];
+        let nearestSnappingPoint = { x: null, y: null };
+        let nearestPointDistance = { x: null, y: null };
+        const snappingThreshold = snapFactor / currentScale;
+        const elementCorners = [
+            {
+                label: 'top-left',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+            },
+            {
+                label: 'top-center',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+            },
+            {
+                label: 'top-right',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+            },
+            {
+                label: 'middle-left',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+            },
+            {
+                label: 'middle-center',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+            },
+            {
+                label: 'middle-right',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+            },
+            {
+                label: 'bottom-left',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+            },
+            {
+                label: 'bottom-center',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+            },
+            {
+                label: 'bottom-right',
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+            },
+        ]
 
-        // Find the nearest corner of the selected edge bounding rect relative to the pointer
-        let nearestSnappingPoint = { label: null, x: null, y: null, rect: null };
-        visibleInViewportElements.forEach(item => {
-            // Skip if the item is the selected node
-            if (item.node === selectedNode.node) {
-                return;
-            }
-
-            // Check snapping points nearby
-            const snappingThreshold = 10 / currentScale;
-            [
-                { x: item.rect.left, y: item.rect.top, corner: 'top-left' },
-                { x: item.rect.right, y: item.rect.top, corner: 'top-right' },
-                { x: item.rect.left, y: item.rect.bottom, corner: 'bottom-left' },
-                { x: item.rect.right, y: item.rect.bottom, corner: 'bottom-right' },
-            ].forEach(point => {
-                const distanceX = Math.abs(point.x - nearestElementEdge.x);
-                const distanceY = Math.abs(point.y - nearestElementEdge.y);
-                if (
-                    distanceX <= snappingThreshold && distanceY <= snappingThreshold &&
-                    (
-                        (nearestSnappingPoint.x === null && nearestSnappingPoint.y === null) ||
-                        (
-                            distanceX < Math.abs(nearestSnappingPoint.x - nearestElementEdge.x) &&
-                            distanceY < Math.abs(nearestSnappingPoint.y - nearestElementEdge.y)
-                        )
-                    ) &&
-                    (
-                        ! constrained ||
-                        (constraintAxis === 'horizontal' && distanceY === 0) ||
-                        (constraintAxis === 'vertical' && distanceX === 0) ||
-                        (constraintAxis === 'diagonal' && distanceX === distanceY)
-                    )
-                ) {
-                    nearestSnappingPoint = { ...point, rect: item.rect };
+        // Find the nearest corner snapping point of visible elements relative to the selected node
+        elementCorners.forEach(elementCorner => {
+            visibleInViewportElements.forEach(viewportElement => {
+                // Skip if the item is the selected node
+                if (viewportElement.node === selectedNode.node) {
+                    return;
                 }
+
+                // Skip if the item is not an absolute or fixed positioned element,
+                // and is not the parent element of the selected node
+                const __metadata = metadata[viewportElement.node.dataset.uwId];
+                if (
+                    ! ['absolute', 'fixed'].includes(__metadata.properties.position?.value) &&
+                    viewportElement.node !== selectedNode.parent
+                ) {
+                    return;
+                }
+
+                // Check for snapping corner points nearby
+                [
+                    {
+                        label: 'top-left',
+                        x: viewportElement.rect.left,
+                        y: viewportElement.rect.top,
+                    },
+                    {
+                        label: 'top-center',
+                        x: viewportElement.rect.left + viewportElement.rect.width / 2,
+                        y: viewportElement.rect.top,
+                    },
+                    {
+                        label: 'top-right',
+                        x: viewportElement.rect.right,
+                        y: viewportElement.rect.top,
+                    },
+                    {
+                        label: 'middle-left',
+                        x: viewportElement.rect.left,
+                        y: viewportElement.rect.top + viewportElement.rect.height / 2,
+                    },
+                    {
+                        label: 'middle-center',
+                        x: viewportElement.rect.left + viewportElement.rect.width / 2,
+                        y: viewportElement.rect.top + viewportElement.rect.height / 2,
+                    },
+                    {
+                        label: 'middle-right',
+                        x: viewportElement.rect.right,
+                        y: viewportElement.rect.top + viewportElement.rect.height / 2,
+                    },
+                    {
+                        label: 'bottom-left',
+                        x: viewportElement.rect.left,
+                        y: viewportElement.rect.bottom,
+                    },
+                    {
+                        label: 'bottom-center',
+                        x: viewportElement.rect.left + viewportElement.rect.width / 2,
+                        y: viewportElement.rect.bottom,
+                    },
+                    {
+                        label: 'bottom-right',
+                        x: viewportElement.rect.right,
+                        y: viewportElement.rect.bottom,
+                    },
+                ].forEach(snappingPoint => {
+                    const distance = {
+                        x: Math.abs(snappingPoint.x - elementCorner.x),
+                        y: Math.abs(snappingPoint.y - elementCorner.y),
+                    };
+                    if (
+                        ! ['vertical', 'diagonal'].includes(constraintDirection) &&
+                        distance.x <= snappingThreshold &&
+                        (
+                            nearestPointDistance.x === null ||
+                            distance.x < nearestPointDistance.x
+                        )
+                    ) {
+                        nearestElementCorners[0].x = elementCorner.x;
+                        nearestElementCorners[0].label =
+                            (nearestElementCorners[0].label.split('-')?.[0] || '') +
+                            '-' + elementCorner.label.split('-')[1];
+                        nearestElementCorners = nearestElementCorners.filter(corner =>
+                            corner.x === elementCorner.x || corner.x === null
+                        );
+                        nearestSnappingPoint.x = snappingPoint.x;
+                        nearestPointDistance.x = distance.x;
+                    }
+                    if (
+                        ! ['horizontal', 'diagonal'].includes(constraintDirection) &&
+                        distance.y <= snappingThreshold &&
+                        (
+                            nearestPointDistance.y === null ||
+                            distance.y < nearestPointDistance.y
+                        )
+                    ) {
+                        nearestElementCorners[0].y = elementCorner.y;
+                        nearestElementCorners[0].label =
+                            elementCorner.label.split('-')[0] +
+                            '-' + (nearestElementCorners[0].label.split('-')?.[1] || '');
+                        nearestElementCorners = nearestElementCorners.filter(corner =>
+                            corner.y === elementCorner.y || corner.y === null
+                        );
+                        nearestSnappingPoint.y = snappingPoint.y;
+                        nearestPointDistance.y = distance.y;
+                    }
+                    // TODO: implement diagonal snapping
+                    // if (
+                    //     constraintDirection === 'diagonal'
+                    // ) {
+                    //     nearestElementCorners[0].x = elementCorner.x;
+                    //     nearestElementCorners[0].y = elementCorner.y;
+                    //     nearestElementCorners[0].label = elementCorner.label;
+                    //     nearestElementCorners = nearestElementCorners.filter(corner =>
+                    //         corner.x === elementCorner.x && corner.y === elementCorner.y
+                    //     );
+                    //     nearestSnappingPoint.x = snappingPoint.x;
+                    //     nearestSnappingPoint.y = snappingPoint.y;
+                    //     nearestPointDistance.x = distance.x;
+                    //     nearestPointDistance.y = distance.y;
+                    // }
+                    if (distance.x === nearestPointDistance.x) {
+                        const hasMatchingX = nearestElementCorners.some(corner => corner.x === elementCorner.x);
+                        if (! hasMatchingX) {
+                            nearestElementCorners.push({ x: elementCorner.x, label: elementCorner.label.split('-')[1] });
+                        }
+                    }
+                    if (distance.y === nearestPointDistance.y) {
+                        const hasMatchingY = nearestElementCorners.some(corner => corner.y === elementCorner.y);
+                        if (! hasMatchingY) {
+                            nearestElementCorners.push({ y: elementCorner.y, label: elementCorner.label.split('-')[0] });
+                        }
+                    }
+                });
             });
+
+            // Find the nearest grid intersection relative to the selected node
+            if (getGridCheckState()) {
+                const intersections = [
+                    {
+                        x: elementCorner.x - (elementCorner.x % gridAppliedSpacing),
+                        y: elementCorner.y - (elementCorner.y % gridAppliedSpacing),
+                    },
+                    {
+                        x: elementCorner.x - (elementCorner.x % gridAppliedSpacing) + gridAppliedSpacing,
+                        y: elementCorner.y - (elementCorner.y % gridAppliedSpacing),
+                    },
+                    {
+                        x: elementCorner.x - (elementCorner.x % gridAppliedSpacing),
+                        y: elementCorner.y - (elementCorner.y % gridAppliedSpacing) + gridAppliedSpacing,
+                    },
+                    {
+                        x: elementCorner.x - (elementCorner.x % gridAppliedSpacing) + gridAppliedSpacing,
+                        y: elementCorner.y - (elementCorner.y % gridAppliedSpacing) + gridAppliedSpacing,
+                    },
+                ];
+                intersections.filter(intersection =>
+                    intersection.x > 0 &&
+                    intersection.y > 0 &&
+                    intersection.x < mainFrameBoundingRect.width &&
+                    intersection.y < mainFrameBoundingRect.height
+                );
+                intersections.forEach(intersection => {
+                    const distance = {
+                        x: Math.abs(intersection.x - elementCorner.x),
+                        y: Math.abs(intersection.y - elementCorner.y),
+                    };
+                    if (
+                        ! ['vertical', 'diagonal'].includes(constraintDirection) &&
+                        distance.x <= snappingThreshold &&
+                        (
+                            nearestPointDistance.x === null ||
+                            distance.x < nearestPointDistance.x
+                        )
+                    ) {
+                        nearestElementCorners[0].x = elementCorner.x;
+                        nearestElementCorners[0].label =
+                            (nearestElementCorners[0].label.split('-')?.[0] || '') +
+                            '-' + elementCorner.label.split('-')[1];
+                        nearestElementCorners = nearestElementCorners.filter(corner =>
+                            corner.x === elementCorner.x || corner.x === null
+                        );
+                        nearestSnappingPoint.x = intersection.x;
+                        nearestPointDistance.x = distance.x;
+                    }
+                    if (
+                        ! ['horizontal', 'diagonal'].includes(constraintDirection) &&
+                        distance.y <= snappingThreshold &&
+                        (
+                            nearestPointDistance.y === null ||
+                            distance.y < nearestPointDistance.y
+                        )
+                    ) {
+                        nearestElementCorners[0].y = elementCorner.y;
+                        nearestElementCorners[0].label =
+                            elementCorner.label.split('-')[0] +
+                            '-' + (nearestElementCorners[0].label.split('-')?.[1] || '');
+                        nearestElementCorners = nearestElementCorners.filter(corner =>
+                            corner.y === elementCorner.y || corner.y === null
+                        );
+                        nearestSnappingPoint.y = intersection.y;
+                        nearestPointDistance.y = distance.y;
+                    }
+                    if (distance.x === nearestPointDistance.x) {
+                        const hasMatchingX = nearestElementCorners.some(corner => corner.x === elementCorner.x);
+                        if (! hasMatchingX) {
+                            nearestElementCorners.push({ x: elementCorner.x, label: elementCorner.label.split('-')[1] });
+                        }
+                    }
+                    if (distance.y === nearestPointDistance.y) {
+                        const hasMatchingY = nearestElementCorners.some(corner => corner.y === elementCorner.y);
+                        if (! hasMatchingY) {
+                            nearestElementCorners.push({ y: elementCorner.y, label: elementCorner.label.split('-')[0] });
+                        }
+                    }
+                });
+            }
         });
 
-        // Apply snapping if found nearby points and not already at those points
+        // Apply snapping if found nearby points
+        let offsetX = 0;
+        let offsetY = 0;
         if (
-            nearestSnappingPoint.x !== null &&
+            nearestSnappingPoint.x !== null ||
             nearestSnappingPoint.y !== null
         ) {
-            matrix.e = nearestSnappingPoint.x;
-            matrix.f = nearestSnappingPoint.y;
+            if (nearestSnappingPoint.x !== null) {
+                matrix.e = nearestSnappingPoint.x;
+            }
+            if (nearestSnappingPoint.y !== null) {
+                matrix.f = nearestSnappingPoint.y;
+            }
 
             // Reposition based on the nearest corner of the selected node bounding rect
-            if (nearestElementEdge.label.endsWith('right')) {
-                matrix.e -= selectedNodeBoundingRect.width;
+            if (nearestSnappingPoint.x !== null) {
+                if (nearestElementCorners[0].label.endsWith('center')) {
+                    matrix.e -= dragStartBoundingRect.width / 2;
+                }
+                if (nearestElementCorners[0].label.endsWith('right')) {
+                    matrix.e -= dragStartBoundingRect.width;
+                }
             }
-            if (nearestElementEdge.label.startsWith('bottom')) {
-                matrix.f -= selectedNodeBoundingRect.height;
+            if (nearestSnappingPoint.y !== null) {
+                if (nearestElementCorners[0].label.startsWith('middle')) {
+                    matrix.f -= dragStartBoundingRect.height / 2;
+                }
+                if (nearestElementCorners[0].label.startsWith('bottom')) {
+                    matrix.f -= dragStartBoundingRect.height;
+                }
             }
 
             // Reposition if the element has offset properties
-            matrix.e -= parseFloat(_metadata.properties['left']?.value || 0);
-            matrix.f -= parseFloat(_metadata.properties['top']?.value || 0);
-
-            // Save the current transformation matrix
-            snapLastMatrix = new DOMMatrix(matrix.toString());
-
-            // Refresh the snapping box
-            refreshSnappingBox(nearestElementEdge, nearestSnappingPoint);
-        } else {
-            snapLastMatrix = null;
-            snappingBox?.classList.add('hidden');
+            if (nearestSnappingPoint.x !== null) {
+                offsetX += parseFloat(_metadata.properties['left']?.value || 0);
+                offsetX += parseFloat(_metadata.properties['margin-left']?.value || 0);
+                matrix.e -= offsetX;
+            }
+            if (nearestSnappingPoint.y !== null) {
+                offsetY += parseFloat(_metadata.properties['top']?.value || 0);
+                offsetY += parseFloat(_metadata.properties['margin-top']?.value || 0);
+                matrix.f -= offsetY;
+            }
         }
+
+        // Refresh the snapping box
+        refreshSnappingBox(nearestElementCorners, matrix.e + offsetX, matrix.f + offsetY);
     }
 
     // Apply the transformation to the element
@@ -2416,7 +2813,7 @@ const moveSelectedNode = (clientX, clientY, constrained = false) => {
     updateSelectedNodeBoundingRect();
     refreshRulers();
     refreshSelectedBox();
-    refreshDraggingConstraint(constrained);
+    refreshDraggingConstraint(constraintDirection);
 
     // Update the bounding rect of the selected node in the cached visible elements
     const visibleElementIndex = visibleInViewportElements.findIndex(item => item.node === selectedNode.node);
@@ -2445,6 +2842,7 @@ const refreshPanel = (event = {}) => {
     //
     refreshCanvas();
     refreshRulers();
+    refreshGrid();
 
     if (! isPanelReady) {
         isPanelReady = true;
@@ -2464,11 +2862,10 @@ const interruptAction = () => {
         draggingConstraint = null;
 
         // Remove the snapping box if exists
-        snapLastMatrix = null;
         snappingBox?.remove();
         snappingBox = null;
 
-        if (dragObjectMode === 'free') {
+        if (dragPositionMode === 'free') {
             // Reset the transformation of the selected node
             styleElement(selectedNode.node, 'transform', dragStartMatrix.toString(), true);
 
@@ -2482,7 +2879,7 @@ const interruptAction = () => {
             dragStartBoundingRect = null;
         }
 
-        if (dragObjectMode === 'layout') {
+        if (dragPositionMode === 'layout') {
             // Remove the dragged box
             draggingBox.remove();
             draggingBox = null;
@@ -2492,7 +2889,7 @@ const interruptAction = () => {
             draggingLine = null;
 
             // Reset the dragging target and position
-            dragTargetObject = null;
+            dragTargetNode = null;
             dragTargetPosition = null;
         }
 
@@ -2516,7 +2913,7 @@ const onCanvasOverlayMouseDown = (event) => {
     }
 
     if (
-        (isSpacebarBeingPressed && event.which === 1) || // left mouse button
+        (getSpaceKeyState() && event.which === 1) || // left mouse button
         event.which === 2 // middle mouse button
     ) {
         isPanning = true;
@@ -2560,14 +2957,13 @@ const onCanvasOverlayMouseUp = (event) => {
         draggingConstraint = null;
 
         // Remove the snapping box if exists
-        snapLastMatrix = null;
         snappingBox?.remove();
         snappingBox = null;
 
         //
         console.log(`[Editor] Move element: @${selectedNode.node.dataset.uwId}${event.shiftKey ? ' (constrained)' : ''}`);
 
-        if (dragObjectMode === 'free') {
+        if (dragPositionMode === 'free') {
             // Request to save the action
             const previousState = {
                 style: { transform: dragStartMatrix.toString() },
@@ -2590,8 +2986,8 @@ const onCanvasOverlayMouseUp = (event) => {
             dragStartBoundingRect = null;
         }
 
-        if (dragObjectMode === 'layout') {
-            if (dragTargetObject) {
+        if (dragPositionMode === 'layout') {
+            if (dragTargetNode) {
                 // Save the current action state
                 const previousState = {
                     container: selectedNode.parent,
@@ -2599,7 +2995,7 @@ const onCanvasOverlayMouseUp = (event) => {
                 };
 
                 // Move the selected element to the target position
-                dragTargetObject.insertAdjacentElement(dragTargetPosition, selectedNode.node);
+                dragTargetNode.insertAdjacentElement(dragTargetPosition, selectedNode.node);
 
                 // Update the selected node
                 setSelectedNode(
@@ -2633,7 +3029,7 @@ const onCanvasOverlayMouseUp = (event) => {
             draggingLine = null;
 
             // Reset the dragging target and position
-            dragTargetObject = null;
+            dragTargetNode = null;
             dragTargetPosition = null;
         }
 
@@ -2649,7 +3045,10 @@ const onCanvasOverlayMouseUp = (event) => {
         hoveredNodeBoundingRect = selectedNodeBoundingRect;
         refreshHoveredBox();
 
-        refreshRulers();
+        setTimeout(() => {
+            refreshRulers();
+            refreshGrid();
+        }, 0);
 
         return;
     }
@@ -2681,7 +3080,7 @@ const onCanvasOverlayMouseMove = (event) => {
         return;
     }
 
-    if (isSpacebarBeingPressed) {
+    if (getSpaceKeyState()) {
         return;
     }
 
@@ -2710,7 +3109,7 @@ const onCanvasOverlayMouseMove = (event) => {
             }
             setSelectedNode(hoveredNode.node, hoveredNode.position, hoveredNode.parent);
 
-            if (dragObjectMode === 'free') {
+            if (dragPositionMode === 'free') {
                 // Re-calculate the dragging start point
                 dragStartPoint = {
                     x: (dragStartPoint.x - mainFrameBoundingRect.left) / currentScale,
@@ -2724,7 +3123,7 @@ const onCanvasOverlayMouseMove = (event) => {
                 dragStartMatrix = new DOMMatrix(metadata[selectedNode.node.dataset.uwId].properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
             }
 
-            if (dragObjectMode === 'layout') {
+            if (dragPositionMode === 'layout') {
                 // Create a dragging box element to indicate the element being dragged
                 draggingBox = document.createElement('div');
                 draggingBox.setAttribute('data-uw-ignore', '');
@@ -2778,8 +3177,8 @@ const onCanvasOverlayMouseMove = (event) => {
                         mainFrame.style.willChange = 'unset'; // force repaint
                         setTimeout(() => {
                             mainFrame.style.willChange = 'transform';
-                            if (dragObjectMode === 'free') {
-                                refreshDraggingConstraint(shiftKeyState);
+                            if (dragPositionMode === 'free') {
+                                refreshDraggingConstraint(getShiftKeyState());
                             }
                         }, 250);
                         return;
@@ -2802,16 +3201,19 @@ const onCanvasOverlayMouseMove = (event) => {
                     dragAnimationRequestId = requestAnimationFrame(continueDragging);
                     const clientX = (currentPointerX - mainFrameBoundingRect.left) / currentScale;
                     const clientY = (currentPointerY - mainFrameBoundingRect.top) / currentScale;
-                    if (dragObjectMode === 'free') {
-                        moveSelectedNode(clientX, clientY, event.shiftKey);
+                    if (dragPositionMode === 'free') {
+                        moveSelectedNode(clientX, clientY);
                     }
-                    if (dragObjectMode === 'layout') {
+                    if (dragPositionMode === 'layout') {
                         refreshDraggingBox();
                         findHoveredElements(event, true);
                         hoveredNodeBoundingRect = hoveredNode.node?.getBoundingClientRect();
                         refreshDraggingLine();
                         refreshHoveredBox();
                     }
+                    setTimeout(() => {
+                        refreshGrid();
+                    }, 0);
                 };
                 dragAnimationRequestId = requestAnimationFrame(continueDragging);
                 return;
@@ -2820,10 +3222,10 @@ const onCanvasOverlayMouseMove = (event) => {
 
         const clientX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
         const clientY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
-        if (dragObjectMode === 'free') {
-            moveSelectedNode(clientX, clientY, event.shiftKey);
+        if (dragPositionMode === 'free') {
+            moveSelectedNode(clientX, clientY);
         }
-        if (dragObjectMode === 'layout') {
+        if (dragPositionMode === 'layout') {
             findHoveredElements(event, true);
             hoveredNodeBoundingRect = hoveredNode.node?.getBoundingClientRect();
             refreshDraggingLine();
@@ -2843,9 +3245,7 @@ const onCanvasOverlayMouseMove = (event) => {
 }
 
 const onCanvasOverlayMouseEnter = () => {
-    // Register the key event listener on the document
-    document.addEventListener('keydown', onDocumentKeyDown);
-    document.addEventListener('keyup', onDocumentKeyUp);
+    isPanelInFocus = true;
 }
 
 const onCanvasOverlayMouseLeave = () => {
@@ -2860,9 +3260,7 @@ const onCanvasOverlayMouseLeave = () => {
     hoveredNodeBoundingRect = null;
     refreshHoveredBox();
 
-    // Register the key event listener on the document
-    document.removeEventListener('keydown', onDocumentKeyDown);
-    document.removeEventListener('keyup', onDocumentKeyUp);
+    isPanelInFocus = false;
 }
 
 const onCanvasOverlayWheel = (event) => {
@@ -2874,6 +3272,8 @@ const onCanvasOverlayWheel = (event) => {
         return;
     }
 
+    // FIXME: the horizontal scrolling is often not working
+    // because the deltaX and deltaY are returning -0
     transformCanvas(event);
 }
 
@@ -2900,42 +3300,25 @@ const onCanvasOverlayContextMenu = (event) => {
     window.dispatchEvent(customEvent);
 }
 
-const onDocumentKeyDown = (event) => {
+const onWindowSpaceKeyPressed = (event) => {
     if (! isPanelReady) {
         return;
     }
 
-    if (event.code === 'Space') {
-        isSpacebarBeingPressed = true;
+    // To prevent from triggering browser's default behavior
+    // after clicking a button by pressing the space key
+    document.activeElement.blur();
 
+    if (event.detail.state) {
         // Clear the hovered element
         setHoveredNode(null);
         hoveredNodeBoundingRect = null;
         refreshHoveredBox();
-
         // Set the cursor style
         canvasOverlay.style.cursor = 'grab';
-
-        event.stopImmediatePropagation();
-
-        return;
-    }
-}
-
-const onDocumentKeyUp = (event) => {
-    if (! isPanelReady) {
-        return;
-    }
-
-    if (event.code === 'Space') {
-        isSpacebarBeingPressed = false;
-
+    } else {
         // Reset the cursor style
         canvasOverlay.style.cursor = 'default';
-
-        event.stopImmediatePropagation();
-
-        return;
     }
 }
 
@@ -2945,7 +3328,7 @@ const onWindowShiftKeyPressed = (event) => {
     }
 
     // Toggle the dragging constraint of positioned elements being dragged
-    if (isDragging && dragObjectMode === 'free') {
+    if (isDragging && dragPositionMode === 'free') {
         // Restore the transformation of the selected node
         const matrix = new DOMMatrix(dragStartMatrix.toString());
         styleElement(selectedNode.node, 'transform', matrix.toString(), true);
@@ -2953,7 +3336,7 @@ const onWindowShiftKeyPressed = (event) => {
         // Reposition the selected node
         const clientX = (currentPointerX - mainFrameBoundingRect.left) / currentScale;
         const clientY = (currentPointerY - mainFrameBoundingRect.top) / currentScale;
-        moveSelectedNode(clientX, clientY, event.detail);
+        moveSelectedNode(clientX, clientY);
     }
 }
 
@@ -2964,7 +3347,7 @@ const onWindowAltKeyPressed = (event) => {
         return;
     }
 
-    if (event.detail) {
+    if (event.detail.state) {
         findHoveredElements({
             clientX: currentPointerX,
             clientY: currentPointerY,
@@ -2977,7 +3360,10 @@ const onWindowResize = () => {
     // To force the selection box to be recalculated
     previousSelectedNode = null;
 
+    canvasContainerBoundingRect = canvasContainer.getBoundingClientRect();
+
     updateRulerSize();
+    updateGridSize();
     refreshPanel();
 }
 
@@ -2996,8 +3382,10 @@ const onWindowResize = () => {
     window.addEventListener('canvas:refresh', refreshPanel);
     window.addEventListener('canvas:zoom', zoomCanvas);
     window.addEventListener('contextmenu:hide', findHoveredElements);
+    window.addEventListener('editor:space', onWindowSpaceKeyPressed);
     window.addEventListener('editor:shift', onWindowShiftKeyPressed);
     window.addEventListener('editor:ctrl', onWindowCtrlKeyPressed);
     window.addEventListener('editor:alt', onWindowAltKeyPressed);
+    window.addEventListener('editor:toggle-grid', refreshGrid);
     window.addEventListener('resize', onWindowResize);
 })()

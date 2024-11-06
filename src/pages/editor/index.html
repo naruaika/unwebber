@@ -129,8 +129,7 @@
             <!--  -->
             <div class="group">
                 <fieldset tabindex="1" class="button">
-                    <!-- TODO: make it unchecked by default -->
-                    <input type="checkbox" id="snapping-toggle-button" checked />
+                    <input type="checkbox" id="snapping-toggle-button" />
                     <label for="snapping-toggle-button">
                         <div class="icon icon-toggle-snapping"></div>
                     </label>
@@ -142,7 +141,12 @@
 
             <!--  -->
             <div class="group">
-                <button class="button" id="grid-toggle-button">Grid</button
+                <fieldset tabindex="1" class="button">
+                    <input type="checkbox" id="grid-toggle-button" />
+                    <label for="grid-toggle-button">
+                        <div class="icon icon-toggle-grid"></div>
+                    </label>
+                </fieldset
                 ><button class="button" id="grid-options-button">
                     <div class="icon icon-chevron-down"></div>
                 </button>
@@ -150,15 +154,12 @@
 
             <!--  -->
             <div class="group">
-                <button class="button" id="gutter-toggle-button">Gutter</button
-                ><button class="button" id="gutter-options-button">
-                    <div class="icon icon-chevron-down"></div>
-                </button>
-            </div>
-
-            <!--  -->
-            <div class="group">
-                <button class="button" id="margin-toggle-button">Margin</button
+                <fieldset tabindex="1" class="button">
+                    <input type="checkbox" id="margin-toggle-button" />
+                    <label for="margin-toggle-button">
+                        <div class="icon icon-toggle-margin"></div>
+                    </label>
+                </fieldset
                 ><button class="button" id="margin-options-button">
                     <div class="icon icon-chevron-down"></div>
                 </button>
@@ -296,6 +297,7 @@
                                     seamless
                                     tabindex="-1"
                                 ></iframe>
+                                <canvas data-uw-ignore class="main-canvas__grid"></canvas>
                                 <div data-uw-ignore class="main-canvas__overlay"></div>
                             </div>
                         </div>

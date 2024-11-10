@@ -28,18 +28,6 @@ export const getAltKeyState = () => _altKeyState;
             return;
         }
 
-        if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
-            if (
-                ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
-                document.activeElement.getAttribute('contenteditable') === 'true'
-            ) {
-                return;
-            }
-            window.dispatchEvent(new CustomEvent('action:undo'));
-            event.preventDefault();
-            return;
-        }
-
         if (
             ((event.ctrlKey || event.metaKey) && event.code === 'KeyY') ||
             ((event.ctrlKey || event.metaKey) && event.shiftKey && event.code === 'KeyZ')
@@ -51,6 +39,18 @@ export const getAltKeyState = () => _altKeyState;
                 return;
             }
             window.dispatchEvent(new CustomEvent('action:redo'));
+            event.preventDefault();
+            return;
+        }
+
+        if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
+            if (
+                ['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase()) ||
+                document.activeElement.getAttribute('contenteditable') === 'true'
+            ) {
+                return;
+            }
+            window.dispatchEvent(new CustomEvent('action:undo'));
             event.preventDefault();
             return;
         }
@@ -112,6 +112,12 @@ export const getAltKeyState = () => _altKeyState;
         }
 
         if (event.code === 'Space') {
+            if (
+                ! ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) &&
+                ! document.activeElement.isContentEditable
+            ) {
+                event.preventDefault();
+            }
             if (_spaceKeyState === true) {
                 return;
             }

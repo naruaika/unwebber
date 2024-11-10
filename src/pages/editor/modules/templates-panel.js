@@ -3,12 +3,15 @@
 import { apiSchema } from "../globals.js";
 import { searchInText } from '../helpers.js';
 
+let panelContentContainer;
+
 const refreshPanel = () => {
+    if (! panelContentContainer) {
+        panelContentContainer = document.querySelector('#templates-panel .content__container');
+    }
+
     //
     console.log('[Editor] Refreshing templates panel...');
-
-    // Get the content container of the templates panel
-    const panelContentContainer = document.querySelector('#templates-panel .content__container');
 
     // Add search input to the templates panel
     const searchInputContainer = document.createElement('div');
@@ -86,7 +89,19 @@ const refreshPanel = () => {
     console.log('[Editor] Refreshing templates panel... [DONE]');
 }
 
-(() => {
+export const initialize = () => {
+    // Create a fragment to hold the panel content
+    const fragment = document.createDocumentFragment();
+    const container = document.createElement('div');
+    container.classList.add('content__container', 'scrollable');
+    const placeholder = document.createElement('span');
+    placeholder.classList.add('placeholder');
+    placeholder.textContent = 'Loading...';
+    container.appendChild(placeholder);
+    fragment.appendChild(container);
+
     // Register the window message event listener
-    window.addEventListener('template:refresh', refreshPanel);
-})()
+    window.addEventListener('templates:refresh', refreshPanel);
+
+    return fragment;
+}

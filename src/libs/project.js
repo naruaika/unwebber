@@ -55,7 +55,7 @@ const create = () => {
 };
 
 const open = (_, workDir) => {
-    const signaturePath = path.join(workDir, 'project.json');
+    const signaturePath = path.join(workDir, '.unwebber', 'signature.json');
 
     let signature = {};
 
@@ -178,7 +178,7 @@ const close = () => {
     try {
         const indexPath = path.join(
             appConfig.project.current.path,
-            signature.entrypoint.replace('.html', '.d.html'),
+            appConfig.project.current.cursor,
         );
         fs.rmSync(indexPath);
         console.debug(`Deleted ${indexPath}`);
@@ -208,28 +208,45 @@ const close = () => {
     BrowserWindow.getFocusedWindow()?.webContents.loadFile(pages.welcome);
 };
 
-const saveTemp = (_, data) => {
-    // Load the app configuration
-    const appConfig = config.read();
+// Return the project tree
+const tree = (_, workDir) => {
+    const buildTree = (dir) => {
+        const tree = {
+            name: path.basename(dir),
+            type: 'directory',
+            path: dir,
+            children: [],
+        };
 
-    // Write the temporary document
-    try {
-        const indexPath = path.join(
-            appConfig.project.current.path,
-            signature.entrypoint.replace('.html', '.d.html'),
-        );
-        fs.writeFileSync(indexPath, data, 'utf-8');
-        console.debug(`Saved temporary document to ${indexPath}`);
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
+        // Read the directory
+        const files = fs.readdirSync(dir);
 
-    // Update current project details
-    appConfig.project.current.isSaved = true;
-    config.write(appConfig);
+        // Iterate over the files
+        for (const file of files) {
+            const filePath = path.join(dir, file);
+            const fileStat = fs.statSync(filePath);
 
-    return appConfig;
-};
+            // Skip hidden files
+            if (file.startsWith('.')) {
+                continue;
+            }
 
-module.exports = { create, open, close, saveTemp };
+            // Add the file to the tree
+            if (fileStat.isDirectory()) {
+                tree.children.push(buildTree(filePath));
+            } else {
+                tree.children.push({
+                    name: file,
+                    type: 'file',
+                    path: filePath,
+                });
+            }
+        }
+
+        return tree;
+    };
+
+    return buildTree(workDir);
+}
+
+module.exports = { create, open, close, tree };

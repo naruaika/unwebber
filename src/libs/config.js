@@ -2,11 +2,148 @@ const { app } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 
+const defaultSidebarLayoutSchema = [
+    {
+        type: 'dock',
+        position: 'left',
+        children: [
+            {
+                type: 'tab',
+                children: [
+                    {
+                        type: 'panel',
+                        id: 'pages',
+                        title: 'Pages',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'outline',
+                        title: 'Outline',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'find-and-replace',
+                        title: 'Find & Replace',
+                    },
+                ],
+            },
+            {
+                type: 'tab',
+                children: [
+                    {
+                        type: 'panel',
+                        id: 'assets',
+                        title: 'Assets',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'templates',
+                        title: 'Templates',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'symbols',
+                        title: 'Symbols',
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        type: 'dock',
+        position: 'right',
+        children: [
+            {
+                type: 'tab',
+                children: [
+                    {
+                        type: 'panel',
+                        id: 'fill-and-stroke',
+                        title: 'Fill & Stroke',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'swatches',
+                        title: 'Swatches',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'attributes',
+                        title: 'Attributes',
+                    },
+                ],
+            },
+            {
+                type: 'tab',
+                children: [
+                    {
+                        type: 'panel',
+                        id: 'character',
+                        title: 'Character',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'paragraph',
+                        title: 'Paragraph',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'text-styles',
+                        title: 'Text Styles',
+                    },
+                ],
+            },
+            {
+                type: 'tab',
+                children: [
+                    {
+                        type: 'panel',
+                        id: 'transform',
+                        title: 'Transform',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'navigator',
+                        title: 'Navigator',
+                    },
+                    {
+                        type: 'panel',
+                        id: 'history',
+                        title: 'History',
+                    },
+                ],
+            },
+        ],
+    },
+];
+
 const schema = {
+    app: {
+        window: {
+            size: {
+                width: 1200,
+                height: 800,
+            },
+            maximized: false,
+        },
+        layout: {
+            topbar: { show: true },
+            controlbar: { show: true },
+            contextbar: { show: true },
+            toolbar: { show: true },
+            sidebar: {
+                show: true,
+                contents: defaultSidebarLayoutSchema,
+            },
+            statusbar: { show: true },
+        },
+    },
     project: {
         current: {
-            path: null,
             name: null,
+            path: null,
+            signature: null,
+            cursor: null,
             isSaved: null,
             isTemp: null,
         },
@@ -28,6 +165,10 @@ const validate = (appConfig, schema) => {
             }
         }
     }
+
+
+    // TODO: implement the ability to customize the sidebar layout
+    appConfig.app.layout.sidebar.contents = defaultSidebarLayoutSchema;
 };
 
 const read = () => {

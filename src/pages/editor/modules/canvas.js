@@ -109,12 +109,12 @@ const refreshRulers = () => {
     const canvasHeight = parseInt(mainFrame.style.height, 10);
 
     // Prepare the top ruler
-    let ctx = topRuler.getContext('2d', { alpha: false });
+    let ctx = topRuler.getContext('2d', { alpha: true });
     ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-gray-600'));
     ctx.fillRect(0, 0, topRuler.width + rulerHeight, topRuler.height);
 
     // Prepare the left ruler
-    ctx = leftRuler.getContext('2d', { alpha: false });
+    ctx = leftRuler.getContext('2d', { alpha: true });
     ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-gray-600'));
     ctx.fillRect(0, 0, leftRuler.width, leftRuler.height);
 
@@ -274,7 +274,7 @@ const refreshGrid = () => {
     isGridRendered = true;
 }
 
-const adjustMainFrameSize = () => {
+const updateMainFrameSize = () => {
     // TODO: add support for viewport width and height,
     // in case of game or presentation slides development?
     canvasContainerBoundingRect = canvasContainer.getBoundingClientRect();
@@ -291,9 +291,9 @@ const initializeCanvas = () => {
     currentTranslateY = marginLeft;
 
     // Set the initial main frame size
-    adjustMainFrameSize();
+    updateMainFrameSize();
 
-    // Create a IntersectionObserver to watch for elements in the viewport
+    // Create an IntersectionObserver to watch for elements in the viewport
     const intersectionObserver = new IntersectionObserver(updateVisibleInViewportElements);
     mainFrame.contentDocument.querySelectorAll('body, body [data-uw-id]').forEach(element => {
         if (! element.hasAttribute('data-uw-ignore')) {
@@ -304,7 +304,6 @@ const initializeCanvas = () => {
     // Create a MutationObserver to watch for changes in the document tree
     const documentTree = mainFrame.contentDocument.documentElement;
     new MutationObserver((records) => {
-        adjustMainFrameSize();
         records.forEach(record => {
             record.addedNodes.forEach(node => {
                 if (
@@ -325,6 +324,9 @@ const initializeCanvas = () => {
                 }
             });
         });
+        updateMainFrameSize();
+        refreshRulers();
+        refreshGrid();
     }).observe(documentTree, {
         childList: true,
         subtree: true,
@@ -2486,7 +2488,9 @@ const moveSelectedNode = (clientX, clientY) => {
         let nearestSnappingPoint = { x: null, y: null };
         let nearestPointDistance = { x: null, y: null };
         const snappingThreshold = snapFactor / currentScale;
-        const elementCorners = [
+
+        // Find the nearest corner snapping point of visible elements relative to the selected node
+        [
             {
                 label: 'top-left',
                 x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
@@ -2532,10 +2536,7 @@ const moveSelectedNode = (clientX, clientY) => {
                 x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
                 y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
             },
-        ]
-
-        // Find the nearest corner snapping point of visible elements relative to the selected node
-        elementCorners.forEach(elementCorner => {
+        ].forEach(elementCorner => {
             visibleInViewportElements.forEach(viewportElement => {
                 // Skip if the item is the selected node
                 if (viewportElement.node === selectedNode.node) {
@@ -2672,7 +2673,7 @@ const moveSelectedNode = (clientX, clientY) => {
 
             // Find the nearest grid intersection relative to the selected node
             if (getGridCheckState()) {
-                const intersections = [
+                let intersections = [
                     {
                         x: elementCorner.x - (elementCorner.x % gridAppliedSpacing),
                         y: elementCorner.y - (elementCorner.y % gridAppliedSpacing),
@@ -2689,8 +2690,7 @@ const moveSelectedNode = (clientX, clientY) => {
                         x: elementCorner.x - (elementCorner.x % gridAppliedSpacing) + gridAppliedSpacing,
                         y: elementCorner.y - (elementCorner.y % gridAppliedSpacing) + gridAppliedSpacing,
                     },
-                ];
-                intersections.filter(intersection =>
+                ].filter(intersection =>
                     intersection.x > 0 &&
                     intersection.y > 0 &&
                     intersection.x < mainFrameBoundingRect.width &&
@@ -2754,6 +2754,9 @@ const moveSelectedNode = (clientX, clientY) => {
         });
 
         // Apply snapping if found nearby points
+        // FIXME: snapping is wrong when the element is rotated
+        // See https://gist.github.com/thednp/294ae28d3ff3afd5e43c2d00b186ba38 as reference
+        // and https://github.com/ismailman/decompose-dommatrix/blob/master/decomposeMatrix.mjs
         let offsetX = 0;
         let offsetY = 0;
         if (
@@ -2831,7 +2834,7 @@ const refreshPanel = (event = {}) => {
     if (event.detail?.transform) {
         previousSelectedNode = null;
         hoveredNodeBoundingRect = null;
-        adjustMainFrameSize();
+        updateMainFrameSize();
     }
 
     // To hide the hovering box
@@ -3034,7 +3037,7 @@ const onCanvasOverlayMouseUp = (event) => {
         }
 
         // Update the main frame size
-        adjustMainFrameSize();
+        updateMainFrameSize();
 
         // Show the selected parent box
         updateSelectedNodeBoundingRect();
@@ -3307,7 +3310,12 @@ const onWindowSpaceKeyPressed = (event) => {
 
     // To prevent from triggering browser's default behavior
     // after clicking a button by pressing the space key
-    document.activeElement.blur();
+    if (
+        ! ['input', 'textarea'].includes(document.activeElement.tagName?.toLowerCase()) &&
+        ! document.activeElement.isContentEditable
+    ) {
+        document.activeElement.blur();
+    }
 
     if (event.detail.state) {
         // Clear the hovered element
@@ -3322,7 +3330,7 @@ const onWindowSpaceKeyPressed = (event) => {
     }
 }
 
-const onWindowShiftKeyPressed = (event) => {
+const onWindowShiftKeyPressed = () => {
     if (! isPanelReady) {
         return;
     }
@@ -3340,7 +3348,7 @@ const onWindowShiftKeyPressed = (event) => {
     }
 }
 
-const onWindowCtrlKeyPressed = () => {}
+const onWindowCtrlKeyPressed = () => { /* TODO: implement this */ }
 
 const onWindowAltKeyPressed = (event) => {
     if (! isPanelReady) {
@@ -3360,6 +3368,7 @@ const onWindowResize = () => {
     // To force the selection box to be recalculated
     previousSelectedNode = null;
 
+    // Update the bounding rect of the canvas container
     canvasContainerBoundingRect = canvasContainer.getBoundingClientRect();
 
     updateRulerSize();
@@ -3367,7 +3376,7 @@ const onWindowResize = () => {
     refreshPanel();
 }
 
-(() => {
+export const initialize = () => {
     // Register the mouse event listeners for the canvas overlay
     canvasOverlay.addEventListener('pointerdown', onCanvasOverlayMouseDown);
     canvasOverlay.addEventListener('pointerup', onCanvasOverlayMouseUp);
@@ -3388,4 +3397,4 @@ const onWindowResize = () => {
     window.addEventListener('editor:alt', onWindowAltKeyPressed);
     window.addEventListener('editor:toggle-grid', refreshGrid);
     window.addEventListener('resize', onWindowResize);
-})()
+}

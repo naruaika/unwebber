@@ -10,8 +10,8 @@ import {
 import { debounce } from '../helpers.js';
 
 const mainFrame = document.getElementById('main-iframe');
-const panelContentContainer = document.querySelector('#outline-panel .content__container');
-const breadcrumb = document.querySelector('#outline-panel .breadcrumb');
+let panelContentContainer;
+let breadcrumb;
 
 let isPanelReady = false;
 
@@ -66,17 +66,8 @@ const scrollToElement = (listItemButton) => {
 
     setTimeout(() => {
         // Scroll to the selected element
-        listItemRect = listItemButton.getBoundingClientRect();
-        const isNearTop = listItemRect.top < panelRect.top + 50;
-        const isNearBottom = listItemRect.bottom > panelRect.bottom - 50;
-        if (isNearTop) {
-            listItemButton.scrollIntoView({ behavior: 'instant', block: 'start' });
-        } else if (isNearBottom) {
-            listItemButton.scrollIntoView({ behavior: 'instant', block: 'end' });
-        } else {
-            listItemButton.scrollIntoView({ behavior: 'instant', block: 'center' });
-        }
-    }, 50);
+        listItemButton.scrollIntoView({ behavior: 'instant', block: 'center' });
+    }, 0);
 }
 
 const highlightSelectedListItem = (event) => {
@@ -1472,14 +1463,19 @@ const createListItem = (node, level, isPanelReady = true) => {
     listItem.dataset.level = level;
     listItem.dataset.tagName = node.tagName ? node.tagName.toLowerCase() : 'text';
     listItem.dataset.uwId = node.dataset?.uwId || '';
-    listItem.dataset.uwPosition = node.parentElement ? Array.prototype.indexOf.call(node.parentElement.childNodes, node) : '';
+    listItem.dataset.uwPosition = node.parentElement
+        ? Array.prototype.indexOf.call(node.parentElement.childNodes, node)
+        : '';
     listItem.dataset.uwParentId = node.parentElement?.dataset.uwId || '';
     listItem.style.setProperty('--guide-size', `${14 + level * 15}px`);
 
     // Check if the element has children excluding empty text nodes
     let hasChild = [...node.childNodes].some(child =>
         ! child.hasAttribute?.('data-uw-ignore') &&
-        (child.nodeType === Node.ELEMENT_NODE || child.textContent.trim())
+        (
+            child.nodeType === Node.ELEMENT_NODE ||
+            child.textContent.trim()
+        )
     );
 
     // Add the button element
@@ -1669,9 +1665,18 @@ const createListItem = (node, level, isPanelReady = true) => {
 }
 
 const initializePanel = () => {
+    panelContentContainer = document.querySelector('#outline-panel .content__container');
+    breadcrumb = document.querySelector('#outline-panel .breadcrumb');
+
+    // Add event listeners to the panel content container
+    panelContentContainer.addEventListener('drag', onPanelDrag);
+    panelContentContainer.addEventListener('dragenter', (event) => event.preventDefault());
+    panelContentContainer.addEventListener('dragover', (event) => event.preventDefault());
+    panelContentContainer.addEventListener('dragend', (event) => event.preventDefault());
+
     const documentTree = mainFrame.contentDocument.documentElement;
 
-    // Add search input to the outline panel
+    // Add search input to the panel
     const searchInputContainer = document.createElement('div');
     searchInputContainer.classList.add('panel__search-container');
     if (panelContentContainer.classList.contains('expanded')) {
@@ -1740,6 +1745,7 @@ const initializePanel = () => {
         const unorderedList = document.createElement('ul');
         unorderedList.appendChild(createListItem(documentTree, 0, false));
         panelContentContainer.appendChild(unorderedList);
+        isPanelReady = true;
     }, 50);
 
     // Use MutationObserver to watch for DOM changes
@@ -1833,9 +1839,6 @@ const initializePanel = () => {
         childList: true,
         subtree: true,
     });
-
-    // Set the panel ready flag
-    isPanelReady = true;
 }
 
 const refreshPanel = () => {
@@ -2075,13 +2078,26 @@ const onListItemButtonDragEnd = (event) => {
     nodeDragPosition = null;
 }
 
-(() => {
-    panelContentContainer.addEventListener('drag', onPanelDrag);
-    panelContentContainer.addEventListener('dragenter', (event) => event.preventDefault());
-    panelContentContainer.addEventListener('dragover', (event) => event.preventDefault());
-    panelContentContainer.addEventListener('dragend', (event) => event.preventDefault());
+export const initialize = () => {
+    // Create a fragment to hold the panel content
+    const fragment = document.createDocumentFragment();
+    // add the panel container
+    let container = document.createElement('div');
+    container.classList.add('content__container', 'scrollable');
+    fragment.appendChild(container);
+    // add placeholder for the panel container
+    const placeholder = document.createElement('span');
+    placeholder.classList.add('placeholder');
+    placeholder.textContent = 'Loading...';
+    container.appendChild(placeholder);
+    // add the breadcrumb element
+    container = document.createElement('div');
+    container.classList.add('breadcrumb', 'scrollable');
+    fragment.appendChild(container);
 
     // Register the window message event listener
     window.addEventListener('outline:refresh', refreshPanel);
     window.addEventListener('outline:hover', onElementHover);
-})()
+
+    return fragment;
+}

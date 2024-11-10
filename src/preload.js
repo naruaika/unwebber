@@ -20,6 +20,6 @@ contextBridge.exposeInMainWorld('unwebber', {
         create: () => ipcRenderer.send('project:create'),
         open: (path) => ipcRenderer.send('project:open', path),
         close: () => ipcRenderer.send('project:close'),
-        temp: (data) => ipcRenderer.invoke('project:temp', data),
+        tree: (path) => ipcRenderer.invoke('project:tree', path),
     },
 })

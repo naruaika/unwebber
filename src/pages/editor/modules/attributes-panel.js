@@ -3,7 +3,7 @@
 import { apiSchema, metadata, selectedNode, setMetadata } from "../globals.js";
 import { generateUniqueId } from "../helpers.js";
 
-const panelContentContainer = document.querySelector('#attributes-panel .content__container');
+let panelContentContainer;
 
 let previousSelectedNodeId = null;
 let showAllAttributes = false;
@@ -442,6 +442,10 @@ const createAttributeFieldset = (attribute) => {
 }
 
 const refreshPanel = () => {
+    if (! panelContentContainer) {
+        panelContentContainer = document.querySelector('#attributes-panel .content__container');
+    }
+
     // Remove all the existing elements from the panel
     panelContentContainer.innerHTML = '';
 
@@ -520,7 +524,19 @@ const refreshPanel = () => {
     console.log('[Editor] Refreshing attributes panel... [DONE]');
 }
 
-(() => {
+export const initialize = () => {
+    // Create a fragment to hold the panel content
+    const fragment = document.createDocumentFragment();
+    const container = document.createElement('div');
+    container.classList.add('content__container', 'scrollable');
+    const placeholder = document.createElement('span');
+    placeholder.innerText = 'No selection.';
+    placeholder.classList.add('placeholder');
+    container.appendChild(placeholder);
+    fragment.appendChild(container);
+
     // Register the window message event listener
     window.addEventListener('attribute:refresh', refreshPanel);
-})()
+
+    return fragment;
+}

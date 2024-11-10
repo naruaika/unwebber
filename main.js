@@ -13,11 +13,16 @@ require('electron-reload')(__dirname, {
     hardResetMethod: 'exit',
 });
 
+let mainWindow;
+
 const createWindow = () => {
+    // Load the app configuration
+    const configData = config.load();
+
     // Create the browser window
-    const mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
+    mainWindow = new BrowserWindow({
+        width: ! configData.app.window.fullscreen ? configData.app.window.size.width : 1200,
+        height: ! configData.app.window.fullscreen ? configData.app.window.size.height : 800,
         minWidth: 800,
         minHeight: 600,
 
@@ -46,17 +51,32 @@ const createWindow = () => {
     // Remove the default menu bar
     mainWindow.removeMenu()
 
+    // Maximize the window if it was last closed in fullscreen mode
+    if (configData.app.window.maximized) {
+        mainWindow.maximize();
+    }
+
     // Show the main window only after all resources have been loaded
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.show();
         mainWindow.focus();
     });
 
+    // Remember the window size and fullscreen state
+    // when the window is going to be closed
+    mainWindow.on('close', () => {
+        const configData = config.load();
+        configData.app.window.size.width = ! mainWindow.isMaximized() ? mainWindow.getSize()[0] : 1200;
+        configData.app.window.size.height = ! mainWindow.isMaximized() ? mainWindow.getSize()[1] : 800;
+        configData.app.window.maximized = mainWindow.isMaximized();
+        config.write(configData);
+    });
+
     // Enable pinch zoom (for development purposes only)
     // mainWindow.webContents.setVisualZoomLevelLimits(1, 3);
 
     // Open the DevTools (for development purposes only)
-    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -70,7 +90,7 @@ app.whenReady().then(() => {
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);
     ipcMain.on('project:close', project.close);
-    ipcMain.handle('project:temp', project.saveTemp);
+    ipcMain.handle('project:tree', project.tree);
 
     // Create a new window
     createWindow();

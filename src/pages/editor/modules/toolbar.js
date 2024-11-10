@@ -29,10 +29,10 @@ const onButtonClick = (event) => {
     setMode(event.target?.value);
 }
 
-(() => {
+export const initialize = () => {
     // For each edit mode button
     document.querySelectorAll('.main-tool__edit').forEach(button => {
         // Register edit mode change event listeners
         button.addEventListener('change', onButtonClick);
     });
-})()
+}

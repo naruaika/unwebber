@@ -76,7 +76,7 @@ const showMenu = (event) => {
 
             // Create a child menu container
             const childMenu = document.createElement('div');
-            childMenu.classList.add('context-menu', 'scrollable', 'no-drag', 'hidden');
+            childMenu.classList.add('context-menu', 'scrollable', 'hidden');
             group.addEventListener('mouseenter', (event) => onMouseOverGroupMenuItem(event, group, childMenu));
             group.appendChild(childMenu);
 
@@ -214,62 +214,12 @@ const onMenuMouseDown = (event) => {
     setMousePosition(event.clientX, event.clientY);
 }
 
-const onMenuDragStart = (event) => {
-    event.stopImmediatePropagation();
-
-    // Create a transparent canvas to set as drag image
-    const transparentCanvas = document.createElement('canvas');
-    event.dataTransfer.setDragImage(transparentCanvas, 0, 0);
-    event.dataTransfer.dropEffect = 'move';
-    transparentCanvas.remove();
-}
-
-const onMenuDrag = (event) => {
-    // Skip the event if the mouse is outside the window
-    if (event.clientX === 0 && event.clientY === 0) {
-        return;
-    }
-
-    // Move the context menu with the mouse
-    const deltaX = event.clientX - mousePosition.x;
-    const deltaY = event.clientY - mousePosition.y;
-    const menuBoundingRect = menu.getBoundingClientRect();
-    const newLeft = menuBoundingRect.left + deltaX;
-    const newTop = menuBoundingRect.top + deltaY;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const menuWidth = menuBoundingRect.width;
-    const menuHeight = menuBoundingRect.height;
-
-    // Check if the new position will cause overflow
-    if (newLeft >= 0 && newLeft + menuWidth <= windowWidth) {
-        menu.style.left = `${newLeft}px`;
-    }
-    if (newTop >= 0 && newTop + menuHeight <= windowHeight) {
-        menu.style.top = `${newTop}px`;
-    }
-    if (newLeft + menuWidth > windowWidth) {
-        menu.style.left = `${windowWidth - menuWidth}px`;
-    }
-    if (newTop + menuHeight > windowHeight) {
-        menu.style.top = `${windowHeight - menuHeight}px`;
-    }
-
-    // Update the mouse position
-    setMousePosition(event.clientX, event.clientY);
-}
-
 (() => {
     // Register the element event listener
     container.addEventListener('pointerdown', hideMenu);
     container.addEventListener('dragover', (event) => event.preventDefault());
     container.addEventListener('dragenter', (event) => event.preventDefault());
     menu.addEventListener('pointerdown', onMenuMouseDown);
-    menu.addEventListener('dragstart', onMenuDragStart);
-    menu.addEventListener('drag', onMenuDrag);
-    menu.addEventListener('dragenter', (event) => event.preventDefault());
-    menu.addEventListener('dragover', (event) => event.preventDefault());
-    menu.addEventListener('dragend', (event) => event.preventDefault());
 
     // Register the window message event listener
     window.addEventListener('contextmenu:show', showMenu);

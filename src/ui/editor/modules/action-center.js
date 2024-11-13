@@ -41,9 +41,11 @@ const onElementSelect = (event) => {
     console.log(`[Editor] Select element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
-    window.dispatchEvent(new CustomEvent('attribute:refresh'));
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('outline:refresh'));
+        window.dispatchEvent(new CustomEvent('attribute:refresh'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    }, 0);
 }
 
 const onElementHover = (event) => {
@@ -70,8 +72,10 @@ const onElementHover = (event) => {
     console.log(`[Editor] Hover element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('outline:hover'));
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('outline:hover'));
+        window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    }, 0);
 }
 
 const onElementCut = () => {
@@ -528,7 +532,7 @@ const onElementMoveToTopTree = () => {
     console.log(`[Editor] Move to top element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementMoveUpTree = () => {
@@ -617,8 +621,7 @@ const onElementMoveUpTree = () => {
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move up element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementMoveDownTree = () => {
@@ -707,8 +710,7 @@ const onElementMoveDownTree = () => {
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move down element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementMoveToBottomTree = () => {
@@ -785,8 +787,7 @@ const onElementMoveToBottomTree = () => {
     const elementId = selectedNode.node.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move to bottom element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementOutdentUp = () => {
@@ -849,8 +850,7 @@ const onElementOutdentUp = () => {
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementOutdentDown = () => {
@@ -913,8 +913,7 @@ const onElementOutdentDown = () => {
     const elementId = actionContext.element.dataset?.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Move out up element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementIndentUp = () => {
@@ -982,8 +981,7 @@ const onElementIndentUp = () => {
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent up element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementIndentDown = () => {
@@ -1051,8 +1049,7 @@ const onElementIndentDown = () => {
     const elementId = actionContext.element.dataset.uwId || `${previousState.container.dataset.uwId}[${previousState.position}]`;
     console.log(`[Editor] Indent down element: @${elementId}`);
 
-    // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh'));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onElementFlipHorizontal = () => {
@@ -1116,7 +1113,7 @@ const onElementFlipHorizontal = () => {
     console.log(`[Editor] Flip horizontal element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 }
 
 const onElementFlipVertical = () => {
@@ -1180,7 +1177,7 @@ const onElementFlipVertical = () => {
     console.log(`[Editor] Flip vertical element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 }
 
 const onElementRotateLeft = () => {
@@ -1215,7 +1212,17 @@ const onElementRotateLeft = () => {
     };
 
     // Apply the transformation of the element
-    matrix.rotateSelf(-45);
+    const angle = -45 * Math.PI / 180;
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
+    const a = matrix.a * cos - matrix.b * sin;
+    const b = matrix.a * sin + matrix.b * cos;
+    const c = matrix.c * cos - matrix.d * sin;
+    const d = matrix.c * sin + matrix.d * cos;
+    matrix.a = a;
+    matrix.b = b;
+    matrix.c = c;
+    matrix.d = d;
     styleElement(selectedNode.node, 'transform', matrix.toString(), true);
 
     // Save the property value
@@ -1242,7 +1249,7 @@ const onElementRotateLeft = () => {
     console.log(`[Editor] Rotate left element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 }
 
 const onElementRotateRight = () => {
@@ -1277,7 +1284,17 @@ const onElementRotateRight = () => {
     };
 
     // Apply the transformation of the element
-    matrix.rotateSelf(45);
+    const angle = 45 * Math.PI / 180;
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
+    const a = matrix.a * cos - matrix.b * sin;
+    const b = matrix.a * sin + matrix.b * cos;
+    const c = matrix.c * cos - matrix.d * sin;
+    const d = matrix.c * sin + matrix.d * cos;
+    matrix.a = a;
+    matrix.b = b;
+    matrix.c = c;
+    matrix.d = d;
     styleElement(selectedNode.node, 'transform', matrix.toString(), true);
 
     // Save the property value
@@ -1304,7 +1321,7 @@ const onElementRotateRight = () => {
     console.log(`[Editor] Rotate right element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 }
 
 const onElementTranslate = (event) => {
@@ -1379,7 +1396,7 @@ const onElementTranslate = (event) => {
     console.log(`[Editor] Translate element: @${elementId}`);
 
     // Request panel updates
-    window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 }
 
 (() => {

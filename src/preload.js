@@ -7,9 +7,9 @@ contextBridge.exposeInMainWorld('unwebber', {
         electron: process.versions.electron,
     },
 
-    apis: {
-        schema: () => ipcRenderer.invoke('apis:schema'),
-        template: (tid, cname) => ipcRenderer.invoke('apis:template', tid, cname),
+    api: {
+        schema: () => ipcRenderer.invoke('api:schema'),
+        template: (tid, cname) => ipcRenderer.invoke('api:template', tid, cname),
     },
 
     config: {

@@ -3,10 +3,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
 
-const pages = require('./src/pages')
-const apis = require('./src/libs/apis')
+const api = require('./src/libs/api')
 const config = require('./src/libs/config')
 const project = require('./src/libs/project')
+const ui = require('./src/ui')
 
 require('electron-reload')(__dirname, {
     electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
@@ -15,6 +15,9 @@ require('electron-reload')(__dirname, {
 
 let mainWindow;
 
+/**
+ * Create a new window as the main window of the app
+ */
 const createWindow = () => {
     // Load the app configuration
     const configData = config.load();
@@ -33,7 +36,7 @@ const createWindow = () => {
             symbolColor: '#FFFFFF',
             height: 36,
         },
-        // icon: path.join(__dirname, 'res/icons/unwebber.svg'),
+        icon: path.join(__dirname, 'res/icons/unwebber.ico'),
         backgroundColor: '#333333',
         // vibrancy: 'fullscreen-ui', // on MacOS
         // backgroundMaterial: 'acrylic', // on Windows 11
@@ -46,7 +49,7 @@ const createWindow = () => {
     })
 
     // Load the welcome page of the app
-    mainWindow.loadFile(pages.welcome)
+    mainWindow.loadFile(ui.welcome)
 
     // Remove the default menu bar
     mainWindow.removeMenu()
@@ -58,6 +61,9 @@ const createWindow = () => {
 
     // Show the main window only after all resources have been loaded
     mainWindow.webContents.on('did-finish-load', () => {
+        if (process.platform === 'win32') {
+            mainWindow.setIcon(path.join(__dirname, 'res/icons/unwebber.ico'));
+        }
         mainWindow.show();
         mainWindow.focus();
     });
@@ -84,8 +90,8 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
     // Register IPC event handlers
-    ipcMain.handle('apis:schema', apis.schema);
-    ipcMain.handle('apis:template', apis.template);
+    ipcMain.handle('api:schema', api.schema);
+    ipcMain.handle('api:template', api.template);
     ipcMain.handle('config:load', config.load);
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);

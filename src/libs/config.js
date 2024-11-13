@@ -2,6 +2,11 @@ const { app } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
 
+/**
+ * Default sidebar layout schema
+ *
+ * Note that the schema is subject to change in future.
+ */
 const defaultSidebarLayoutSchema = [
     {
         type: 'dock',
@@ -117,8 +122,24 @@ const defaultSidebarLayoutSchema = [
     },
 ];
 
+/**
+ * Default application configuration schema
+ *
+ * This schema can be used to validate the application configuration.
+ * If the configuration file doesn't exist or is invalid, this schema
+ * will be used to create a new configuration file.
+ *
+ * Note that the sidebar layout configuration is not customizable yet.
+ * In the future when the user can customize the sidebar layout,
+ * we need to more carefully validate the configuration so that the user
+ * will not lose their customizations but still get the new features.
+ *
+ * Note that the schema is subject to change in future.
+ */
 const schema = {
+    // Application configuration
     app: {
+        // Window configuration
         window: {
             size: {
                 width: 1200,
@@ -126,6 +147,8 @@ const schema = {
             },
             maximized: false,
         },
+
+        // Layout configuration
         layout: {
             topbar: { show: true },
             controlbar: { show: true },
@@ -138,6 +161,8 @@ const schema = {
             statusbar: { show: true },
         },
     },
+
+    // Project configuration
     project: {
         current: {
             name: null,
@@ -153,6 +178,23 @@ const schema = {
     }
 };
 
+/**
+ * Validates the application configuration
+ *
+ * This function will validate the application configuration
+ * against the application configuration schema. If the configuration
+ * is missing some properties or values, it will be filled with the
+ * default values from the schema.
+ *
+ * Note that the sidebar layout configuration is not customizable yet.
+ * In the future when the user can customize the sidebar layout,
+ * we should implement a versioning system in the configuration file
+ * so that we can update the configuration schema without losing
+ * the user's customizations.
+ *
+ * @param {Object} appConfig - The application configuration object.
+ * @param {Object} schema - The application configuration schema object.
+ */
 const validate = (appConfig, schema) => {
     for (const key in schema) {
         if (! appConfig[key]) {
@@ -166,11 +208,26 @@ const validate = (appConfig, schema) => {
         }
     }
 
-
+    // Force the default sidebar layout schema
     // TODO: implement the ability to customize the sidebar layout
     appConfig.app.layout.sidebar.contents = defaultSidebarLayoutSchema;
 };
 
+/**
+ * Reads the application configuration from the file system
+ *
+ * This function reads the application configuration from the file system.
+ * If the configuration file doesn't exist, it will be created with the
+ * default configuration values. The configuration file will be validated
+ * against the application configuration schema.
+ *
+ * Since the current implementation for creating a new project puts
+ * the project folder at the system's temporary directory, it is possible
+ * that the project folder is deleted by the system or the user. In this case,
+ * the recent project paths will be updated to remove the invalid paths.
+ *
+ * @returns {Object} The application configuration object.
+ */
 const read = () => {
     // Get user data directory path
     const userData = app.getPath('userData');
@@ -211,6 +268,15 @@ const read = () => {
     return appConfig;
 };
 
+/**
+ * Writes the application configuration to the file system
+ *
+ * This function writes the application configuration to the file system.
+ * The configuration will be validated against the application configuration
+ * schema before being saved to the file system.
+ *
+ * @param {Object} appConfig - The application configuration object.
+ */
 const write = (appConfig) => {
     // Get user data directory path
     const userData = app.getPath('userData');
@@ -224,7 +290,13 @@ const write = (appConfig) => {
     console.debug(`Configuration file saved to ${configPath}`);
 };
 
-// Alias for read() function
+/**
+ * Loads the application configuration from the file system
+ *
+ * This function is basically an alias of the `read` function.
+ *
+ * @returns {Object} The application configuration object.
+ */
 const load = () => read();
 
 module.exports = { read, write, load };

@@ -11,6 +11,7 @@ import {
 } from '../globals.js';
 import {
     hexToRgba,
+    isElementTextable,
     isElementVoid,
     styleElement,
 } from '../helpers.js';
@@ -57,6 +58,9 @@ let mainFrameBoundingRect;
 let selectedNodeBoundingRect;
 let selectedNodeParentBoundingRect;
 let hoveredNodeBoundingRect;
+
+let isEditingText = false;
+let isSelectingText = false;
 
 let isPanning = false;
 let panningTimeout;
@@ -294,7 +298,9 @@ const initializeCanvas = () => {
     updateMainFrameSize();
 
     // Create an IntersectionObserver to watch for elements in the viewport
-    const intersectionObserver = new IntersectionObserver(updateVisibleInViewportElements);
+    const intersectionObserver = new IntersectionObserver(entries => {
+        setTimeout(() => updateVisibleInViewportElements(entries), 0);
+    });
     mainFrame.contentDocument.querySelectorAll('body, body [data-uw-id]').forEach(element => {
         if (! element.hasAttribute('data-uw-ignore')) {
             intersectionObserver.observe(element);
@@ -304,29 +310,31 @@ const initializeCanvas = () => {
     // Create a MutationObserver to watch for changes in the document tree
     const documentTree = mainFrame.contentDocument.documentElement;
     new MutationObserver((records) => {
-        records.forEach(record => {
-            record.addedNodes.forEach(node => {
-                if (
-                    node.nodeType === Node.ELEMENT_NODE &&
-                    ! node.hasAttribute('data-uw-ignore')
-                ) {
-                    intersectionObserver.observe(node);
-                }
-            });
-            record.removedNodes.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    intersectionObserver.unobserve(node);
-                    const visibleElementIndex = visibleInViewportElements.findIndex(item => item.node === node);
-                    if (visibleElementIndex !== -1) {
-                        visibleInViewportElements.splice(visibleElementIndex, 1);
+        setTimeout(() => {
+            records.forEach(record => {
+                record.addedNodes.forEach(node => {
+                    if (
+                        node.nodeType === Node.ELEMENT_NODE &&
+                        ! node.hasAttribute('data-uw-ignore')
+                    ) {
+                        intersectionObserver.observe(node);
                     }
-                    // TODO: should we unobserve deleted node and its children?
-                }
+                });
+                record.removedNodes.forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        intersectionObserver.unobserve(node);
+                        const visibleElementIndex = visibleInViewportElements.findIndex(item => item.node === node);
+                        if (visibleElementIndex !== -1) {
+                            visibleInViewportElements.splice(visibleElementIndex, 1);
+                        }
+                        // TODO: should we unobserve deleted node and its children?
+                    }
+                });
             });
-        });
-        updateMainFrameSize();
-        refreshRulers();
-        refreshGrid();
+            updateMainFrameSize();
+            refreshRulers();
+            refreshGrid();
+        }, 0);
     }).observe(documentTree, {
         childList: true,
         subtree: true,
@@ -343,8 +351,9 @@ const refreshCanvas = () => {
         hoveredBox = document.createElement('div');
         hoveredBox.classList.add('hovered-box');
         hoveredBox.setAttribute('data-uw-ignore', '');
-        hoveredBox.addEventListener('pointerup', onHoveredBoxMouseUp);
         hoveredBox.addEventListener('pointerdown', onHoveredBoxMouseDown);
+        hoveredBox.addEventListener('pointerup', onHoveredBoxMouseUp);
+        hoveredBox.addEventListener('dblclick', onHoveredBoxDoubleClick);
         canvasOverlay.appendChild(hoveredBox);
     }
 
@@ -399,7 +408,6 @@ const refreshCanvas = () => {
     }
 
     // Get the bounding rect of the selected node
-    // TODO: get the rects instead for non-element nodes?
     if (
         selectedNode.node &&
         selectedNode.node.nodeType === Node.ELEMENT_NODE &&
@@ -692,8 +700,12 @@ const refreshSelectedBox = () => {
         }
 
         // Update the selected box position and size
-        const left = currentTranslateX + selectedNode.node.offsetLeft * currentScale;
-        const top = currentTranslateY + selectedNode.node.offsetTop * currentScale;
+        const rect =
+            visibleInViewportElements.find(item => item.node === selectedNode.node.offsetParent)?.rect ||
+            selectedNode.node.offsetParent?.getBoundingClientRect() ||
+            { left: 0, top: 0 };
+        const left = currentTranslateX + (selectedNode.node.offsetLeft + rect.left) * currentScale;
+        const top = currentTranslateY + (selectedNode.node.offsetTop + rect.top) * currentScale;
         const width = selectedNode.node.offsetWidth * currentScale;
         const height = selectedNode.node.offsetHeight * currentScale;
         selectedBox.style.left = `${left}px`;
@@ -731,6 +743,7 @@ const refreshSelectedBox = () => {
         // Get the original position and size of the selected node
         // before considering the offset of the positioned element
         if (
+            ! isEditingText &&
             Object.keys(_metadata.properties).some(property =>
                 [
                     'left',
@@ -777,6 +790,12 @@ const refreshSelectedBox = () => {
 
         //
         selectedBox.querySelectorAll('.transform-area').forEach(element => {
+            // Hide the transform area point if the selected element is being edited
+            if (isEditingText) {
+                element.classList.add('hidden');
+                return;
+            }
+
             // Unhide the transform area point
             element.classList.remove('hidden');
 
@@ -827,9 +846,14 @@ const refreshSelectedBox = () => {
             selectedBox.classList.remove('is-layout');
         }
 
+        //
+        selectedBox.classList.toggle('is-editing', isEditingText);
+
         // Show the selected box
         selectedBox.classList.remove('hidden');
-    } else {
+    }
+
+    if (! selectedNodeBoundingRect) {
         // Hide the selected box
         selectedBox.classList.add('hidden');
     }
@@ -843,8 +867,14 @@ const refreshHoveredBox = () => {
         }
 
         // Update the hovered box position and size
-        const left = currentTranslateX + hoveredNode.node.offsetLeft * currentScale;
-        const top = currentTranslateY + hoveredNode.node.offsetTop * currentScale;
+        // FIXME: the position is wrong when the hovered element is inside a transformed element,
+        // even if the transformation matrix is matrix(1, 0, 0, 1, 0, 0)
+        const rect =
+            visibleInViewportElements.find(item => item.node === hoveredNode.node.offsetParent)?.rect ||
+            hoveredNode.node.offsetParent?.getBoundingClientRect() ||
+            { left: 0, top: 0 };
+        const left = currentTranslateX + (hoveredNode.node.offsetLeft + rect.left) * currentScale;
+        const top = currentTranslateY + (hoveredNode.node.offsetTop + rect.top) * currentScale;
         const width = hoveredNode.node.offsetWidth * currentScale;
         const height = hoveredNode.node.offsetHeight * currentScale;
         hoveredBox.style.left = `${left}px`;
@@ -865,6 +895,9 @@ const refreshHoveredBox = () => {
         } else {
             hoveredBox.classList.remove('is-layout');
         }
+
+        //
+        hoveredBox.classList.toggle('is-editing', isEditingText && selectedNode.node === hoveredNode.node);
 
         // Show the hovered box
         hoveredBox.classList.remove('hidden');
@@ -906,7 +939,7 @@ const refreshDraggingBox = () => {
 
 const refreshDraggingLine = () => {
     // Skip if there is no hovered nodes
-    if (hoveredElements.length == 0) {
+    if (hoveredElements.length === 0) {
         draggingLine.classList.add('hidden');
         dragTargetNode = null;
         dragTargetPosition = null;
@@ -949,32 +982,68 @@ const refreshDraggingLine = () => {
     if (containerLayoutDirection.startsWith('row')) {
         // If the mouse position 1/2 of the width from the left of hovered element,
         // indicate the target position before hovered element
-        if (clientX < hoveredNodeBoundingRect.left + hoveredNodeBoundingRect.width / 2) {
+        if (clientX <= hoveredNodeBoundingRect.left + hoveredNodeBoundingRect.width / 2) {
             dragTargetPosition = 'beforebegin';
+            width = 2;
         }
         // If the mouse position 1/2 of the width from the right of hovered element,
         // indicate the target position after hovered element
         if (clientX > hoveredNodeBoundingRect.left + hoveredNodeBoundingRect.width * 1 / 2) {
             dragTargetPosition = 'afterend';
             left = left + width - 2;
+            width = 2;
         }
-        width = 2;
+        // If the mouse position 1/5 of the height from the top of hovered element,
+        // indicate the target position before hovered element
+        if (clientY < hoveredNodeBoundingRect.top + 5) {
+            dragTargetPosition = 'beforebegin';
+            left = currentTranslateX + hoveredNodeBoundingRect.left * currentScale;
+            width = hoveredNodeBoundingRect.width * currentScale;
+            height = 2;
+        }
+        // If the mouse position 4/5 of the height from the top of hovered element,
+        // indicate the target position after hovered element
+        if (clientY > hoveredNodeBoundingRect.top + hoveredNodeBoundingRect.height - 5) {
+            dragTargetPosition = 'afterend';
+            left = currentTranslateX + hoveredNodeBoundingRect.left * currentScale;
+            top = top + height - 2;
+            width = hoveredNodeBoundingRect.width * currentScale;
+            height = 2;
+        }
     }
 
     // If the container layout direction is top-to-bottom
     if (containerLayoutDirection.startsWith('column')) {
         // If the mouse position 1/2 of the height from the top of hovered element,
         // indicate the target position before hovered element
-        if (clientY < hoveredNodeBoundingRect.top + hoveredNodeBoundingRect.height / 2) {
+        if (clientY <= hoveredNodeBoundingRect.top + hoveredNodeBoundingRect.height / 2) {
             dragTargetPosition = 'beforebegin';
+            height = 2;
         }
         // If the mouse position 1/2 of the height from the bottom of hovered element,
         // indicate the target position after hovered element
         if (clientY > hoveredNodeBoundingRect.top + hoveredNodeBoundingRect.height * 1 / 2) {
             dragTargetPosition = 'afterend';
             top = top + height - 2;
+            height = 2;
         }
-        height = 2;
+        // If the mouse position 1/5 of the width from the left of hovered element,
+        // indicate the target position before hovered element
+        if (clientX < hoveredNodeBoundingRect.left + 5) {
+            dragTargetPosition = 'beforebegin';
+            top = currentTranslateY + hoveredNodeBoundingRect.top * currentScale;
+            width = 2;
+            height = hoveredNodeBoundingRect.height * currentScale;
+        }
+        // If the mouse position 4/5 of the width from the left of hovered element,
+        // indicate the target position after hovered element
+        if (clientX > hoveredNodeBoundingRect.left + hoveredNodeBoundingRect.width - 5) {
+            dragTargetPosition = 'afterend';
+            left = left + width - 2;
+            top = currentTranslateY + hoveredNodeBoundingRect.top * currentScale;
+            width = 2;
+            height = hoveredNodeBoundingRect.height * currentScale;
+        }
     }
 
     // If hovered element is a container and it has no child elements,
@@ -1032,14 +1101,14 @@ const refreshDraggingConstraint = (constrained) => {
         // Crosshair indicating the start position
         const startCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         startCrosshair.classList.add('start-crosshair');
-        startCrosshair.setAttribute('r', 4);
+        startCrosshair.setAttribute('r', 3);
         startCrosshair.setAttribute('fill', 'var(--color-blue)');
         draggingConstraint.appendChild(startCrosshair);
 
         // Crosshair indicating the end position
         const endCrosshair = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         endCrosshair.classList.add('end-crosshair');
-        endCrosshair.setAttribute('r', 4);
+        endCrosshair.setAttribute('r', 3);
         endCrosshair.setAttribute('fill', 'var(--color-blue)');
         draggingConstraint.appendChild(endCrosshair);
 
@@ -1047,7 +1116,7 @@ const refreshDraggingConstraint = (constrained) => {
         const connectingLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         connectingLine.classList.add('connecting-line');
         connectingLine.setAttribute('stroke', 'var(--color-blue)');
-        connectingLine.setAttribute('stroke-width', '2');
+        connectingLine.setAttribute('stroke-width', '1');
         connectingLine.setAttribute('shape-rendering', 'crispEdges');
         draggingConstraint.appendChild(connectingLine);
         canvasOverlay.appendChild(draggingConstraint);
@@ -1074,7 +1143,7 @@ const refreshDraggingConstraint = (constrained) => {
     draggingConstraint.classList.remove('hidden');
 }
 
-const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
+const refreshSnappingBox = (elementCorners) => {
     // Create a snapping box if not exists
     if (! snappingBox) {
         snappingBox = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1087,7 +1156,7 @@ const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
             verticalLine.setAttribute('y1', 0);
             verticalLine.setAttribute('y2', canvasOverlay.clientHeight);
             verticalLine.setAttribute('stroke', 'var(--color-blue)');
-            verticalLine.setAttribute('stroke-width', '2');
+            verticalLine.setAttribute('stroke-width', '1');
             verticalLine.setAttribute('shape-rendering', 'crispEdges');
             verticalLine.classList.add('hidden');
             snappingBox.appendChild(verticalLine);
@@ -1100,7 +1169,7 @@ const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
             horizontalLine.setAttribute('x1', 0);
             horizontalLine.setAttribute('x2', canvasOverlay.clientWidth);
             horizontalLine.setAttribute('stroke', 'var(--color-blue)');
-            horizontalLine.setAttribute('stroke-width', '2');
+            horizontalLine.setAttribute('stroke-width', '1');
             horizontalLine.setAttribute('shape-rendering', 'crispEdges');
             horizontalLine.classList.add('hidden');
             snappingBox.appendChild(horizontalLine);
@@ -1118,14 +1187,14 @@ const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
     const verticalLines = snappingBox.querySelectorAll('.vertical-line');
     const horizontalLines = snappingBox.querySelectorAll('.horizontal-line');
 
-    if (elementCorners[0].x) {
-        const corners = elementCorners.filter(corner => corner.x);
+    if (elementCorners[0].x !== null) {
+        const corners = elementCorners.filter(corner => corner.x !== null);
         verticalLines.forEach((line, index) => {
             if (typeof corners[index] === 'undefined') {
                 line.classList.add('hidden');
                 return;
             }
-            let offset = offsetX * currentScale + currentTranslateX;
+            let offset = selectedNodeBoundingRect.x * currentScale + currentTranslateX;
             if (corners[index].label.endsWith('left')) {
                 offset += 1;
             }
@@ -1140,19 +1209,17 @@ const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
             line.classList.remove('hidden');
         });
     } else {
-        verticalLines.forEach(line => {
-            line.classList.add('hidden');
-        });
+        verticalLines.forEach(line => line.classList.add('hidden'));
     }
 
-    if (elementCorners[0].y) {
-        const corners = elementCorners.filter(corner => corner.y);
+    if (elementCorners[0].y !== null) {
+        const corners = elementCorners.filter(corner => corner.y !== null);
         horizontalLines.forEach((line, index) => {
             if (typeof corners[index] === 'undefined') {
                 line.classList.add('hidden');
                 return;
             }
-            let offset = offsetY * currentScale + currentTranslateY;
+            let offset = selectedNodeBoundingRect.y * currentScale + currentTranslateY;
             if (corners[index].label.startsWith('top')) {
                 offset += 1;
             }
@@ -1167,13 +1234,65 @@ const refreshSnappingBox = (elementCorners, offsetX, offsetY) => {
             line.classList.remove('hidden');
         });
     } else {
-        horizontalLines.forEach(line => {
-            line.classList.add('hidden');
-        });
+        horizontalLines.forEach(line => line.classList.add('hidden'));
     }
 
     // Show the snapping box
     canvasOverlay.appendChild(snappingBox);
+}
+
+const onHoveredBoxMouseDown = (event) => {
+    if (event.which === 1) { // left mouse button
+        // Skip if the hovered node is HTML or body
+        // TODO: implement marquee selection, but add support for multiple selection first
+        if (['html', 'body'].includes(hoveredNode.node.tagName.toLowerCase())) {
+            return;
+        }
+
+        // Specify the drag position mode
+        const _metadata = metadata[hoveredNode.node.dataset.uwId];
+        const position = _metadata.properties['position']?.value || 'static';
+        dragPositionMode = ['absolute', 'fixed', 'sticky'].includes(position) ? 'free' : 'layout';
+
+        // Flag to start dragging
+        dragStartPoint = { x: event.clientX, y: event.clientY };
+        isPreparedToDrag = true;
+
+        if (
+            isEditingText &&
+            selectedNode.node === hoveredNode.node
+        ) {
+            event.preventDefault();
+
+            // Get the cursor position relative to the iframe document
+            const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+            const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+
+            // Update the text selection
+            const caretPosition = selectedNode.node.ownerDocument.caretPositionFromPoint(pointerX, pointerY);
+            if (caretPosition) {
+                const selection = selectedNode.node.ownerDocument.getSelection();
+                const range = selectedNode.node.ownerDocument.createRange();
+                if (getShiftKeyState()) {
+                    range.setStart(selection.anchorNode, selection.anchorOffset);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    selection.extend(caretPosition.offsetNode, caretPosition.offset);
+                } else {
+                    range.setStart(caretPosition.offsetNode, caretPosition.offset);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+
+            // Re-focus on the selected node
+            selectedNode.node.focus();
+        }
+
+        return;
+    }
 }
 
 const onHoveredBoxMouseUp = (event) => {
@@ -1197,7 +1316,7 @@ const onHoveredBoxMouseUp = (event) => {
     }
 
     // Skip if there is no hovered nodes
-    if (hoveredElements.length == 0) {
+    if (hoveredElements.length === 0) {
         return;
     }
 
@@ -1232,7 +1351,30 @@ const onHoveredBoxMouseUp = (event) => {
         );
     }
 
+    if (
+        isEditingText &&
+        selectedNode.node === hoveredNode.node
+    ) {
+        return;
+    }
+
     if (selectedNode.node !== hoveredNode.node) {
+        if (selectedNode.node?.nodeType === Node.ELEMENT_NODE) {
+            // Remove the contenteditable attribute from the hovered node
+            // FIXME: handle the case when the user explicitly set the contenteditable attribute
+            selectedNode.node.removeAttribute('contenteditable');
+
+            // Blur on the hovered node
+            selectedNode.node.blur();
+
+            // Clear the text selection
+            selectedNode.node?.ownerDocument.getSelection().removeAllRanges();
+        }
+
+        //
+        isEditingText = false;
+        previousSelectedNode = selectedNode;
+
         // Request to update the selected node
         window.dispatchEvent(new CustomEvent('element:select', {
             detail: {
@@ -1252,25 +1394,48 @@ const onHoveredBoxMouseUp = (event) => {
     }
 }
 
-const onHoveredBoxMouseDown = (event) => {
-    if (event.which === 1) { // left mouse button
-        // Skip if the hovered node is HTML or body
-        // TODO: implement marquee selection, but add support for multiple selection first
-        if (['html', 'body'].includes(hoveredNode.node.tagName.toLowerCase())) {
-            return;
-        }
-
-        // Specify the drag position mode
-        const _metadata = metadata[hoveredNode.node.dataset.uwId];
-        const position = _metadata.properties['position']?.value || 'static';
-        dragPositionMode = ['absolute', 'fixed', 'sticky'].includes(position) ? 'free' : 'layout';
-
-        // Flag to start dragging
-        dragStartPoint = { x: event.clientX, y: event.clientY };
-        isPreparedToDrag = true;
-
+const onHoveredBoxDoubleClick = (event) => {
+    if (! isElementTextable(hoveredNode.node)) {
         return;
     }
+
+    // Set the content of the hovered node to be editable
+    hoveredNode.node.setAttribute('contenteditable', 'true');
+
+    // Focus on the hovered node
+    hoveredNode.node.focus();
+
+    // Get the cursor position relative to the iframe document
+    const pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+    const pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+
+    // Update the text selection
+    const caretPosition = hoveredNode.node.ownerDocument.caretPositionFromPoint(pointerX, pointerY);
+    if (caretPosition) {
+        const selection = hoveredNode.node.ownerDocument.getSelection();
+        const range = hoveredNode.node.ownerDocument.createRange();
+        let node = caretPosition.offsetNode;
+        let offset = caretPosition.offset;
+        let text = node.textContent;
+        let start = offset;
+        let end = offset;
+        while (start > 0 && /\w/.test(text[start - 1])) {
+            start--;
+        }
+        while (end < text.length && /\w/.test(text[end])) {
+            end++;
+        }
+        range.setStart(node, start);
+        range.setEnd(node, end);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    isEditingText = true;
+
+    //
+    refreshSelectedBox();
+    refreshHoveredBox();
 }
 
 const onHoveredBoxContextMenu = (event) => {
@@ -2255,7 +2420,7 @@ const onHoveredBoxContextMenu = (event) => {
             label: 'Edit Text...',
             icon: 'edit',
             action: () => onListItemDoubleClick(event),
-            disabled: selectedNode.node.dataset.uwId,
+            disabled: ! isElementTextable(selectedNode.node),
         },
     ];
 
@@ -2483,58 +2648,57 @@ const moveSelectedNode = (clientX, clientY) => {
     }
 
     // Reposition if there is a snapping point nearby
+    let nearestElementCorners = [ { x: null, y: null, label: '' } ];
     if (getSnapCheckState()) {
-        let nearestElementCorners = [ { x: null, y: null, label: '' } ];
+        // Find the nearest corner snapping point of visible elements relative to the selected node
         let nearestSnappingPoint = { x: null, y: null };
         let nearestPointDistance = { x: null, y: null };
         const snappingThreshold = snapFactor / currentScale;
-
-        // Find the nearest corner snapping point of visible elements relative to the selected node
         [
             {
                 label: 'top-left',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y),
             },
             {
                 label: 'top-center',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y),
             },
             {
                 label: 'top-right',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top),
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y),
             },
             {
                 label: 'middle-left',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height / 2,
             },
             {
                 label: 'middle-center',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height / 2,
             },
             {
                 label: 'middle-right',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height / 2,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height / 2,
             },
             {
                 label: 'bottom-left',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left),
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x),
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height,
             },
             {
                 label: 'bottom-center',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width / 2,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width / 2,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height,
             },
             {
                 label: 'bottom-right',
-                x: clientX - (dragStartPoint.x - dragStartBoundingRect.left) + dragStartBoundingRect.width,
-                y: clientY - (dragStartPoint.y - dragStartBoundingRect.top) + dragStartBoundingRect.height,
+                x: clientX - (dragStartPoint.x - dragStartBoundingRect.x) + dragStartBoundingRect.width,
+                y: clientY - (dragStartPoint.y - dragStartBoundingRect.y) + dragStartBoundingRect.height,
             },
         ].forEach(elementCorner => {
             visibleInViewportElements.forEach(viewportElement => {
@@ -2754,55 +2918,14 @@ const moveSelectedNode = (clientX, clientY) => {
         });
 
         // Apply snapping if found nearby points
-        // FIXME: snapping is wrong when the element is rotated
-        // See https://gist.github.com/thednp/294ae28d3ff3afd5e43c2d00b186ba38 as reference
-        // and https://github.com/ismailman/decompose-dommatrix/blob/master/decomposeMatrix.mjs
-        let offsetX = 0;
-        let offsetY = 0;
-        if (
-            nearestSnappingPoint.x !== null ||
-            nearestSnappingPoint.y !== null
-        ) {
+        if (nearestSnappingPoint.x !== null || nearestSnappingPoint.y !== null) {
             if (nearestSnappingPoint.x !== null) {
-                matrix.e = nearestSnappingPoint.x;
+                matrix.e += nearestSnappingPoint.x - nearestElementCorners[0].x;
             }
             if (nearestSnappingPoint.y !== null) {
-                matrix.f = nearestSnappingPoint.y;
-            }
-
-            // Reposition based on the nearest corner of the selected node bounding rect
-            if (nearestSnappingPoint.x !== null) {
-                if (nearestElementCorners[0].label.endsWith('center')) {
-                    matrix.e -= dragStartBoundingRect.width / 2;
-                }
-                if (nearestElementCorners[0].label.endsWith('right')) {
-                    matrix.e -= dragStartBoundingRect.width;
-                }
-            }
-            if (nearestSnappingPoint.y !== null) {
-                if (nearestElementCorners[0].label.startsWith('middle')) {
-                    matrix.f -= dragStartBoundingRect.height / 2;
-                }
-                if (nearestElementCorners[0].label.startsWith('bottom')) {
-                    matrix.f -= dragStartBoundingRect.height;
-                }
-            }
-
-            // Reposition if the element has offset properties
-            if (nearestSnappingPoint.x !== null) {
-                offsetX += parseFloat(_metadata.properties['left']?.value || 0);
-                offsetX += parseFloat(_metadata.properties['margin-left']?.value || 0);
-                matrix.e -= offsetX;
-            }
-            if (nearestSnappingPoint.y !== null) {
-                offsetY += parseFloat(_metadata.properties['top']?.value || 0);
-                offsetY += parseFloat(_metadata.properties['margin-top']?.value || 0);
-                matrix.f -= offsetY;
+                matrix.f += nearestSnappingPoint.y - nearestElementCorners[0].y;
             }
         }
-
-        // Refresh the snapping box
-        refreshSnappingBox(nearestElementCorners, matrix.e + offsetX, matrix.f + offsetY);
     }
 
     // Apply the transformation to the element
@@ -2817,6 +2940,7 @@ const moveSelectedNode = (clientX, clientY) => {
     refreshRulers();
     refreshSelectedBox();
     refreshDraggingConstraint(constraintDirection);
+    refreshSnappingBox(nearestElementCorners);
 
     // Update the bounding rect of the selected node in the cached visible elements
     const visibleElementIndex = visibleInViewportElements.findIndex(item => item.node === selectedNode.node);
@@ -2852,7 +2976,47 @@ const refreshPanel = (event = {}) => {
     }
 }
 
+const refreshSelection = () => {
+    updateSelectedNodeBoundingRect();
+    refreshSelectedBox();
+
+    if (
+        selectedNode.node === hoveredNode.node &&
+        ! hoveredBox?.classList.contains('hidden')
+    ) {
+        hoveredNodeBoundingRect = selectedNodeBoundingRect;
+        refreshHoveredBox();
+    }
+}
+
 const interruptAction = () => {
+    if (isSelectingText) {
+        isSelectingText = false;
+        canvasOverlay.releasePointerCapture(dragPointerId);
+        return;
+    }
+
+    if (isEditingText) {
+        // Remove the contenteditable attribute from the hovered node
+        // FIXME: handle the case when the user explicitly set the contenteditable attribute
+        selectedNode.node?.removeAttribute('contenteditable');
+
+        // Blur on the hovered node
+        selectedNode.node?.blur();
+
+        // Clear the text selection
+        selectedNode.node?.ownerDocument.getSelection().removeAllRanges();
+
+        //
+        isEditingText = false;
+        previousSelectedNode = selectedNode;
+
+        // Refresh the selected box
+        refreshSelectedBox();
+
+        return;
+    }
+
     if (isDragging) {
         // Flag to interrupt dragging
         dragStartPoint = null;
@@ -2911,6 +3075,10 @@ const interruptAction = () => {
 }
 
 const onCanvasOverlayMouseDown = (event) => {
+    // Prevent from triggering the window's mouse down event
+    // which will emit an interrupt event
+    event.stopImmediatePropagation();
+
     if (! isPanelReady) {
         return;
     }
@@ -2946,6 +3114,31 @@ const onCanvasOverlayMouseUp = (event) => {
         isPanning = false;
         document.exitPointerLock();
         return;
+    }
+
+    if (isSelectingText) {
+        // Flag to stop selecting
+        dragStartPoint = null;
+        isSelectingText = false;
+        canvasOverlay.releasePointerCapture(dragPointerId);
+
+        return;
+    }
+
+    if (isEditingText) {
+        // Remove the contenteditable attribute from the hovered node
+        // FIXME: handle the case when the user explicitly set the contenteditable attribute
+        selectedNode.node?.removeAttribute('contenteditable');
+
+        // Blur on the hovered node
+        selectedNode.node?.blur();
+
+        // Clear the text selection
+        selectedNode.node?.ownerDocument.getSelection().removeAllRanges();
+
+        //
+        isEditingText = false;
+        previousSelectedNode = selectedNode;
     }
 
     if (isDragging) {
@@ -3057,7 +3250,7 @@ const onCanvasOverlayMouseUp = (event) => {
     }
 
     // Request to clear the selected node if there is no hovered nodes
-    if (hoveredElements.length == 0) {
+    if (hoveredElements.length === 0) {
         window.dispatchEvent(new CustomEvent('element:select', {
             detail: { target: 'canvas' }
         }));
@@ -3075,6 +3268,7 @@ const onCanvasOverlayMouseMove = (event) => {
         return;
     }
 
+    //
     currentPointerX = event.clientX;
     currentPointerY = event.clientY;
 
@@ -3093,11 +3287,23 @@ const onCanvasOverlayMouseMove = (event) => {
             Math.abs(event.clientX - dragStartPoint.x) > 5 ||
             Math.abs(event.clientY - dragStartPoint.y) > 5
         ) {
-            // Flag to start dragging
+            //
             isPreparedToDrag = false;
-            isDragging = true;
             isDraggingInterrupted = false;
             canvasOverlay.setPointerCapture(dragPointerId);
+
+            // Flag to start selecting text
+            if (isEditingText) {
+                isSelectingText = true;
+                return;
+            }
+
+            if (! hoveredNode.node) {
+                return;
+            }
+
+            // Flag to start dragging
+            isDragging = true;
 
             // Request to update the selected node
             if (selectedNode.node !== hoveredNode.node) {
@@ -3153,6 +3359,103 @@ const onCanvasOverlayMouseMove = (event) => {
         return;
     }
 
+    if (isSelectingText) {
+        if (! dragAnimationRequestId) {
+            const canvasOverlayRect = canvasOverlay.getBoundingClientRect();
+            if (
+                currentPointerX < canvasOverlayRect.left ||
+                currentPointerX > canvasOverlayRect.right ||
+                currentPointerY < canvasOverlayRect.top ||
+                currentPointerY > canvasOverlayRect.bottom
+            ) {
+                const lastPointerX = currentPointerX;
+                const lastPointerY = currentPointerY;
+                const continueDragging = () => {
+                    if (
+                        ! (
+                            isSelectingText &&
+                            (
+                                currentPointerX < canvasOverlayRect.left ||
+                                currentPointerX > canvasOverlayRect.right ||
+                                currentPointerY < canvasOverlayRect.top ||
+                                currentPointerY > canvasOverlayRect.bottom
+                            )
+                        )
+                    ) {
+                        dragAnimationRequestId = null;
+                        mainFrame.style.willChange = 'unset'; // force repaint
+                        setTimeout(() => mainFrame.style.willChange = 'transform', 250);
+                        return;
+                    }
+                    const speedFactor = 1 / 10;
+                    if (
+                        currentPointerX < canvasOverlayRect.left ||
+                        currentPointerX > canvasOverlayRect.right
+                    ) {
+                        const distanceX = currentPointerX - lastPointerX;
+                        panCanvas(-distanceX * speedFactor, 0);
+                    }
+                    if (
+                        currentPointerY < canvasOverlayRect.top ||
+                        currentPointerY > canvasOverlayRect.bottom
+                    ) {
+                        const distanceY = currentPointerY - lastPointerY;
+                        panCanvas(0, -distanceY * speedFactor);
+                    }
+                    let pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+                    let pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+                    pointerX = Math.max(selectedNodeBoundingRect.left, Math.min(selectedNodeBoundingRect.right, pointerX));
+                    pointerY = Math.max(selectedNodeBoundingRect.top, Math.min(selectedNodeBoundingRect.bottom, pointerY));
+                    const selection = selectedNode.node.ownerDocument.getSelection();
+                    const range = selectedNode.node.ownerDocument.createRange();
+                    const newCaretPosition = hoveredNode.node.ownerDocument.caretPositionFromPoint(pointerX, pointerY);
+                    if (! selectedNode.node.contains(newCaretPosition.offsetNode)) {
+                        dragAnimationRequestId = requestAnimationFrame(continueDragging);
+                        return;
+                    }
+                    range.setStart(selection.anchorNode, selection.anchorOffset);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    selection.extend(newCaretPosition.offsetNode, newCaretPosition.offset);
+                    dragAnimationRequestId = requestAnimationFrame(continueDragging);
+                    setTimeout(() => refreshGrid(), 0);
+                };
+                dragAnimationRequestId = requestAnimationFrame(continueDragging);
+                return;
+            }
+        }
+
+        // Get the cursor position relative to the iframe document
+        let pointerX = (event.clientX - mainFrameBoundingRect.left) / currentScale;
+        let pointerY = (event.clientY - mainFrameBoundingRect.top) / currentScale;
+
+        // Limit the pointer position within the selected node bounding rect
+        pointerX = Math.max(selectedNodeBoundingRect.left, Math.min(selectedNodeBoundingRect.right, pointerX));
+        pointerY = Math.max(selectedNodeBoundingRect.top, Math.min(selectedNodeBoundingRect.bottom, pointerY));
+
+        if (! hoveredNode.node) {
+            return;
+        }
+
+        const selection = selectedNode.node.ownerDocument.getSelection();
+        const range = selectedNode.node.ownerDocument.createRange();
+        const newCaretPosition = hoveredNode.node.ownerDocument.caretPositionFromPoint(pointerX, pointerY);
+
+        if (! selectedNode.node.contains(newCaretPosition.offsetNode)) {
+            return;
+        }
+
+        // Update the document text selection
+        range.setStart(selection.anchorNode, selection.anchorOffset);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        selection.extend(newCaretPosition.offsetNode, newCaretPosition.offset);
+
+        return;
+    }
+
     if (isDragging) {
         if (! dragAnimationRequestId) {
             const canvasOverlayRect = canvasOverlay.getBoundingClientRect();
@@ -3201,7 +3504,6 @@ const onCanvasOverlayMouseMove = (event) => {
                         const distanceY = currentPointerY - lastPointerY;
                         panCanvas(0, -distanceY * speedFactor);
                     }
-                    dragAnimationRequestId = requestAnimationFrame(continueDragging);
                     const clientX = (currentPointerX - mainFrameBoundingRect.left) / currentScale;
                     const clientY = (currentPointerY - mainFrameBoundingRect.top) / currentScale;
                     if (dragPositionMode === 'free') {
@@ -3214,9 +3516,8 @@ const onCanvasOverlayMouseMove = (event) => {
                         refreshDraggingLine();
                         refreshHoveredBox();
                     }
-                    setTimeout(() => {
-                        refreshGrid();
-                    }, 0);
+                    setTimeout(() => refreshGrid(), 0);
+                    dragAnimationRequestId = requestAnimationFrame(continueDragging);
                 };
                 dragAnimationRequestId = requestAnimationFrame(continueDragging);
                 return;
@@ -3253,6 +3554,10 @@ const onCanvasOverlayMouseEnter = () => {
 
 const onCanvasOverlayMouseLeave = () => {
     if (! isPanelReady) {
+        return;
+    }
+
+    if (isSelectingText) {
         return;
     }
 
@@ -3389,12 +3694,13 @@ export const initialize = () => {
     // Register event listeners on the window
     window.addEventListener('action:interrupt', interruptAction);
     window.addEventListener('canvas:refresh', refreshPanel);
+    window.addEventListener('canvas:select', refreshSelection);
     window.addEventListener('canvas:zoom', zoomCanvas);
     window.addEventListener('contextmenu:hide', findHoveredElements);
     window.addEventListener('editor:space', onWindowSpaceKeyPressed);
     window.addEventListener('editor:shift', onWindowShiftKeyPressed);
     window.addEventListener('editor:ctrl', onWindowCtrlKeyPressed);
     window.addEventListener('editor:alt', onWindowAltKeyPressed);
-    window.addEventListener('editor:toggle-grid', refreshGrid);
+    window.addEventListener('editor:grid', refreshGrid);
     window.addEventListener('resize', onWindowResize);
 }

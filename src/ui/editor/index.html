@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metadata -->
+    <meta charset="UTF-8">
+    <meta
+        http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    />
+    <meta
+        http-equiv="X-Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    />
+
+    <title>Unwebber</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Main Top Bar -->
+    <div class="main-topbar__container">
+        <div class="main-topbar">
+
+            <!-- Application Titlebar -->
+            <div class="titlebar">
+                <div id="document-name">Untitled</div>
+            </div>
+
+            <!-- Left Toolbar -->
+            <div class="left-toolbar">
+
+                <!-- Application Menu Button -->
+                <button class="button" id="application-menu-button">
+                    <div class="icon icon-unwebber application-logo"></div>
+                </button>
+                <button class="button" id="file-menu-button">File</button>
+                <button class="button" id="edit-menu-button">Edit</button>
+                <button class="button" id="select-menu-button">Select</button>
+                <button class="button" id="view-menu-button">View</button>
+                <button class="button" id="text-menu-button">Text</button>
+                <button class="button" id="table-menu-button">Table</button>
+                <button class="button" id="media-menu-button">Media</button>
+                <button class="button" id="help-menu-button">Help</button>
+            </div>
+
+            <!-- Right Toolbar -->
+            <div class="right-toolbar"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content__container">
+
+        <!-- Main Control Bar -->
+        <div class="main-controlbar">
+
+            <div class="group__container">
+
+                <!-- -->
+                <div class="group">
+                    <button tabindex="-1" class="button" id="move-to-bottom-button" title="Move to Bottom">
+                        <div class="icon icon-move-to-bottom"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="move-down-button" title="Move Down">
+                        <div class="icon icon-move-down"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="move-up-button" title="Move Up">
+                        <div class="icon icon-move-up"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="move-to-top-button" title="Move to Top">
+                        <div class="icon icon-move-to-top"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <button tabindex="-1" class="button" id="align-left-button" title="Align Left">
+                        <div class="icon icon-align-left"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="align-center-button" title="Align Center">
+                        <div class="icon icon-align-center"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="align-right-button" title="Align Right">
+                        <div class="icon icon-align-right"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="align-top-button" title="Align Top">
+                        <div class="icon icon-align-top"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="align-middle-button" title="Align Middle">
+                        <div class="icon icon-align-middle"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="align-bottom-button" title="Align Bottom">
+                        <div class="icon icon-align-bottom"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <button tabindex="-1" class="button" id="flip-horizontal-button" title="Flip Horizontal">
+                        <div class="icon icon-flip-horizontal"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="flip-vertical-button" title="Flip Vertical">
+                        <div class="icon icon-flip-vertical"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <button tabindex="-1" class="button" id="rotate-left-button" title="Rotate Left">
+                        <div class="icon icon-rotate-left"></div>
+                    </button
+                    ><button tabindex="-1" class="button" id="rotate-right-button" title="Rotate Right">
+                        <div class="icon icon-rotate-right"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <fieldset tabindex="-1" class="button">
+                        <input type="checkbox" id="snapping-toggle-button" />
+                        <label for="snapping-toggle-button">
+                            <div class="icon icon-toggle-snapping"></div>
+                        </label>
+                    </fieldset
+                    ><button tabindex="-1" class="button" id="snapping-customize-button" title="Customize Snapping...">
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <fieldset tabindex="-1" class="button">
+                        <input type="checkbox" id="grid-toggle-button" />
+                        <label for="grid-toggle-button">
+                            <div class="icon icon-toggle-grid"></div>
+                        </label>
+                    </fieldset
+                    ><button tabindex="-1" class="button" id="grid-customize-button" title="Customize Grid...">
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group">
+                    <fieldset tabindex="-1" class="button" title="Toggle Margin">
+                        <input type="checkbox" id="margin-toggle-button" />
+                        <label for="margin-toggle-button">
+                            <div class="icon icon-toggle-margin"></div>
+                        </label>
+                    </fieldset
+                    ><button tabindex="-1" class="button" id="margin-customize-button" title="Customize Margin...">
+                        <div class="icon icon-chevron-down"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- -->
+            <div class="overflow__container">
+                <button tabindex="-1" class="button overflow__button invisible">
+                    <div class="icon icon-chevrons-right"></div>
+                </button>
+                <div class="overflow__list hidden">
+                    <!-- NOTE: The contents are dynamically generated. -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Context Bar -->
+        <div class="main-contextbar">
+            <div>No Selection</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- Main Toolbar -->
+            <div class="main-toolbar">
+
+                <!-- Move Edit Button -->
+                <fieldset tabindex="-1">
+                    <input type="radio" name="edit-mode" value="move" id="edit-move-button" />
+                    <label for="edit-move-button" class="button">
+                        <div class="icon icon-mouse-pointer"></div>
+                    </label>
+                </fieldset>
+
+                <!-- Node Edit Button -->
+                <fieldset tabindex="-1">
+                    <input type="radio" name="edit-mode" value="node" id="edit-node-button" />
+                    <label for="edit-node-button" class="button">
+                        <div class="icon icon-pen-tool"></div>
+                    </label>
+                </fieldset>
+
+                <!-- Code Edit Button -->
+                <fieldset tabindex="-1">
+                    <input type="radio" name="edit-mode" value="code" id="edit-code-button" />
+                    <label for="edit-code-button" class="button">
+                        <div class="icon icon-code"></div>
+                    </label>
+                </fieldset>
+
+                <div class="spacer"></div>
+
+                <!-- Live Edit Button -->
+                <fieldset tabindex="-1">
+                    <input type="radio" name="edit-mode" value="live" id="edit-live-button" />
+                    <label for="edit-live-button" class="button">
+                        <div class="icon icon-play"></div>
+                    </label>
+                </fieldset>
+
+                <!-- Document View Button -->
+                <button class="button" id="document-view-button" tabindex="-1">
+                    <div class="icon icon-monitor"></div>
+                </button>
+
+                <!-- Document Version Button -->
+                <button class="button" id="document-version-button" tabindex="-1">
+                    <div class="icon icon-git-branch"></div>
+                </button>
+
+                <!-- Document Setting Button -->
+                <button class="button" id="document-setting-button" tabindex="-1">
+                    <div class="icon icon-settings"></div>
+                </button>
+            </div>
+
+            <!-- Main Left Sidebar -->
+            <div class="main-sidebar__left hidden">
+                <!-- NOTE: The contents are dynamically generated. -->
+            </div>
+
+            <!-- Main Panel -->
+            <div class="main-panel scrollable">
+
+                <!-- Main Frame -->
+                <div class="main-frame">
+
+                    <!-- Main Canvas -->
+                    <div class="main-canvas__container">
+                        <div class="row">
+                            <div class="corner"></div>
+                            <canvas class="top-ruler"></canvas>
+                        </div>
+                        <div class="row">
+                            <canvas class="left-ruler"></canvas>
+                            <div data-uw-ignore class="main-container">
+                                <iframe
+                                    src=""
+                                    title=""
+                                    class="main-iframe"
+                                    id="main-iframe"
+                                    loading="lazy"
+                                    frameborder="0"
+                                    seamless
+                                    tabindex="-1"
+                                ></iframe>
+                                <canvas data-uw-ignore class="main-canvas__grid"></canvas>
+                                <div data-uw-ignore class="main-canvas__overlay"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Right Sidebar -->
+            <div class="main-sidebar__right hidden">
+                <!-- NOTE: The contents are dynamically generated. -->
+            </div>
+        </div>
+
+        <!-- Main Status Bar -->
+        <div class="main-statusbar">
+            <span class="container">
+                <!-- NOTE: The text content is dynamically generated. -->
+                <b>Drag</b> to marquee select. <b>Click</b> an object to select it.
+            </span>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu__container" class="hidden">
+        <div class="context-menu scrollable">
+            <!-- NOTE: The contents are dynamically generated. -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js" type="module"></script>
+</body>
+</html>

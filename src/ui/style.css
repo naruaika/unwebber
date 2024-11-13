@@ -1,3 +1,5 @@
+@import url('../../res/icons.css');
+
 @font-face {
     font-family: 'Inter';
     src: url('../../res/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
@@ -1114,51 +1116,3 @@ canvas {
         }
     }
 }
-
-/* Icons */
-.icon-unwebber { mask: url('../../res/icons/unwebber.svg'); }
-.icon-box { mask: url('../../res/icons/box.svg'); }
-.icon-check { mask: url('../../res/icons/check.svg'); }
-.icon-chevron-down { mask: url('../../res/icons/chevron-down.svg'); }
-.icon-chevrons-right { mask: url('../../res/icons/chevrons-right.svg'); }
-.icon-code { mask: url('../../res/icons/code.svg'); }
-.icon-git-branch { mask: url('../../res/icons/git-branch.svg'); }
-.icon-monitor { mask: url('../../res/icons/monitor.svg'); }
-.icon-mouse-pointer { mask: url('../../res/icons/mouse-pointer.svg'); }
-.icon-pen-tool { mask: url('../../res/icons/pen-tool.svg'); }
-.icon-play { mask: url('../../res/icons/play.svg'); }
-.icon-settings { mask: url('../../res/icons/settings.svg'); }
-.icon-save { mask: url('../../res/icons/save.svg'); }
-.icon-square { mask: url('../../res/icons/square.svg'); }
-.icon-type { mask: url('../../res/icons/type.svg'); }
-.icon-cut { mask: url('../../res/icons/scissors.svg'); }
-.icon-copy { mask: url('../../res/icons/copy.svg'); }
-.icon-paste { mask: url('../../res/icons/clipboard.svg'); }
-.icon-delete { mask: url('../../res/icons/trash.svg'); }
-.icon-edit { mask: url('../../res/icons/edit-2.svg'); }
-.icon-maximize { mask: url('../../res/icons/maximize-2.svg'); }
-.icon-minimize { mask: url('../../res/icons/minimize-2.svg'); }
-.icon-plus { mask: url('../../res/icons/plus.svg'); }
-.icon-minus { mask: url('../../res/icons/minus.svg'); }
-.icon-eye { mask: url('../../res/icons/eye.svg'); }
-.icon-eye-off { mask: url('../../res/icons/eye-off.svg'); }
-.icon-dot { mask: url('../../res/icons/dot.svg'); }
-
-.icon-blank { background: none !important; }
-.icon-move-to-bottom { background-image: url('../../res/icons/move-to-bottom.svg'); }
-.icon-move-down { background-image: url('../../res/icons/move-down.svg'); }
-.icon-move-up { background-image: url('../../res/icons/move-up.svg'); }
-.icon-move-to-top { background-image: url('../../res/icons/move-to-top.svg'); }
-.icon-align-left { background-image: url('../../res/icons/align-left.svg'); }
-.icon-align-center { background-image: url('../../res/icons/align-center.svg'); }
-.icon-align-right { background-image: url('../../res/icons/align-right.svg'); }
-.icon-align-top { background-image: url('../../res/icons/align-top.svg'); }
-.icon-align-middle { background-image: url('../../res/icons/align-middle.svg'); }
-.icon-align-bottom { background-image: url('../../res/icons/align-bottom.svg'); }
-.icon-flip-horizontal { background-image: url('../../res/icons/flip-horizontal.svg'); }
-.icon-flip-vertical { background-image: url('../../res/icons/flip-vertical.svg'); }
-.icon-rotate-left { background-image: url('../../res/icons/rotate-left.svg'); }
-.icon-rotate-right { background-image: url('../../res/icons/rotate-right.svg'); }
-.icon-toggle-snapping { background-image: url('../../res/icons/toggle-snapping.svg'); }
-.icon-toggle-grid { background-image: url('../../res/icons/toggle-grid.svg'); }
-.icon-toggle-margin { background-image: url('../../res/icons/toggle-margin.svg'); }

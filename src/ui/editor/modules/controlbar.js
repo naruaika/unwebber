@@ -14,7 +14,7 @@ const toggleSnapCheckState = (event) => {
 
 const toggleGridCheckState = (event) => {
     _gridCheckState = event.target.checked;
-    window.dispatchEvent(new CustomEvent('editor:toggle-grid', { detail: { state: _gridCheckState } }));
+    window.dispatchEvent(new CustomEvent('editor:grid', { detail: { state: _gridCheckState } }));
 }
 
 const toggleMarginCheckState = (event) => {

@@ -54,8 +54,9 @@
     <div class="main-content__container">
 
         <!-- Main Control Bar -->
-        <div class="main-controlbar">
+        <div class="main-controlbar" id="main-controlbar">
 
+            <!-- -->
             <div class="group__container">
 
                 <!-- -->
@@ -168,15 +169,77 @@
         </div>
 
         <!-- Main Context Bar -->
-        <div class="main-contextbar">
-            <div>No Selection</div>
+        <div class="main-contextbar" id="main-contextbar">
+
+            <!-- -->
+            <div class="group__container">
+
+                <!-- -->
+                <div id="selection">No selection</div>
+
+                <!-- -->
+                <div class="group hidden">
+                    <div class="label">Fill:</div>
+                    <button class="button" id="background-picker"></button>
+                </div>
+
+                <!-- -->
+                <div class="group hidden">
+                    <div class="label">Stroke:</div>
+                    <button class="button" id="border-picker"></button>
+                    <button class="button" id="border-style-picker">
+                        <div class="border-style"></div>
+                        <div class="border-width"></div>
+                    </button>
+                    <button class="button" id="border-radius-picker">
+                        <div class="radius-icon"></div>
+                        <div class="radius-value"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group hidden">
+                    <button class="button" id="font-family-picker"></button>
+                    <button class="button" id="font-size-picker"></button>
+                    <button class="button" id="color-picker"></button>
+                </div>
+
+                <!-- -->
+                <div class="group no-divider hidden">
+                    <button class="button" id="bold-toggle">
+                        <div class="icon icon-text-bold"></div>
+                    </button>
+                    <button class="button" id="italic-toggle">
+                        <div class="icon icon-text-italic"></div>
+                    </button>
+                    <button class="button" id="underline-toggle">
+                        <div class="icon icon-text-underline"></div>
+                    </button>
+                </div>
+
+                <!-- -->
+                <div class="group no-divider hidden">
+                    <button class="button" id="text-align-left-radio">
+                        <div class="icon icon-text-align-left"></div>
+                    </button>
+                    <button class="button" id="text-align-center-radio">
+                        <div class="icon icon-text-align-center"></div>
+                    </button>
+                    <button class="button" id="text-align-right-radio">
+                        <div class="icon icon-text-align-right"></div>
+                    </button>
+                    <button class="button" id="text-align-justify-radio">
+                        <div class="icon icon-text-align-justify"></div>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
 
             <!-- Main Toolbar -->
-            <div class="main-toolbar">
+            <div class="main-toolbar" id="main-toolbar">
 
                 <!-- Move Edit Button -->
                 <fieldset tabindex="-1">

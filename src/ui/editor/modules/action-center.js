@@ -24,9 +24,12 @@ const onElementSelect = (event) => {
         ! event?.detail.uwParentId
     ) {
         setSelectedNode(null);
-        window.dispatchEvent(new CustomEvent('outline:refresh'));
-        window.dispatchEvent(new CustomEvent('attribute:refresh'));
-        window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('contextbar:refresh'));
+            window.dispatchEvent(new CustomEvent('outline:refresh'));
+            window.dispatchEvent(new CustomEvent('attribute:refresh'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+        }, 0);
         return;
     }
 
@@ -42,6 +45,7 @@ const onElementSelect = (event) => {
 
     // Request panel updates
     setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('contextbar:refresh'));
         window.dispatchEvent(new CustomEvent('outline:refresh'));
         window.dispatchEvent(new CustomEvent('attribute:refresh'));
         window.dispatchEvent(new CustomEvent('canvas:refresh'));
@@ -56,8 +60,10 @@ const onElementHover = (event) => {
         ! event?.detail.uwParentId
     ) {
         setHoveredNode(null);
-        window.dispatchEvent(new CustomEvent('outline:hover'));
-        window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('outline:hover'));
+            window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
+        }, 0);
         return;
     }
 

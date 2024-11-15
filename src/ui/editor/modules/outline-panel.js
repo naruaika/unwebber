@@ -1609,6 +1609,18 @@ const createListItem = (node, level, isPanelReady = true) => {
         button.appendChild(spacer);
     }
 
+    // Register the event listener for the button
+    button.addEventListener('click', onListItemClick);
+    button.addEventListener('dblclick', onListItemDoubleClick);
+    button.addEventListener('contextmenu', showContextMenu);
+    button.addEventListener('mouseenter', onListItemMouseEnter);
+    button.addEventListener('mouseleave', onListItemMouseLeave);
+    button.addEventListener('dragstart', onListItemButtonDragStart);
+    button.addEventListener('dragover', (event) => event.preventDefault());
+    button.addEventListener('drop', onListItemButtonDrop);
+    button.addEventListener('dragend', onListItemButtonDragEnd);
+    // TODO: add support for multiple selection
+
     // Loop through the children elements recursively
     if (hasChild) {
         const unorderedList = document.createElement('ul');
@@ -1629,18 +1641,6 @@ const createListItem = (node, level, isPanelReady = true) => {
         });
         listItem.appendChild(unorderedList);
     }
-
-    // Register the event listener for the button
-    button.addEventListener('click', onListItemClick);
-    button.addEventListener('dblclick', onListItemDoubleClick);
-    button.addEventListener('contextmenu', showContextMenu);
-    button.addEventListener('mouseenter', onListItemMouseEnter);
-    button.addEventListener('mouseleave', onListItemMouseLeave);
-    button.addEventListener('dragstart', onListItemButtonDragStart);
-    button.addEventListener('dragover', (event) => event.preventDefault());
-    button.addEventListener('drop', onListItemButtonDrop);
-    button.addEventListener('dragend', onListItemButtonDragEnd);
-    // TODO: add support for multiple selection
 
     // Add to the collapsed list if the element is new,
     // or has children and is not a top-level element
@@ -1687,6 +1687,7 @@ const initializePanel = () => {
 
     // Add event listeners to the search input
     // FIXME: get rid of the "glitch" when performing the initial search
+    // and when clearing the search input
     const filterListItems = (event) => {
         const query = event.target.value.toLowerCase();
         requestAnimationFrame(() => {
@@ -1739,95 +1740,22 @@ const initializePanel = () => {
 
     // Populate the outline panel with the document tree
     setTimeout(() => {
-        panelContentContainer.innerHTML = '';
         const unorderedList = document.createElement('ul');
         unorderedList.appendChild(createListItem(documentTree, 0, false));
+        panelContentContainer.innerHTML = '';
         panelContentContainer.appendChild(unorderedList);
         isPanelReady = true;
-    }, 0);
+    }, 50);
 
     // Use MutationObserver to watch for DOM changes
-    new MutationObserver((records) => {
+    new MutationObserver(() => {
         setTimeout(() => {
             // Repopulate the outline panel if there are changes
-            records.forEach(record => {
-                if (record.removedNodes.length > 0) {
-                    // Remove the list item
-                    const removedNode = record.removedNodes[0];
-                    if (removedNode.nodeType === Node.ELEMENT_NODE) {
-                        panelContentContainer.querySelector(`li[data-uw-id="${removedNode.dataset.uwId}"]`)?.remove();
-                    } else {
-                        const position = Math.max(
-                            Array.prototype.indexOf.call(record.target.childNodes, record.previousSibling) + 1,
-                            Array.prototype.indexOf.call(record.target.childNodes, record.nextSibling) - 1
-                        );
-                        if (position >= 0) {
-                            panelContentContainer.querySelector(`li[data-uw-parent-id="${record.target.dataset.uwId}"][data-uw-position="${position}"]`)?.remove();
-                        } else {
-                            panelContentContainer?.replaceWith(createListItem(record.target, parseInt(parentListItem.dataset.level)));
-                        }
-                    }
-                }
-                if (record.addedNodes.length > 0) {
-                    // Add a new list item
-                    const addedNode = record.addedNodes[0];
-                    const parentListItem = panelContentContainer.querySelector(`li[data-uw-id="${record.target.dataset.uwId}"]`);
-                    const parentList = parentListItem.querySelector('ul');
-                    if (addedNode.nodeType === Node.ELEMENT_NODE) {
-                        setupDocument(addedNode);
-                        addedNode.dataset.uwNew = true;
-                        Array.from(addedNode.querySelectorAll('[data-uw-id]')).forEach(element => {
-                            element.dataset.uwNew = true;
-                        });
-                    }
-                    const listItem = createListItem(addedNode, parseInt(parentListItem.dataset.level) + 1);
-                    if (record.previousSibling) {
-                        const position = Array.prototype.indexOf.call(record.target.childNodes, record.previousSibling);
-                        const previousListItem = panelContentContainer.querySelector(`li[data-uw-parent-id="${record.target.dataset.uwId}"][data-uw-position="${position}"]`);
-                        if (previousListItem?.nextSibling) {
-                            parentList.insertBefore(listItem, previousListItem.nextSibling);
-                        } else {
-                            parentList.appendChild(listItem);
-                        }
-                    } else if (record.nextSibling) {
-                        const position = Array.prototype.indexOf.call(record.target.childNodes, record.nextSibling);
-                        const nextListItem = panelContentContainer.querySelector(`li[data-uw-parent-id="${record.target.dataset.uwId}"][data-uw-position="${position}"]`);
-                        parentList.insertBefore(listItem, nextListItem);
-                    } else {
-                        parentList.appendChild(listItem);
-                    }
-                    // Update its label if the previous sibling is a text node
-                    if (record.previousSibling?.nodeType === Node.TEXT_NODE) {
-                        const position = Array.prototype.indexOf.call(record.target.childNodes, record.previousSibling);
-                        const previousListItem = panelContentContainer.querySelector(`li[data-uw-parent-id="${record.target.dataset.uwId}"][data-uw-position="${position}"]`);
-                        previousListItem.querySelector('.element-label').textContent = record.previousSibling.textContent.trim();
-                        previousListItem.querySelector('button').dataset.label = record.previousSibling.textContent.trim();
-                    }
-                }
-                // Recalculate the dataset position of targeted list item children
-                let listItems = Array.from(panelContentContainer.querySelectorAll(`li[data-uw-parent-id="${record.target.dataset.uwId}"]`));
-                let listItemIndex = 0;
-                Array.from(record.target.childNodes).forEach(child => {
-                    if (
-                        child.hasAttribute?.('data-uw-ignore') ||
-                        (
-                            child.nodeType !== Node.ELEMENT_NODE &&
-                            child.textContent.trim() === ''
-                        )
-                    ) {
-                        return;
-                    }
-                    const listItem = listItems[listItemIndex];
-                    if (! listItem) {
-                        // Sometimes the child nodes order is not the same as the list items order
-                        // due to there are some comment nodes in between
-                        return;
-                    }
-                    listItem.dataset.uwPosition = Array.prototype.indexOf.call(record.target.childNodes, child);
-                    listItem.querySelector('button').dataset.uwPosition = listItem.dataset.uwPosition;
-                    listItemIndex++;
-                });
-            });
+            // FIXME: optimize this
+            const unorderedList = document.createElement('ul');
+            unorderedList.appendChild(createListItem(documentTree, 0, true));
+            panelContentContainer.innerHTML = '';
+            panelContentContainer.appendChild(unorderedList);
 
             // If the selected element is found
             if (selectedNode.node) {
@@ -1851,7 +1779,7 @@ const initializePanel = () => {
                 // Scroll to the selected element
                 scrollToElement(listItemButton);
             }
-        }, 0);
+        }, 50);
     }).observe(documentTree, {
         childList: true,
         subtree: true,

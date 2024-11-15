@@ -6,6 +6,7 @@ import './modules/context-menu.js';
 import * as shortcut from './modules/keyboard-shortcut.js';
 import * as topbar from './modules/topbar.js';
 import * as controlbar from './modules/controlbar.js';
+import * as contextbar from './modules/contextbar.js';
 import * as toolbar from './modules/toolbar.js';
 import * as canvas from './modules/canvas.js';
 import * as sidebar from './modules/sidebar.js';
@@ -28,9 +29,7 @@ const onWindowMessage = (event) => {
             // Emit events to trigger the sidebar panels refresh
             window.dispatchEvent(new CustomEvent('canvas:refresh'));
             window.dispatchEvent(new CustomEvent('pages:refresh'));
-            window.dispatchEvent(new CustomEvent('outline:refresh'));
             window.dispatchEvent(new CustomEvent('assets:refresh'));
-            window.dispatchEvent(new CustomEvent('templates:refresh'));
 
             //
             console.log('[Editor] Setting up the document... [DONE]');
@@ -74,6 +73,7 @@ const onWindowMouseDown = () => {
         // Initialize all the UI components
         topbar.initialize(appConfig);
         controlbar.initialize(appConfig);
+        contextbar.initialize(appConfig);
         toolbar.initialize(appConfig);
         sidebar.initialize(appConfig);
         canvas.initialize(appConfig);

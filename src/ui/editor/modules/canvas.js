@@ -1187,11 +1187,17 @@ const refreshSnappingBox = (elementCorners) => {
     const verticalLines = snappingBox.querySelectorAll('.vertical-line');
     const horizontalLines = snappingBox.querySelectorAll('.horizontal-line');
 
+    // Hide all lines
+    verticalLines.forEach(line => line.classList.add('hidden'));
+    horizontalLines.forEach(line => line.classList.add('hidden'));
+
+    // TODO: limit the vertical line height and horizontal line width
+    // TODO: add distance information to the snapping lines
+
     if (elementCorners[0].x !== null) {
-        const corners = elementCorners.filter(corner => corner.x !== null);
+        const corners = elementCorners.filter(corner => corner.x);
         verticalLines.forEach((line, index) => {
             if (typeof corners[index] === 'undefined') {
-                line.classList.add('hidden');
                 return;
             }
             let offset = selectedNodeBoundingRect.x * currentScale + currentTranslateX;
@@ -1208,15 +1214,12 @@ const refreshSnappingBox = (elementCorners) => {
             line.setAttribute('x2', offset);
             line.classList.remove('hidden');
         });
-    } else {
-        verticalLines.forEach(line => line.classList.add('hidden'));
     }
 
     if (elementCorners[0].y !== null) {
-        const corners = elementCorners.filter(corner => corner.y !== null);
+        const corners = elementCorners.filter(corner => corner.y);
         horizontalLines.forEach((line, index) => {
             if (typeof corners[index] === 'undefined') {
-                line.classList.add('hidden');
                 return;
             }
             let offset = selectedNodeBoundingRect.y * currentScale + currentTranslateY;
@@ -1233,8 +1236,6 @@ const refreshSnappingBox = (elementCorners) => {
             line.setAttribute('y2', offset);
             line.classList.remove('hidden');
         });
-    } else {
-        horizontalLines.forEach(line => line.classList.add('hidden'));
     }
 
     // Show the snapping box
@@ -1320,6 +1321,13 @@ const onHoveredBoxMouseUp = (event) => {
         return;
     }
 
+    if (
+        isEditingText &&
+        selectedNode.node === hoveredNode.node
+    ) {
+        return;
+    }
+
     // Cycle through the overlapping hovered elements
     if (event.altKey) {
         if (! (
@@ -1349,13 +1357,6 @@ const onHoveredBoxMouseUp = (event) => {
                 : null,
             hoveredElements[0].parentElement,
         );
-    }
-
-    if (
-        isEditingText &&
-        selectedNode.node === hoveredNode.node
-    ) {
-        return;
     }
 
     if (selectedNode.node !== hoveredNode.node) {
@@ -2583,14 +2584,24 @@ const findHoveredElements = (event, force = false) => {
             return;
         }
 
-        // Set the hovered element
-        setHoveredNode(
-            topMostHoveredElement,
-            topMostHoveredElement.parentElement
-                ? Array.prototype.indexOf.call(topMostHoveredElement.parentElement.childNodes, topMostHoveredElement)
-                : null,
-            topMostHoveredElement.parentElement,
-        );
+        if (
+            (
+                isEditingText &&
+                selectedNode.node.contains(topMostHoveredElement)
+            )
+        ) {
+            // Reset the hovered element
+            setHoveredNode(selectedNode.node, selectedNode.position, selectedNode.parent);
+        } else {
+            // Set the hovered element
+            setHoveredNode(
+                topMostHoveredElement,
+                topMostHoveredElement.parentElement
+                    ? Array.prototype.indexOf.call(topMostHoveredElement.parentElement.childNodes, topMostHoveredElement)
+                    : null,
+                topMostHoveredElement.parentElement,
+            );
+        }
 
         //
         hoveredNodeBoundingRect = topMostHoveredElement.getBoundingClientRect();
@@ -3251,10 +3262,11 @@ const onCanvasOverlayMouseUp = (event) => {
 
     // Request to clear the selected node if there is no hovered nodes
     if (hoveredElements.length === 0) {
-        window.dispatchEvent(new CustomEvent('element:select', {
-            detail: { target: 'canvas' }
-        }));
-        return;
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('element:select', {
+                detail: { target: 'canvas' }
+            }));
+        }, 0);
     }
 }
 
@@ -3284,8 +3296,8 @@ const onCanvasOverlayMouseMove = (event) => {
     if (isPreparedToDrag) {
         // Check if the drag distance is enough to start dragging
         if (
-            Math.abs(event.clientX - dragStartPoint.x) > 5 ||
-            Math.abs(event.clientY - dragStartPoint.y) > 5
+            Math.abs(event.clientX - dragStartPoint.x) > snapFactor ||
+            Math.abs(event.clientY - dragStartPoint.y) > snapFactor
         ) {
             //
             isPreparedToDrag = false;
@@ -3302,21 +3314,24 @@ const onCanvasOverlayMouseMove = (event) => {
                 return;
             }
 
-            // Flag to start dragging
-            isDragging = true;
-
             // Request to update the selected node
             if (selectedNode.node !== hoveredNode.node) {
-                window.dispatchEvent(new CustomEvent('element:select', {
-                    detail: {
-                        uwId: hoveredNode.node.dataset.uwId,
-                        uwPosition: hoveredNode.position,
-                        uwParentId: hoveredNode.parent?.dataset.uwId,
-                        target: 'canvas',
-                    }
-                }));
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('element:select', {
+                        detail: {
+                            uwId: hoveredNode.node.dataset.uwId,
+                            uwPosition: hoveredNode.position,
+                            uwParentId: hoveredNode.parent?.dataset.uwId,
+                            target: 'canvas',
+                        }
+                    }));
+                }, 0);
             }
             setSelectedNode(hoveredNode.node, hoveredNode.position, hoveredNode.parent);
+
+            if (! selectedNodeBoundingRect) {
+                updateSelectedNodeBoundingRect();
+            }
 
             if (dragPositionMode === 'free') {
                 // Re-calculate the dragging start point
@@ -3346,14 +3361,17 @@ const onCanvasOverlayMouseMove = (event) => {
                 draggingLine.setAttribute('data-uw-ignore', '');
                 draggingLine.classList.add('dragging-line', 'hidden');
                 canvasOverlay.appendChild(draggingLine);
-
-                // Hide the selected box
-                refreshSelectedBox();
             }
+
+            // Flag to start dragging
+            isDragging = true;
 
             // Hide the hovered box
             hoveredNodeBoundingRect = null;
             refreshHoveredBox();
+
+            // Refresh the selected box
+            refreshSelectedBox();
         }
 
         return;

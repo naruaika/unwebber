@@ -10,6 +10,8 @@ Unlike typical website builders, Unwebber is a sophisticated web editor that bri
 
 Just as Visual Studio Code transformed how we write code, analyze business data with Jupyter Notebook, write papers using LaTeX extension, create graphs using Graphviz, or write slide decks using Markdown, Unwebber aims to revolutionize how professionals interact with web technologies. Whether you're a designer, developer, or content creator, Unwebber bridges the gap between visual creativity and technical implementation.
 
+![Work-in-progress Prototype](res/screenshots/work-in-progress.png)
+
 ## Status
 
 Currently in early development. Stay tuned for updates.
@@ -78,6 +80,7 @@ In fact, when designing and developing, we have done some research on various so
 - Framer
 - Wappler
 - Pinegrow
+- Wix Studio
 - Droip WordPress
 - Adobe Dreamweaver
 - Adobe Edge Animate

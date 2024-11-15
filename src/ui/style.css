@@ -223,20 +223,16 @@ canvas {
     overflow-y: auto;
     overflow-x: hidden;
 
-    .main-controlbar {
+    .main-controlbar,
+    .main-contextbar {
+        box-sizing: border-box;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
         gap: 8px;
         padding: 8px;
 
+        color: var(--color-base);
         background-color: var(--color-gray-475);
-        border-top: var(--border-size) solid var(--color-primary);
-        border-bottom: var(--border-size) solid var(--color-primary);
-
-        /* Make sure to hide the wrapped elements */
-        height: 50px;
-        box-sizing: border-box;
 
         fieldset {
             display: flex;
@@ -320,21 +316,22 @@ canvas {
 
             .group {
                 display: flex;
-            }
+                z-index: 0;
 
-            .group .button {
-                border-radius: 0;
+                .button {
+                    border-radius: 0;
 
-                &:not(:first-child) {
-                    border-left: 0;
-                }
-                &:first-child {
-                    border-top-left-radius: 5px;
-                    border-bottom-left-radius: 5px;
-                }
-                &:last-child {
-                    border-top-right-radius: 5px;
-                    border-bottom-right-radius: 5px;
+                    &:not(:first-child) {
+                        border-left: 0;
+                    }
+                    &:first-child {
+                        border-top-left-radius: 5px;
+                        border-bottom-left-radius: 5px;
+                    }
+                    &:last-child {
+                        border-top-right-radius: 5px;
+                        border-bottom-right-radius: 5px;
+                    }
                 }
             }
         }
@@ -396,50 +393,14 @@ canvas {
                 }
             }
         }
-
     }
 
-    .main-contextbar {
-        display: flex;
-        flex-direction: row;
-        gap: 8px;
-        padding: 8px;
+    .main-controlbar {
+        height: 50px;
+        justify-content: space-between;
 
-        font-size: 11px;
-        color: var(--color-base);
-        background-color: var(--color-gray-475);
-
-        .group {
-            display: flex;
-
-            .button {
-                padding: 8px 6px;
-
-                font-size: 11px;
-                color: var(--color-base);
-                background-color: var(--color-gray-450);
-                border: var(--border-size) solid var(--color-primary);
-
-                -webkit-user-select: none;
-                user-select: none;
-
-                &:first-of-type {
-                    border-top-left-radius: 5px;
-                    border-bottom-left-radius: 5px;
-                }
-                &:last-of-type {
-                    border-top-right-radius: 5px;
-                    border-bottom-right-radius: 5px;
-                }
-                &:not(:first-of-type) {
-                    border-left: 0;
-                }
-
-                &:hover {
-                    background-color: var(--color-gray-400);
-                }
-            }
-        }
+        border-top: var(--border-size) solid var(--color-primary);
+        border-bottom: var(--border-size) solid var(--color-primary);
     }
 
     .main-toolbar {
@@ -543,6 +504,7 @@ canvas {
         .main-panel {
             flex: 1;
 
+            min-width: 50px;
             display: flex;
             box-sizing: border-box;
             flex-direction: column;

@@ -26,8 +26,8 @@ const createWindow = () => {
     mainWindow = new BrowserWindow({
         width: ! configData.app.window.fullscreen ? configData.app.window.size.width : 1200,
         height: ! configData.app.window.fullscreen ? configData.app.window.size.height : 800,
-        minWidth: 800,
-        minHeight: 600,
+        minWidth: 400,
+        minHeight: 300,
 
         title: 'Unwebber',
         titleBarStyle: 'hidden',

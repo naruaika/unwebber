@@ -103,6 +103,11 @@ const defaultSidebarLayoutSchema = [
                 children: [
                     {
                         type: 'panel',
+                        id: 'layout',
+                        title: 'Layout',
+                    },
+                    {
+                        type: 'panel',
                         id: 'transform',
                         title: 'Transform',
                     },
@@ -287,7 +292,7 @@ const write = (appConfig) => {
 
     // Save the updated configuration
     fs.writeFileSync(configPath, JSON.stringify(appConfig));
-    console.debug(`Configuration file saved to ${configPath}`);
+    console.debug(`Application config file saved to ${configPath}`);
 };
 
 /**

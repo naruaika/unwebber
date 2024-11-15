@@ -1,4 +1,5 @@
 .icon-unwebber { mask: url('./icons/unwebber.svg'); }
+
 .icon-box { mask: url('./icons/box.svg'); }
 .icon-check { mask: url('./icons/check.svg'); }
 .icon-chevron-down { mask: url('./icons/chevron-down.svg'); }
@@ -25,6 +26,13 @@
 .icon-eye { mask: url('./icons/eye.svg'); }
 .icon-eye-off { mask: url('./icons/eye-off.svg'); }
 .icon-dot { mask: url('./icons/dot.svg'); }
+.icon-text-align-left { mask: url('./icons/text-align-left.svg'); }
+.icon-text-align-center { mask: url('./icons/text-align-center.svg'); }
+.icon-text-align-right { mask: url('./icons/text-align-right.svg'); }
+.icon-text-align-justify { mask: url('./icons/text-align-justify.svg'); }
+.icon-text-bold { mask: url('./icons/text-bold.svg'); }
+.icon-text-italic { mask: url('./icons/text-italic.svg'); }
+.icon-text-underline { mask: url('./icons/text-underline.svg'); }
 
 .icon-blank { background: none !important; }
 .icon-move-to-bottom { background-image: url('./icons/move-to-bottom.svg'); }

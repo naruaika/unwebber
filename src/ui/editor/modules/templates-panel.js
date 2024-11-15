@@ -5,9 +5,15 @@ import { searchInText } from '../helpers.js';
 
 let panelContentContainer;
 
+let isPanelReady = false;
+
 const refreshPanel = () => {
     if (! panelContentContainer) {
         panelContentContainer = document.querySelector('#templates-panel .content__container');
+    }
+
+    if (isPanelReady) {
+        return;
     }
 
     //
@@ -84,6 +90,9 @@ const refreshPanel = () => {
 
     // Append the fragment to the panel content container
     panelContentContainer.appendChild(fragment);
+
+    // Set the panel ready flag
+    isPanelReady = true;
 
     //
     console.log('[Editor] Refreshing templates panel... [DONE]');

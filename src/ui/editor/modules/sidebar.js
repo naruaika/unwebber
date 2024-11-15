@@ -13,6 +13,7 @@ export const Panel = Object.freeze({
     CHARACTER: 'character',
     PARAGRAPH: 'paragraph',
     TEXT_STYLES: 'text-styles',
+    LAYOUT: 'layout',
     TRANSFORM: 'transform',
     NAVIGATOR: 'navigator',
     HISTORY: 'history',

@@ -45,6 +45,10 @@ const addElementAtCaret = (tagName) => {
     selection.addRange(range);
 }
 
+const addElementAfter = () => { /* TODO: implement this */ }
+
+const toggleWrapForSelection = () => { /* TODO: implement this */ }
+
 const onDocumentKeyDown = (event) => {
     if (document.activeElement.isContentEditable) {
         // Send the keydown event to the editor window,
@@ -106,7 +110,7 @@ const onDocumentKeyDown = (event) => {
         }
 
         if (event.code === 'Enter') {
-            // TODO: implement this
+            addElementAfter();
             event.preventDefault();
             return;
         }
@@ -134,19 +138,19 @@ const onDocumentKeyDown = (event) => {
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'KeyB') {
-            // TODO: implement this
+            toggleWrapForSelection('b');
             event.preventDefault();
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'KeyI') {
-            // TODO: implement this
+            toggleWrapForSelection('i');
             event.preventDefault();
             return;
         }
 
         if ((event.ctrlKey || event.metaKey) && event.code === 'KeyU') {
-            // TODO: implement this
+            toggleWrapForSelection('u');
             event.preventDefault();
             return;
         }

@@ -33,7 +33,7 @@ const refreshPanel = () => {
     // Add event listeners to the search input
     searchInput.addEventListener('input', (event) => {
         // Filter the template options based on the search input value
-        panelContentContainer.querySelectorAll('.template-element').forEach(element => {
+        panelContentContainer.querySelectorAll('.template-item').forEach(element => {
             const query = event.target.value.toLowerCase();
             const searchIn = element.dataset.label.toLowerCase();
             element.classList.toggle('hidden', ! searchInText(query, searchIn));
@@ -75,21 +75,17 @@ const refreshPanel = () => {
             ].includes(template.tag)
         )
         .forEach(template => {
-            const contentOption = document.createElement('div');
-            contentOption.classList.add('content-option');
-            contentOption.classList.add('template-element');
-            contentOption.dataset.label = template.name;
-            contentOption.dataset.tagName = template.tag;
-            contentOption.innerHTML = `${template.name} &lt;${template.tag}&gt;`;
-            contentOption.title = template.description;
-            fragment.appendChild(contentOption);
+            const templateItem = document.createElement('div');
+            templateItem.classList.add('template-item');
+            templateItem.dataset.label = template.name;
+            templateItem.dataset.tagName = template.tag;
+            templateItem.innerHTML = `${template.name} &lt;${template.tag}&gt;`;
+            templateItem.title = template.description;
+            fragment.appendChild(templateItem);
         });
 
-    // Remove all the existing elements from the panel
-    panelContentContainer.innerHTML = '';
-
-    // Append the fragment to the panel content container
-    panelContentContainer.appendChild(fragment);
+    // Replace the panel content with the fragment
+    panelContentContainer.replaceChildren(fragment);
 
     // Set the panel ready flag
     isPanelReady = true;

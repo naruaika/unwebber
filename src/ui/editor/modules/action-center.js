@@ -27,6 +27,7 @@ const onElementSelect = (event) => {
         setTimeout(() => {
             window.dispatchEvent(new CustomEvent('contextbar:refresh'));
             window.dispatchEvent(new CustomEvent('outline:refresh'));
+            window.dispatchEvent(new CustomEvent('fill-and-stroke:refresh'));
             window.dispatchEvent(new CustomEvent('attribute:refresh'));
             window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } }));
         }, 0);
@@ -47,6 +48,7 @@ const onElementSelect = (event) => {
     setTimeout(() => {
         window.dispatchEvent(new CustomEvent('contextbar:refresh'));
         window.dispatchEvent(new CustomEvent('outline:refresh'));
+        window.dispatchEvent(new CustomEvent('fill-and-stroke:refresh'));
         window.dispatchEvent(new CustomEvent('attribute:refresh'));
         window.dispatchEvent(new CustomEvent('canvas:refresh'));
     }, 0);

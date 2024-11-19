@@ -92,6 +92,7 @@ app.whenReady().then(() => {
     // Register IPC event handlers
     ipcMain.handle('api:schema', api.schema);
     ipcMain.handle('api:template', api.template);
+    ipcMain.handle('api:palette', api.palette);
     ipcMain.handle('config:load', config.load);
     ipcMain.on('project:create', project.create);
     ipcMain.on('project:open', project.open);

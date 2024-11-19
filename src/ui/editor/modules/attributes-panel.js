@@ -88,7 +88,15 @@ const onCheckboxChange = (event) => {
     setMetadata(selectedNode.node.dataset.uwId, _metadata);
 
     // Request to refresh the outline panel
-    window.dispatchEvent(new CustomEvent('outline:refresh'));
+    // FIXME: this will not work because we only depend on MutationObserver
+    // to repopulate the outline panel when the DOM changes. The workaround
+    // should be to dispatch a custom event to refresh the outline panel or
+    // make the observer listen to the attribute changes or, as proposed in
+    // the outline panel, to reimplement the element existence toggle using
+    // inline CSS property "display:none".
+    if (['id', 'hidden'].includes(event.target.dataset.key)) {
+        setTimeout(() => window.dispatchEvent(new CustomEvent('outline:refresh')), 0);
+    }
 }
 
 const createCheckBox = (attribute, container, cachedAttribute) => {
@@ -222,9 +230,9 @@ const onInputBoxBlur = (event, cachedAttribute) => {
     };
     setMetadata(selectedNode.node.dataset.uwId, _metadata);
 
-    // Request to refresh the outline panel only if the checkbox is checked
-    if (checked) {
-        window.dispatchEvent(new CustomEvent('outline:refresh'));
+    // Request to refresh the outline panel
+    if (['id', 'hidden'].includes(event.target.dataset.key)) {
+        setTimeout(() => window.dispatchEvent(new CustomEvent('outline:refresh')), 0);
     }
 
     // Hide the dropdown list

@@ -1,0 +1,20 @@
+[
+    { "name": "@charset" },
+    { "name": "@color-profile" },
+    { "name": "@container" },
+    { "name": "@counter-style" },
+    { "name": "@font-face" },
+    { "name": "@font-feature-values" },
+    { "name": "@font-palette-values" },
+    { "name": "@import" },
+    { "name": "@keyframes" },
+    { "name": "@layer" },
+    { "name": "@media" },
+    { "name": "@namespace" },
+    { "name": "@page" },
+    { "name": "@property" },
+    { "name": "@scope" },
+    { "name": "@starting-style" },
+    { "name": "@supports" },
+    { "name": "@view-transition" }
+]

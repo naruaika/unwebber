@@ -282,6 +282,16 @@ const undoAction = () => {
             setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 
             break;
+
+        case 'element:property':
+            // TODO: implement this
+            // if the property is visibility, request the outline panel update
+            break;
+
+        case 'element:attribute':
+            // TODO: implement this
+            // if the attribute is hidden, request the outline panel update
+            break;
     }
 
     actionHistoryIndex -= 1;
@@ -509,6 +519,14 @@ const redoAction = () => {
             // Request panel updates
             setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { transform: true } })), 0);
 
+            break;
+
+        case 'element:property':
+            // TODO: implement this
+            break;
+
+        case 'element:attribute':
+            // TODO: implement this
             break;
     }
 }

@@ -88,9 +88,6 @@ const refreshPanel = () => {
             //
             console.log('[Pages] Refreshing the panel...');
 
-            // Remove all the existing elements from the panel
-            panelContentContainer.innerHTML = '';
-
             // Create a DocumentFragment to hold the new elements
             const fragment = document.createDocumentFragment();
 
@@ -117,8 +114,8 @@ const refreshPanel = () => {
                 fragment.appendChild(listItem);
             });
 
-            // Append the fragment to the panel content container
-            panelContentContainer.appendChild(fragment);
+            // Replace the panel content with the fragment
+            panelContentContainer.replaceChildren(fragment);
         });
 
         isPanelReady = true;

@@ -7,7 +7,7 @@ import {
     apiSchema,
     setMetadata,
 } from '../globals.js';
-import { debounce, setupDocument } from '../helpers.js';
+import { debounce, styleElement } from '../helpers.js';
 
 const mainFrame = document.getElementById('main-iframe');
 let panelContentContainer;
@@ -1411,16 +1411,94 @@ const refreshBreadcrumb = () => {
     breadcrumb.classList.add('expanded');
 }
 
-const toggleElementInclusion = (event, button) => {
-    // TODO: implement the inclusion toggle action
+const toggleElementExistence = (event) => {
+    // Select the element if not selected
+    const element = mainFrame.contentDocument.querySelector(`[data-uw-id="${event.target.parentElement.dataset.uwId}"]`);
+
+    // Toggle the hidden attribute of the selected element
+    // FIXME: browser implements "display: none;" to hide an element,
+    // so it is not possible to toggle the "existence" of the element
+    // when the user set the display property in the style attribute.
+    if (! event.target.checked) {
+        element.setAttribute('hidden', 'hidden');
+    } else {
+        element.removeAttribute('hidden');
+    }
+
+    // Save the attribute value
+    // TODO: push to action history
+    const _metadata = metadata[element.dataset.uwId];
+    delete _metadata.attributes['hidden'];
+    if (! event.target.checked) {
+        _metadata.attributes['hidden'] = {
+            value: 'hidden',
+            checked: ! event.target.checked,
+        };
+    }
+    setMetadata(element.dataset.uwId, _metadata);
+
+    // Request panel updates
+    setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('canvas:refresh', { detail: { existence: true } }));
+        window.dispatchEvent(new CustomEvent('attribute:refresh'));
+    }, 0);
 }
 
-const toggleElementVisibility = (event, button) => {
-    const visibilityIcon = button.querySelector('.element-visibility');
+const toggleElementVisibility = (event) => {
+    // Select the element if not selected
+    const element = mainFrame.contentDocument.querySelector(`[data-uw-id="${event.target.parentElement.dataset.uwId}"]`);
+
+    // Toggle the visibility icon
+    const visibilityIcon = event.target.parentElement.querySelector('.element-visibility');
     visibilityIcon.classList.toggle('icon-eye');
     visibilityIcon.classList.toggle('icon-eye-off');
 
-    // TODO: implement the visibility toggle action
+    // Get the properties of the selected element
+    const _metadata = metadata[element.dataset.uwId];
+
+    // Save the current action state
+    const previousState = {
+        style: {
+            property: 'visibility',
+            value: _metadata.properties['visibility']?.value || 'visible',
+            checked: _metadata.properties['visibility']?.checked || false,
+        },
+    };
+
+    // Toggle the visibility property of the selected element
+    const newValue = previousState.style.value === 'visible' ? 'hidden' : 'visible';
+    const newChecked = ! previousState.style.checked;
+    styleElement(
+        element,
+        previousState.style.property,
+        newValue,
+        newChecked,
+    );
+
+    // Save the property value
+    _metadata.properties['visibility'] = { value: newValue, checked: newChecked };
+    setMetadata(element.dataset.uwId, _metadata);
+
+    // Request to save the action
+    const upcomingState = {
+        style: {
+            property: 'visibility',
+            value: _metadata.properties['visibility']?.value,
+            checked: _metadata.properties['visibility']?.checked,
+        },
+    };
+    const actionContext = { element };
+    window.dispatchEvent(new CustomEvent('action:save', {
+        detail: {
+            title: 'element:property',
+            previous: previousState,
+            upcoming: upcomingState,
+            reference: actionContext,
+        }
+    }));
+
+    // Request panel updates
+    setTimeout(() => window.dispatchEvent(new CustomEvent('canvas:refresh')), 0);
 }
 
 const onListItemMouseEnter = (event) => {
@@ -1569,19 +1647,19 @@ const createListItem = (node, level, isPanelReady = true) => {
             .categories
             .includes('metadata')
     ) {
-        const inclusionCheckbox = document.createElement('input');
-        inclusionCheckbox.type = 'checkbox';
-        inclusionCheckbox.title = 'Exclude from Viewport';
-        inclusionCheckbox.checked = true;
-        inclusionCheckbox.classList.add('element-inclusion');
-        inclusionCheckbox.addEventListener('contextmenu', (event) => event.stopPropagation());
-        inclusionCheckbox.addEventListener('dblclick', (event) => event.stopPropagation());
-        inclusionCheckbox.addEventListener('change', (event) => toggleElementInclusion(event, button));
-        button.appendChild(inclusionCheckbox);
+        const existenceCheckbox = document.createElement('input');
+        existenceCheckbox.type = 'checkbox';
+        existenceCheckbox.title = 'Exclude from Viewport';
+        existenceCheckbox.checked = node.hasAttribute('hidden') ? false : true;
+        existenceCheckbox.classList.add('element-existence');
+        existenceCheckbox.addEventListener('contextmenu', (event) => event.stopPropagation());
+        existenceCheckbox.addEventListener('dblclick', (event) => event.stopPropagation());
+        existenceCheckbox.addEventListener('change', toggleElementExistence);
+        button.appendChild(existenceCheckbox);
     } else {
         // add a spacer for the inclusion button
         const spacer = document.createElement('div');
-        spacer.classList.add('element-inclusion', 'icon', 'icon-dot');
+        spacer.classList.add('element-existence', 'icon', 'icon-dot');
         button.appendChild(spacer);
     }
 
@@ -1597,9 +1675,11 @@ const createListItem = (node, level, isPanelReady = true) => {
     ) {
         const visibilityButton = document.createElement('div');
         visibilityButton.title = 'Hide in Viewport';
-        visibilityButton.classList.add('element-visibility', 'icon', 'icon-eye');
+        visibilityButton.classList.add('element-visibility', 'icon');
+        const visibilityState = metadata[button.dataset.uwId].properties['visibility'];
+        visibilityButton.classList.add(visibilityState?.value === 'hidden' && visibilityState?.checked ? 'icon-eye-off' : 'icon-eye');
         visibilityButton.addEventListener('contextmenu', (event) => event.stopPropagation());
-        visibilityButton.addEventListener('click', (event) => toggleElementVisibility(event, button));
+        visibilityButton.addEventListener('click', toggleElementVisibility);
         visibilityButton.addEventListener('dblclick', (event) => event.stopPropagation());
         button.appendChild(visibilityButton);
     } else {
@@ -1737,6 +1817,8 @@ const initializePanel = () => {
 
     // Insert the search container before the panel content container
     panelContentContainer.parentElement.insertBefore(searchInputContainer, panelContentContainer);
+
+    // TODO: add opacity and blend mode controls
 
     // Populate the outline panel with the document tree
     setTimeout(() => {

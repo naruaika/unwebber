@@ -7,7 +7,7 @@ export const Mode = Object.freeze({
     LIVE: 'live',
 });
 
-export var currentMode;
+export var currentMode = Mode.MOVE;
 
 export const setMode = (targetMode) => {
     // Return if the target mode is invalid

@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('unwebber', {
     api: {
         schema: () => ipcRenderer.invoke('api:schema'),
         template: (tid, cname) => ipcRenderer.invoke('api:template', tid, cname),
+        palette: () => ipcRenderer.invoke('api:palette'),
     },
 
     config: {

@@ -176,6 +176,8 @@ export const initialize = () => {
     overflowButton.addEventListener('click', () => {
         overflowList.classList.toggle('hidden');
     });
+
+    // Hide the overflow list when the user clicks outside of it
     document.addEventListener('mousedown', (event) => {
         if (! event.target.closest('.main-controlbar .overflow__container')) {
             overflowList.classList.add('hidden');

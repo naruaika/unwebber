@@ -188,6 +188,18 @@ const refreshRulers = () => {
     // Fill the area to show the selected node position on the canvas
     // to prevent unnecessary re-rendering of the rulers
     if (selectedNodeBoundingRect) {
+        //
+        const _metadata = metadata[selectedNode.node.dataset.uwId];
+        if (
+            selectedNode.node.hasAttribute('hidden') ||
+            (
+                _metadata.properties['display']?.value === 'none' &&
+                _metadata.properties['display']?.checked
+            )
+        ) {
+            return;
+        }
+
         ctx = topRuler.getContext('2d', { alpha: false });
         ctx.fillStyle = hexToRgba(documentComputedStyle.getPropertyValue('--color-blue') + '55');
         ctx.fillRect(currentTranslateX + selectedNodeBoundingRect.left * currentScale - rulerHeight, 0, selectedNodeBoundingRect.width * currentScale, topRuler.height);
@@ -279,11 +291,11 @@ const refreshGrid = () => {
 }
 
 const updateMainFrameSize = () => {
-    // TODO: add support for viewport width and height,
-    // in case of game or presentation slides development?
+    // TODO: add support for viewport width and height, in case of game or presentation slides development?
+    // TODO: add placeholder when mainFrame.contentDocument.body.scrollHeight equals zero
     canvasContainerBoundingRect = canvasContainer.getBoundingClientRect();
     mainFrame.style.width = `${defaultBreakpoints.desktop}px`;
-    mainFrame.style.height = `${mainFrame.contentDocument.body.scrollHeight}px`;
+    mainFrame.style.height = `${Math.max(mainFrame.contentDocument.body.scrollHeight, 50)}px`;
     mainFrameBoundingRect = mainFrame.getBoundingClientRect();
 };
 
@@ -688,13 +700,26 @@ const updateSelectedNodeBoundingRect = () => {
 
 const refreshSelectedBox = () => {
     if (isDragging && dragPositionMode === 'layout') {
-        // Hide the hovered box
         selectedBox.classList.add('hidden');
         return;
     }
 
     if (selectedNodeBoundingRect) {
+        //
         if (panningTimeout) {
+            selectedBox.classList.add('hidden');
+            return;
+        }
+
+        //
+        const _metadata = metadata[selectedNode.node.dataset.uwId];
+        if (
+            selectedNode.node.hasAttribute('hidden') ||
+            (
+                _metadata.properties['display']?.value === 'none' &&
+                _metadata.properties['display']?.checked
+            )
+        ) {
             selectedBox.classList.add('hidden');
             return;
         }
@@ -715,7 +740,6 @@ const refreshSelectedBox = () => {
 
         // Apply the transformation matrix of the selected node
         // TODO: put the transformation origin into account
-        const _metadata = metadata[selectedNode.node.dataset.uwId];
         const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
         selectedBox.style.transform = `matrix(${matrix.a}, ${matrix.b}, ${matrix.c}, ${matrix.d}, ${matrix.e * currentScale}, ${matrix.f * currentScale})`;
 
@@ -861,6 +885,7 @@ const refreshSelectedBox = () => {
 
 const refreshHoveredBox = () => {
     if (hoveredNodeBoundingRect) {
+        //
         if (panningTimeout) {
             hoveredBox.classList.add('hidden');
             return;
@@ -885,7 +910,7 @@ const refreshHoveredBox = () => {
         // Apply the transformation matrix of the hovered node
         // TODO: put the transformation origin into account
         const _metadata = metadata[hoveredNode.node.dataset.uwId];
-        const matrix = new DOMMatrix(_metadata.properties.transform?.value || 'matrix(1, 0, 0, 1, 0, 0)');
+        const matrix = new DOMMatrix(_metadata.properties['transform']?.value || 'matrix(1, 0, 0, 1, 0, 0)');
         hoveredBox.style.transform = `matrix(${matrix.a}, ${matrix.b}, ${matrix.c}, ${matrix.d}, ${matrix.e * currentScale}, ${matrix.f * currentScale})`;
 
         //
@@ -1397,6 +1422,12 @@ const onHoveredBoxMouseUp = (event) => {
 
 const onHoveredBoxDoubleClick = (event) => {
     if (! isElementTextable(hoveredNode.node)) {
+        return;
+    }
+
+    // Prevent from editing text when the user is cycling
+    // through the overlapping hovered elements
+    if (event.altKey) {
         return;
     }
 
@@ -2420,7 +2451,7 @@ const onHoveredBoxContextMenu = (event) => {
             id: 'edit-text',
             label: 'Edit Text...',
             icon: 'edit',
-            action: () => onListItemDoubleClick(event),
+            action: () => { /* TODO: implement this */ },
             disabled: ! isElementTextable(selectedNode.node),
         },
     ];
@@ -2966,7 +2997,10 @@ const refreshPanel = (event = {}) => {
     // To force the selection box to be recalculated,
     // hide the hovering box while transforming the selected node,
     // and adjust the main frame size
-    if (event.detail?.transform) {
+    if (
+        event.detail?.transform ||
+        event.detail?.existence
+    ) {
         previousSelectedNode = null;
         hoveredNodeBoundingRect = null;
         updateMainFrameSize();

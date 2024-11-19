@@ -26,6 +26,7 @@
     "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
+    "colorjs.io": "^0.5.2",
     "electron-squirrel-startup": "^1.0.1",
     "update-electron-app": "^3.0.0"
   }

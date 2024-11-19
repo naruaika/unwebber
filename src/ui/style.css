@@ -637,13 +637,15 @@ canvas {
                     .main-sidebar__tab-header {
                         display: flex;
                         background-color: var(--color-gray-700);
+                        border-bottom: 1px solid var(--color-gray-400);
 
                         .main-sidebar__tab-header-item {
                             position: relative;
                             padding: 6px 8px;
+                            margin: -1px 0;
 
                             font-size: 10px;
-                            color: var(--color-base);
+                            color: var(--color-gray-300);
 
                             overflow: hidden;
                             white-space: nowrap;
@@ -653,20 +655,16 @@ canvas {
                             user-select: none;
 
                             &:hover {
-                                background-color: var(--color-gray);
-                            }
-
-                            &:active {
-                                background-color: var(--color-gray-800);
+                                color: var(--color-base);
                             }
 
                             &.selected {
-                                background-color: var(--color-gray-600);
+                                color: var(--color-base);
 
                                 &::before {
                                     content: '';
                                     position: absolute;
-                                    top: 0;
+                                    bottom: 0;
                                     left: 0;
                                     right: 0;
                                     height: 2px;
@@ -681,10 +679,6 @@ canvas {
                         display: flex;
                         flex-direction: column;
                         overflow: hidden;
-
-                        .main-sidebar__panel {
-                            flex: 1;
-                        }
                     }
                 }
             }
@@ -783,6 +777,7 @@ canvas {
             }
 
             > .content__container {
+                flex: 1;
                 display: flex;
                 height: fit-content;
                 padding: 8px;

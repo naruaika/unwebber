@@ -14,11 +14,12 @@ const refreshPanel = () => {
 
     //
     if (! selectedNode.node) {
-        panelContentContainer.querySelector('#selection').textContent = 'No selection';
+        panelContentContainer.querySelector('#selection').textContent = 'No selection.';
         return;
     }
 
     //
+    // TODO: indicate whether the style is inherited (not set explicitly)
     const computedStyle = window.getComputedStyle(selectedNode.node);
 
     //
@@ -79,7 +80,7 @@ const refreshPanel = () => {
     const fontSize = computedStyle.fontSize;
     const color = computedStyle.color;
     panelContentContainer.querySelector('#font-family-picker').textContent = fontFamily.replace(/"/g, '').split(',')[0];
-    panelContentContainer.querySelector('#font-size-picker').textContent = fontSize;
+    panelContentContainer.querySelector('#font-size-picker').textContent = Math.round(parseFloat(fontSize)) + 'px';
     panelContentContainer.querySelector('#color-picker').style.setProperty('--data-color', color);
 
     //

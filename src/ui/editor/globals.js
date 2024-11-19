@@ -2,6 +2,7 @@
 
 let appConfig = {};
 let apiSchema = {};
+let colorPalette = {};
 
 let mousePosition = { x: 0, y: 0 };
 
@@ -41,10 +42,12 @@ const setNodeToPaste = (node, position = null, parent = null) => nodeToPaste = {
 
 await window.unwebber.config.load().then(config => appConfig = config);
 await window.unwebber.api.schema().then(schema => apiSchema = schema);
+await window.unwebber.api.palette().then(palette => colorPalette = palette);
 
 export {
     appConfig,
     apiSchema,
+    colorPalette,
 
     mousePosition,
     metadata,

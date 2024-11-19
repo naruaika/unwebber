@@ -1,0 +1,1724 @@
+[
+    {
+        "name": "accept",
+        "type": "string",
+        "belongsTo": ["input"],
+        "description": "List of types the server accepts, typically a file type.",
+        "options": [
+            {
+                "value": "audio/*",
+                "belongsTo": ["input"],
+                "description": "Any audio file."
+            },
+            {
+                "value": "video/*",
+                "belongsTo": ["input"],
+                "description": "Any video file."
+            },
+            {
+                "value": "image/*",
+                "belongsTo": ["input"],
+                "description": "Any image file."
+            },
+            {
+                "value": "text/plain",
+                "belongsTo": ["input"],
+                "description": "Generic text file"
+            },
+            {
+                "value": "application/octet-stream",
+                "belongsTo": ["input"],
+                "description": "Generic binary file"
+            },
+            {
+                "value": "etc",
+                "belongsTo": ["input"],
+                "description": "User-defined value."
+            }
+        ],
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#accept",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types"
+        ]
+    },
+    {
+        "name": "accept-charset",
+        "type": "string",
+        "belongsTo": ["form"],
+        "description": "List of supported charsets.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form#accept-charset"
+        ]
+    },
+    {
+        "name": "accesskey",
+        "type": "char",
+        "belongsTo": "global",
+        "description": "Keyboard shortcut to activate or add focus to the element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/accesskey"
+    },
+    {
+        "name": "action",
+        "type": "string",
+        "belongsTo": ["form"],
+        "description": "The URI of a program that processes the information submitted via the form.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form#action"
+        ]
+    },
+    {
+        "name": "allow",
+        "type": "string",
+        "belongsTo": ["iframe"],
+        "description": "Specifies a feature-policy for the iframe.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#allow",
+            "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy#iframes"
+        ]
+    },
+    {
+        "name": "alt",
+        "type": "string",
+        "belongsTo": ["area", "img", "input"],
+        "description": "Alternative text in case an image can't be displayed.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/area#alt",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/img#alt",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#alt"
+        ]
+    },
+    {
+        "name": "as",
+        "type": "enum",
+        "belongsTo": ["link"],
+        "description": "Specifies the type of content being loaded by the link.",
+        "options": [
+            {
+                "value": "audio",
+                "belongsTo": ["link"],
+                "description": "The linked resource is an audio file."
+            },
+            {
+                "value": "document",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a document."
+            },
+            {
+                "value": "embed",
+                "belongsTo": ["link"],
+                "description": "The linked resource is an embeddable plugin."
+            },
+            {
+                "value": "fetch",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a fetch script."
+            },
+            {
+                "value": "font",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a font."
+            },
+            {
+                "value": "image",
+                "belongsTo": ["link"],
+                "description": "The linked resource is an image."
+            },
+            {
+                "value": "object",
+                "belongsTo": ["link"],
+                "description": "The linked resource is an object."
+            },
+            {
+                "value": "script",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a script."
+            },
+            {
+                "value": "style",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a stylesheet."
+            },
+            {
+                "value": "track",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a track."
+            },
+            {
+                "value": "video",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a video."
+            },
+            {
+                "value": "worker",
+                "belongsTo": ["link"],
+                "description": "The linked resource is a worker."
+            }
+        ],
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link#as"
+        ]
+    },
+    {
+        "name": "async",
+        "type": "boolean",
+        "belongsTo": ["script"],
+        "description": "Executes the script asynchronously.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#async"
+        ]
+    },
+    {
+        "name": "autocapitalize",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Sets whether input is automatically capitalized when entered by user.",
+        "options": [
+            {
+                "value": "off",
+                "belongsTo": "global",
+                "description": "No autocapitalization."
+            },
+            {
+                "value": "none",
+                "belongsTo": "global",
+                "description": "No autocapitalization."
+            },
+            {
+                "value": "on",
+                "belongsTo": "global",
+                "description": "Autocapitalize the first letter of each word."
+            },
+            {
+                "value": "sentences",
+                "belongsTo": "global",
+                "description": "Autocapitalize the first letter of each sentence."
+            },
+            {
+                "value": "words",
+                "belongsTo": "global",
+                "description": "Autocapitalize the first letter of each word."
+            },
+            {
+                "value": "characters",
+                "belongsTo": "global",
+                "description": "Autocapitalize all characters."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autocapitalize"
+    },
+    {
+        "name": "autofocus",
+        "type": "boolean",
+        "belongsTo": "global",
+        "description": "Automatically focus the form control when the page is loaded.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/autofocus"
+    },
+    {
+        "name": "autocomplete",
+        "type": "enum",
+        "belongsTo": ["form", "input", "select", "textarea"],
+        "options": [
+            {
+                "value": "off",
+                "belongsTo": ["form", "input", "select", "textarea"],
+                "description": "The browser is not allowed to automatically complete the input."
+            },
+            {
+                "value": "on",
+                "belongsTo": ["form", "input", "select", "textarea"],
+                "description": "The browser is allowed to automatically complete the input."
+            },
+            {
+                "value": "etc",
+                "belongsTo": ["form", "input", "select", "textarea"],
+                "description": "User-defined value."
+            }
+        ],
+        "description": "Indicates whether controls in this form can by default have their values automatically completed by the browser.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete"
+        ]
+    },
+    {
+        "name": "autoplay",
+        "type": "boolean",
+        "belongsTo": ["audio", "video"],
+        "description": "The audio or video should play as soon as possible.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio#autoplay",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video#autoplay",
+            "https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide"
+        ]
+    },
+    {
+        "name": "capture",
+        "type": "enum",
+        "belongsTo": ["input"],
+        "description": "Specifies a new file should be captured and which device should be used.",
+        "options": [
+            {
+                "value": "user",
+                "belongsTo": ["input"],
+                "description": "The user-facing camera and/or microphone should be used."
+            },
+            {
+                "value": "environment",
+                "belongsTo": ["input"],
+                "description": "The outward-facing camera and/or microphone should be used."
+            }
+        ],
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#capture"
+        ]
+    },
+    {
+        "name": "charset",
+        "type": "string",
+        "belongsTo": ["meta"],
+        "description": "Declares the character encoding of the page or script.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#charset"
+        ]
+    },
+    {
+        "name": "checked",
+        "type": "boolean",
+        "belongsTo": ["input"],
+        "description": "Indicates whether the element should be checked on page load.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#checked"
+        ]
+    },
+    {
+        "name": "cite",
+        "type": "string",
+        "belongsTo": ["blockquote", "del", "ins", "q"],
+        "description": "Contains a URI which points to the source of the quote or change.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blockquote#cite",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/del#cite",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ins#cite",
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/q#cite"
+        ]
+    },
+    {
+        "name": "class",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Often used with CSS to style elements with common properties.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/class"
+    },
+    {
+        "name": "cols",
+        "type": "number",
+        "belongsTo": ["textarea"],
+        "description": "Defines the number of columns in a textarea.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea#cols"
+        ],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "colspan",
+        "type": "number",
+        "belongsTo": ["td", "th"],
+        "description": "The colspan attribute defines the number of columns a cell should span.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "content",
+        "type": "string",
+        "belongsTo": ["meta"],
+        "description": "A value associated with http-equiv or name depending on the context.",
+        "documentation": []
+    },
+    {
+        "name": "contenteditable",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Indicates whether the element's content is editable.",
+        "options": [
+            {
+                "value": "true",
+                "belongsTo": "global",
+                "description": "The element is editable."
+            },
+            {
+                "value": "false",
+                "belongsTo": "global",
+                "description": "The element is not editable."
+            },
+            {
+                "value": "plaintext-only",
+                "belongsTo": "global",
+                "description": "The element is editable, but only plain text."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/contenteditable"
+    },
+    {
+        "name": "controls",
+        "type": "boolean",
+        "belongsTo": ["audio", "video"],
+        "description": "Indicates whether the browser should show playback controls to the user.",
+        "documentation": []
+    },
+    {
+        "name": "coords",
+        "type": "string",
+        "belongsTo": ["area"],
+        "description": "A set of values specifying the coordinates of the hot-spot region.",
+        "documentation": []
+    },
+    {
+        "name": "crossorigin",
+        "type": "enum",
+        "belongsTo": ["audio", "img", "link", "script", "video"],
+        "description": "How the element handles cross-origin requests.",
+        "options": [
+            {
+                "value": "",
+                "belongsTo": ["audio", "img", "link", "script", "video"],
+                "description": "A cross-origin request (i.e., with no credentials)."
+            },
+            {
+                "value": "anonymous",
+                "belongsTo": ["audio", "img", "link", "script", "video"],
+                "description": "A cross-origin request (i.e., with no credentials)."
+            },
+            {
+                "value": "use-credentials",
+                "belongsTo": ["audio", "img", "link", "script", "video"],
+                "description": "A cross-origin request with credentials."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "data",
+        "type": "string",
+        "belongsTo": ["object"],
+        "description": "Specifies the URL of the resource.",
+        "documentation": []
+    },
+    {
+        "name": "data-*",
+        "type": "dict",
+        "belongsTo": "global",
+        "description": "Lets you attach custom attributes to an HTML element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/data-*"
+    },
+    {
+        "name": "datetime",
+        "type": "string",
+        "belongsTo": ["del", "ins", "time"],
+        "description": "Indicates the date and time associated with the element.",
+        "documentation": []
+    },
+    {
+        "name": "decoding",
+        "type": "enum",
+        "belongsTo": ["img"],
+        "description": "Indicates the preferred method to decode the image.",
+        "options": [
+            {
+                "value": "sync",
+                "belongsTo": ["img"],
+                "description": "Decode the image synchronously."
+            },
+            {
+                "value": "async",
+                "belongsTo": ["img"],
+                "description": "Decode the image asynchronously."
+            },
+            {
+                "value": "auto",
+                "belongsTo": ["img"],
+                "description": "Let the browser decide."
+            }
+        ]
+    },
+    {
+        "name": "default",
+        "type": "boolean",
+        "belongsTo": ["track"],
+        "description": "Indicates that the track should be enabled unless the user's preferences indicate something different.",
+        "documentation": []
+    },
+    {
+        "name": "defer",
+        "type": "boolean",
+        "belongsTo": ["script"],
+        "description": "Indicates that the script should be executed after the page has been parsed.",
+        "documentation": []
+    },
+    {
+        "name": "dir",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Defines the text direction. Allowed values are ltr (left-to-right) or rtl (right-to-left).",
+        "options": [
+            {
+                "value": "ltr",
+                "belongsTo": "global",
+                "description": "Left to right."
+            },
+            {
+                "value": "rtl",
+                "belongsTo": "global",
+                "description": "Right to left."
+            },
+            {
+                "value": "auto",
+                "belongsTo": "global",
+                "description": "Let the browser decide."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir"
+    },
+    {
+        "name": "dirname",
+        "type": "string",
+        "belongsTo": ["input", "textarea"],
+        "description": "The dirname attribute on a form control element enables the submission of the element's directionality in form submission.",
+        "options": [
+            {
+                "value": "ltr",
+                "belongsTo": "global",
+                "description": "Left to right."
+            },
+            {
+                "value": "rtl",
+                "belongsTo": "global",
+                "description": "Right to left."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/dirname"
+    },
+    {
+        "name": "disabled",
+        "type": "boolean",
+        "belongsTo": ["button", "fieldset", "optgroup", "option", "select", "textarea", "input"],
+        "description": "Indicates whether the user can interact with the element.",
+        "documentation": []
+    },
+    {
+        "name": "download",
+        "type": "string",
+        "belongsTo": ["a", "area"],
+        "description": "Indicates that the hyperlink is to be used for downloading a resource.",
+        "documentation": []
+    },
+    {
+        "name": "draggable",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Defines whether the element can be dragged.",
+        "options": [
+            {
+                "value": "true",
+                "belongsTo": "global",
+                "description": "The element is draggable."
+            },
+            {
+                "value": "false",
+                "belongsTo": "global",
+                "description": "The element is not draggable."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/draggable"
+    },
+    {
+        "name": "enctype",
+        "type": "string",
+        "belongsTo": ["form"],
+        "description": "Defines the content type of the form data when the method is POST.",
+        "documentation": [
+            {
+                "value": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form#enctype",
+                "belongsTo": ["form"]
+            }
+        ]
+    },
+    {
+        "name": "enterkeyhint",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "The enterkeyhint specifies what action label (or icon) to present for the enter key on virtual keyboards. The attribute can be used with form controls (such as the value of textarea elements), or in elements in an editing host (e.g., using contenteditable attribute).",
+        "options": [
+            {
+                "value": "enter",
+                "belongsTo": "global",
+                "description": "The enter key is used to accept the input."
+            },
+            {
+                "value": "done",
+                "belongsTo": "global",
+                "description": "The enter key is used to indicate that the input is done and should be submitted."
+            },
+            {
+                "value": "go",
+                "belongsTo": "global",
+                "description": "The enter key is used to indicate that the input is complete and should be submitted."
+            },
+            {
+                "value": "next",
+                "belongsTo": "global",
+                "description": "The enter key is used to move to the next step in the input process."
+            },
+            {
+                "value": "previous",
+                "belongsTo": "global",
+                "description": "The enter key is used to move to the previous step in the input process."
+            },
+            {
+                "value": "search",
+                "belongsTo": "global",
+                "description": "The enter key is used to perform a search operation."
+            },
+            {
+                "value": "send",
+                "belongsTo": "global",
+                "description": "The enter key is used to send the input."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/enterkeyhint"
+    },
+    {
+        "name": "exportparts",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Defines the element's export parts.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/exportparts"
+    },
+    {
+        "name": "for",
+        "type": "string",
+        "belongsTo": ["label", "output"],
+        "description": "Describes elements which belongs to this one.",
+        "documentation": []
+    },
+    {
+        "name": "form",
+        "type": "string",
+        "belongsTo": ["button", "fieldset", "input", "label", "meter", "object", "output", "progress", "select", "textarea"],
+        "description": "Indicates the form that is the owner of the element.",
+        "documentation": []
+    },
+    {
+        "name": "formaction",
+        "type": "string",
+        "belongsTo": ["input", "button"],
+        "description": "Indicates the action of the element, overriding the action defined in the <form>.",
+        "documentation": []
+    },
+    {
+        "name": "formenctype",
+        "type": "string",
+        "belongsTo": ["button", "input"],
+        "description": "If the button/input is a submit button (e.g. type=\"submit\"), this attribute sets the encoding type to use during form submission. If this attribute is specified, it overrides the enctype attribute of the button's form owner.",
+        "documentation": []
+    },
+    {
+        "name": "formmethod",
+        "type": "enum",
+        "belongsTo": ["button", "input"],
+        "description": "If the button/input is a submit button (e.g. type=\"submit\"), this attribute sets the submission method to use during form submission (GET, POST, etc.). If this attribute is specified, it overrides the method attribute of the button's form owner.",
+        "options": [
+            {
+                "value": "get",
+                "belongsTo": ["button", "input"],
+                "description": "Submits the form data as part of the URL."
+            },
+            {
+                "value": "post",
+                "belongsTo": ["button", "input"],
+                "description": "Submits the form data as part of the request body."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "formnovalidate",
+        "type": "boolean",
+        "belongsTo": ["button", "input"],
+        "description": "If the button/input is a submit button (e.g. type=\"submit\"), this boolean attribute specifies that the form is not to be validated when it is submitted. If this attribute is specified, it overrides the novalidate attribute of the button's form owner.",
+        "documentation": []
+    },
+    {
+        "name": "formtarget",
+        "type": "string",
+        "belongsTo": ["button", "input"],
+        "description": "If the button/input is a submit button (e.g. type=\"submit\"), this attribute specifies the browsing context (for example, tab, window, or inline frame) in which to display the response that is received after submitting the form. If this attribute is specified, it overrides the target attribute of the button's form owner.",
+        "documentation": []
+    },
+    {
+        "name": "headers",
+        "type": "string",
+        "belongsTo": ["td", "th"],
+        "description": "IDs of the <th> elements which applies to this element.",
+        "documentation": []
+    },
+    {
+        "name": "height",
+        "type": "number",
+        "belongsTo": ["canvas", "embed", "iframe", "img", "input", "object", "video"],
+        "description": "Specifies the height of elements listed here. For all other elements, use the CSS height property.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "hidden",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Prevents rendering of given element, while keeping child elements, e.g. script elements, active.",
+        "options": [
+            {
+                "value": "",
+                "belongsTo": "global",
+                "description": "The element is not displayed."
+            },
+            {
+                "value": "hidden",
+                "belongsTo": "global",
+                "description": "The element is not displayed."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/hidden"
+    },
+    {
+        "name": "high",
+        "type": "number",
+        "belongsTo": ["meter"],
+        "description": "Indicates the lower bound of the upper range.",
+        "documentation": [],
+        "slider": {
+            "min": 0,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "href",
+        "type": "string",
+        "belongsTo": ["a", "area", "base", "link"],
+        "description": "The URL of a linked resource.",
+        "documentation": []
+    },
+    {
+        "name": "hreflang",
+        "type": "string",
+        "belongsTo": ["a", "link"],
+        "description": "Specifies the language of the linked resource.",
+        "documentation": []
+    },
+    {
+        "name": "http-equiv",
+        "type": "enum",
+        "belongsTo": ["meta"],
+        "description": "Defines a pragma directive.",
+        "options": [
+            {
+                "value": "content-security-policy",
+                "belongsTo": ["meta"],
+                "description": "Defines a content policy for the document."
+            },
+            {
+                "value": "content-type",
+                "belongsTo": ["meta"],
+                "description": "Gives the value in the Content-Type HTTP header."
+            },
+            {
+                "value": "default-style",
+                "belongsTo": ["meta"],
+                "description": "Specifies the preferred stylesheet to use."
+            },
+            {
+                "value": "refresh",
+                "belongsTo": ["meta"],
+                "description": "Specifies a delay before the browser automatically reloads the page."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "id",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Often used with CSS to style a specific element. The value of this attribute must be unique.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/id"
+    },
+    {
+        "name": "inert",
+        "type": "boolean",
+        "belongsTo": "global",
+        "description": "Indicates that the element is not interactive.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert"
+    },
+    {
+        "name": "integrity",
+        "type": "string",
+        "belongsTo": ["link", "script"],
+        "description": "Specifies a Subresource Integrity value that allows browsers to verify what they fetch.",
+        "documentation": []
+    },
+    {
+        "name": "inputmode",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Provides a hint as to the type of data that might be entered by the user while editing the element or its contents. The attribute can be used with form controls (such as the value of textarea elements), or in elements in an editing host (e.g., using contenteditable attribute).",
+        "options": [
+            {
+                "value": "none",
+                "belongsTo": "global",
+                "description": "No virtual keyboard."
+            },
+            {
+                "value": "text",
+                "belongsTo": "global",
+                "description": "Text input. (Default)"
+            },
+            {
+                "value": "decimal",
+                "belongsTo": "global",
+                "description": "Decimal input."
+            },
+            {
+                "value": "numeric",
+                "belongsTo": "global",
+                "description": "Numeric input."
+            },
+            {
+                "value": "tel",
+                "belongsTo": "global",
+                "description": "Telephone input."
+            },
+            {
+                "value": "search",
+                "belongsTo": "global",
+                "description": "Search input."
+            },
+            {
+                "value": "email",
+                "belongsTo": "global",
+                "description": "Email input."
+            },
+            {
+                "value": "url",
+                "belongsTo": "global",
+                "description": "URL input."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inputmode"
+    },
+    {
+        "name": "is",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Used to specify the standard HTML element should behave like a custom element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/is#browser_compatibility"
+    },
+    {
+        "name": "ismap",
+        "type": "boolean",
+        "belongsTo": ["img"],
+        "description": "Indicates that the image is part of a server-side image map.",
+        "documentation": []
+    },
+    {
+        "name": "itemid",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Global attribute that is used to uniquely identify an item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemid"
+    },
+    {
+        "name": "itemprop",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Used to add properties to an item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemprop"
+    },
+    {
+        "name": "itemref",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Provides a list of element IDs that are referenced by the item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemref"
+    },
+    {
+        "name": "itemscope",
+        "type": "boolean",
+        "belongsTo": "global",
+        "description": "Indicates that the element and its children is about a particular item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemscope"
+    },
+    {
+        "name": "itemtype",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Specifies the URL of the vocabulary that will be used to define the item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/itemtype"
+    },
+    {
+        "name": "kind",
+        "type": "enum",
+        "belongsTo": ["track"],
+        "description": "Specifies the kind of text track.",
+        "options": [
+            {
+                "value": "subtitles",
+                "belongsTo": ["track"],
+                "description": "Subtitles provide translation of content that cannot be understood by the viewer."
+            },
+            {
+                "value": "captions",
+                "belongsTo": ["track"],
+                "description": "Captions provide a transcription of audio content."
+            },
+            {
+                "value": "descriptions",
+                "belongsTo": ["track"],
+                "description": "Descriptions provide a textual description of the video content."
+            },
+            {
+                "value": "chapters",
+                "belongsTo": ["track"],
+                "description": "Chapters provide chapter titles for the video."
+            },
+            {
+                "value": "metadata",
+                "belongsTo": ["track"],
+                "description": "Metadata tracks contain metadata."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "label",
+        "type": "string",
+        "belongsTo": ["optgroup", "option", "track"],
+        "description": "Specifies a user-readable title of the element.",
+        "documentation": []
+    },
+    {
+        "name": "lang",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Defines the language used in the element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang"
+    },
+    {
+        "name": "loading",
+        "type": "enum",
+        "belongsTo": ["img", "iframe"],
+        "description": "Indicates if the element should be loaded lazily (loading=\"lazy\") or loaded immediately (loading=\"eager\").",
+        "options": [
+            {
+                "value": "lazy",
+                "belongsTo": ["img", "iframe"],
+                "description": "Defer loading of the resource until it reaches a calculated distance from the viewport."
+            },
+            {
+                "value": "eager",
+                "belongsTo": ["img", "iframe"],
+                "description": "Load the resource immediately."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "list",
+        "type": "string",
+        "description": "Identifies a list of pre-defined options to suggest to the user.",
+        "belongsTo": ["input"],
+        "documentation": []
+    },
+    {
+        "name": "loop",
+        "type": "boolean",
+        "belongsTo": ["audio", "marquee", "video"],
+        "description": "Indicates whether the media should start playing from the start when it's finished.",
+        "documentation": []
+    },
+    {
+        "name": "low",
+        "type": "number",
+        "belongsTo": ["meter"],
+        "description": "Indicates the upper bound of the lower range.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "max",
+        "type": "string",
+        "belongsTo": ["input", "meter", "progress"],
+        "description": "Indicates the maximum value allowed.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/max"
+        ]
+    },
+    {
+        "name": "maxlength",
+        "type": "number",
+        "belongsTo": ["input", "textarea"],
+        "description": "Defines the maximum number of characters allowed in the element.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/maxlength"
+        ],
+        "slider": {
+            "min": 1,
+            "max": 160,
+            "step": 1
+        }
+    },
+    {
+        "name": "min",
+        "type": "string",
+        "belongsTo": ["input", "meter", "progress"],
+        "description": "Indicates the minimum value allowed.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/min"
+        ]
+    },
+    {
+        "name": "minlength",
+        "type": "number",
+        "belongsTo": ["input", "textarea"],
+        "description": "Defines the minimum number of characters allowed in the element.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/minlength"
+        ],
+        "slider": {
+            "min": 1,
+            "max": 160,
+            "step": 1
+        }
+    },
+    {
+        "name": "media",
+        "type": "string",
+        "belongsTo": ["a", "area", "link", "source", "style"],
+        "description": "Specifies a hint of the media for which the linked resource was designed.",
+        "documentation": []
+    },
+    {
+        "name": "method",
+        "type": "enum",
+        "belongsTo": ["form"],
+        "description": "Defines which HTTP method to use when submitting the form. Can be GET (default) or POST.",
+        "options": [
+            {
+                "value": "GET",
+                "belongsTo": ["form"],
+                "description": "Submits the form data as part of the URL."
+            },
+            {
+                "value": "POST",
+                "belongsTo": ["form"],
+                "description": "Submits the form data as part of the request body."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "min",
+        "type": "number",
+        "belongsTo": ["input", "meter"],
+        "description": "Indicates the minimum value allowed.",
+        "documentation": [],
+        "slider": {
+            "min": 0,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "multiple",
+        "type": "boolean",
+        "belongsTo": ["input", "select"],
+        "description": "Indicates whether multiple values can be entered in an input of the type email or file.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/multiple"
+    },
+    {
+        "name": "muted",
+        "type": "boolean",
+        "belongsTo": ["audio", "video"],
+        "description": "Indicates whether the audio will be initially silenced on page load.",
+        "documentation": []
+    },
+    {
+        "name": "name",
+        "type": "string",
+        "belongsTo": ["button", "form", "fieldset", "iframe", "input", "object", "output", "select", "textarea", "map", "meta", "param"],
+        "description": "Name of the element. For example used by the server to identify the fields in form submits.",
+        "documentation": []
+    },
+    {
+        "name": "nonce",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Defines a cryptographic nonce (\"number used once\")",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/nonce"
+    },
+    {
+        "name": "novalidate",
+        "type": "boolean",
+        "belongsTo": ["form"],
+        "description": "This attribute indicates that the form shouldn't be validated when submitted."
+    },
+    {
+        "name": "open",
+        "type": "boolean",
+        "belongsTo": ["details", "dialog"],
+        "description": "Indicates whether the contents are currently visible (in the case of a <details> element) or whether the dialog is active and can be interacted with (in the case of a <dialog> element).",
+        "documentation": []
+    },
+    {
+        "name": "optimum",
+        "type": "number",
+        "belongsTo": ["meter"],
+        "description": "Indicates the optimal numeric value.",
+        "documentation": [],
+        "slider": {
+            "min": 0,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "pattern",
+        "type": "string",
+        "belongsTo": ["input"],
+        "description": "Defines a regular expression which the element's value will be validated against.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/pattern"
+    },
+    {
+        "name": "part",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Contains a space-separated list of the part names of the element",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/part"
+    },
+    {
+        "name": "ping",
+        "type": "string",
+        "belongsTo": ["a", "area"],
+        "description": "The ping attribute specifies a space-separated list of URLs to be notified if a user follows the hyperlink.",
+        "documentation": []
+    },
+    {
+        "name": "placeholder",
+        "type": "string",
+        "belongsTo": ["input", "textarea"],
+        "description": "Provides a hint to the user of what can be entered in the field.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/placeholder"
+    },
+    {
+        "name": "playsinline",
+        "type": "boolean",
+        "belongsTo": ["video"],
+        "description": "A Boolean attribute indicating that the video is to be played \"inline\"; that is, within the element's playback area. Note that the absence of this attribute does not imply that the video will always be played in fullscreen.",
+        "documentation": []
+    },
+    {
+        "name": "poster",
+        "type": "string",
+        "belongsTo": ["video"],
+        "description": "A URL indicating a poster frame to show until the user plays or seeks.",
+        "documentation": []
+    },
+    {
+        "name": "popover",
+        "type": "boolean",
+        "belongsTo": "global",
+        "description": "Represents a popover.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/popover"
+    },
+    {
+        "name": "popovertarget",
+        "type": "string",
+        "belongsTo": ["button"],
+        "description": "Turns a button element into a popover control button.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#popovertarget"
+    },
+    {
+        "name": "popovertargetaction",
+        "type": "string",
+        "belongsTo": ["button"],
+        "description": "Specifies the action to be performed on a popover element being controlled by a control button.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button#popovertargetaction"
+    },
+    {
+        "name": "preload",
+        "type": "enum",
+        "belongsTo": ["audio", "video"],
+        "description": "Indicates whether the whole resource, parts of it or nothing should be preloaded.",
+        "options": [
+            {
+                "value": "none",
+                "belongsTo": ["audio", "video"],
+                "description": "Do not preload any data."
+            },
+            {
+                "value": "metadata",
+                "belongsTo": ["audio", "video"],
+                "description": "Preload only metadata."
+            },
+            {
+                "value": "auto",
+                "belongsTo": ["audio", "video"],
+                "description": "Preload the entire resource."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "readonly",
+        "type": "boolean",
+        "belongsTo": ["input", "textarea"],
+        "description": "Indicates whether the element can be edited.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/readonly"
+    },
+    {
+        "name": "referrerpolicy",
+        "type": "enum",
+        "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+        "description": "Specifies which referrer is sent when fetching the resource.",
+        "options": [
+            {
+                "value": "no-referrer",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "The referrer information will not be sent."
+            },
+            {
+                "value": "no-referrer-when-downgrade",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "The referrer information will not be sent when navigating from HTTPS to HTTP."
+            },
+            {
+                "value": "origin",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Only send the origin (scheme, host, and port) as the referrer."
+            },
+            {
+                "value": "origin-when-cross-origin",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Send the origin as the referrer when the destination is a different origin."
+            },
+            {
+                "value": "same-origin",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Send the full URL as the referrer when the destination is the same origin."
+            },
+            {
+                "value": "strict-origin",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Send the origin (scheme, host, and port) as the referrer when the destination is a same-origin HTTPS URL."
+            },
+            {
+                "value": "strict-origin-when-cross-origin",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Send the origin (scheme, host, and port) as the referrer when the destination is a cross-origin HTTPS URL. (Default)"
+            },
+            {
+                "value": "unsafe-url",
+                "belongsTo": ["a", "area", "iframe", "img", "link", "script"],
+                "description": "Send the full URL as the referrer."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "rel",
+        "type": "enum",
+        "belongsTo": ["a", "area", "link", "form"],
+        "description": "Specifies the relationship of the target object to the link object.",
+        "options": [
+            {
+                "value": "alternate",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies an alternate version of the document, such as a translated version or a version with different content."
+            },
+            {
+                "value": "author",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies the author of the document."
+            },
+            {
+                "value": "bookmark",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies a bookmark within the document."
+            },
+            {
+                "value": "canonical",
+                "belongsTo": ["link"],
+                "description": "Specifies the canonical URL for the document, which helps search engines to eliminate duplicate content."
+            },
+            {
+                "value": "dns-prefetch",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively perform DNS resolution for the target resource's origin."
+            },
+            {
+                "value": "external",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies an external document, such as a document hosted on a different website."
+            },
+            {
+                "value": "expect",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively perform resource loading for the target resource."
+            },
+            {
+                "value": "help",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies a help document that provides additional information or instructions."
+            },
+            {
+                "value": "icon",
+                "belongsTo": ["link"],
+                "description": "Specifies an icon for the document."
+            },
+            {
+                "value": "license",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies a license document that contains the terms and conditions for using the current document."
+            },
+            {
+                "value": "manifest",
+                "belongsTo": ["link"],
+                "description": "Specifies the location of the document's manifest, which is a JSON file that contains metadata about the document."
+            },
+            {
+                "value": "me",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies the author of the document."
+            },
+            {
+                "value": "modulepreload",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively perform resource loading for the target resource as a module."
+            },
+            {
+                "value": "next",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies the next document in a sequence, such as the next page in a book or the next step in a tutorial."
+            },
+            {
+                "value": "nofollow",
+                "belongsTo": ["a", "area", "form"],
+                "description": "Specifies that search engines should not follow the link and should not consider it for ranking purposes."
+            },
+            {
+                "value": "noopener",
+                "belongsTo": ["a", "area", "form"],
+                "description": "Specifies that the browser should not send a HTTP referer header and should not allow the new browsing context to access the window.opener property, providing more security."
+            },
+            {
+                "value": "noreferrer",
+                "belongsTo": ["a", "area", "form"],
+                "description": "Specifies that the browser should not send a HTTP referer header if the user follows the element, providing more privacy."
+            },
+            {
+                "value": "opener",
+                "belongsTo": ["a", "area", "form"],
+                "description": "Specifies that the browser should send a HTTP referer header and should allow the new browsing context to access the window.opener property."
+            },
+            {
+                "value": "pingback",
+                "belongsTo": ["link"],
+                "description": "Specifies the location of a pingback service that handles pingbacks for the document."
+            },
+            {
+                "value": "preconnect",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively connect to the target resource's origin."
+            },
+            {
+                "value": "prefetch",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively fetch and cache the target resource."
+            },
+            {
+                "value": "preload",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively fetch the target resource."
+            },
+            {
+                "value": "prerender",
+                "belongsTo": ["link"],
+                "description": "Specifies that the browser should preemptively render the target resource."
+            },
+            {
+                "value": "prev",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies the previous document in a sequence, such as the previous page in a book or the previous step in a tutorial."
+            },
+            {
+                "value": "privacy-policy",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies a privacy policy document that provides information about how the user's data is handled."
+            },
+            {
+                "value": "search",
+                "belongsTo": ["a", "area", "link", "form"],
+                "description": "Specifies a search document that allows searching within the current document or website."
+            },
+            {
+                "value": "stylesheet",
+                "belongsTo": ["link"],
+                "description": "Specifies a stylesheet for the document."
+            },
+            {
+                "value": "tag",
+                "belongsTo": ["a", "area"],
+                "description": "Specifies a tag (keyword) for the current document, providing additional metadata or categorization."
+            },
+            {
+                "value": "terms-of-service",
+                "belongsTo": ["a", "area", "link"],
+                "description": "Specifies a terms of service document that contains the terms and conditions for using the current document."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel"
+    },
+    {
+        "name": "required",
+        "type": "boolean",
+        "belongsTo": ["input", "select", "textarea"],
+        "description": "Indicates whether this element is required to fill out or not.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/required"
+    },
+    {
+        "name": "reversed",
+        "type": "boolean",
+        "belongsTo": ["ol"],
+        "description": "Indicates whether the list should be displayed in a descending order instead of an ascending order.",
+        "documentation": []
+    },
+    {
+        "name": "role",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Defines an explicit role for an element for use by assistive technologies.",
+        "documentation": []
+    },
+    {
+        "name": "rows",
+        "type": "number",
+        "belongsTo": ["textarea"],
+        "description": "Defines the number of rows in a text area.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "rowspan",
+        "type": "number",
+        "belongsTo": ["td", "th"],
+        "description": "Defines the number of rows a table cell should span over.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "sandbox",
+        "type": "string",
+        "belongsTo": ["iframe"],
+        "description": "Stops a document loaded in an iframe from using certain features (such as submitting forms or opening new windows).",
+        "documentation": []
+    },
+    {
+        "name": "scope",
+        "type": "string",
+        "belongsTo": ["th"],
+        "description": "Defines the cells that the header test (defined in the th element) relates to.",
+        "documentation": []
+    },
+    {
+        "name": "selected",
+        "type": "boolean",
+        "belongsTo": ["option"],
+        "description": "Defines a value which will be selected on page load.",
+        "documentation": []
+    },
+    {
+        "name": "shape",
+        "type": "string",
+        "belongsTo": ["a", "area"],
+        "description": "Defines the shape of the area.",
+        "documentation": []
+    },
+    {
+        "name": "size",
+        "type": "number",
+        "belongsTo": ["input", "select"],
+        "description": "Defines the width of the element (in pixels). If the element's type attribute is text or password then it's the number of characters.",
+        "documentation": [
+            "https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/size"
+        ],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "sizes",
+        "type": "string",
+        "belongsTo": ["link", "img", "source"],
+        "description": "Defines the sizes of the icons for visual media.",
+        "documentation": []
+    },
+    {
+        "name": "slot",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Assigns a slot in a shadow DOM shadow tree to an element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/slot"
+    },
+    {
+        "name": "span",
+        "type": "number",
+        "belongsTo": ["col", "colgroup"],
+        "description": "Defines the number of columns a table cell should span over.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "spellcheck",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Indicates whether spell checking is allowed for the element.",
+        "options": [
+            {
+                "value": "",
+                "belongsTo": "global",
+                "description": "The element is to have its spelling and grammar checked."
+            },
+            {
+                "value": "true",
+                "belongsTo": "global",
+                "description": "The element is to have its spelling and grammar checked."
+            },
+            {
+                "value": "false",
+                "belongsTo": "global",
+                "description": "The element is to have its spelling and grammar checked."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/spellcheck"
+    },
+    {
+        "name": "src",
+        "type": "string",
+        "belongsTo": ["audio", "embed", "iframe", "img", "input", "script", "source", "track", "video"],
+        "description": "The URL of the embeddable content.",
+        "documentation": []
+    },
+    {
+        "name": "srcdoc",
+        "type": "string",
+        "belongsTo": ["iframe"],
+        "description": "A document to render in the iframe.",
+        "documentation": []
+    },
+    {
+        "name": "srclang",
+        "type": "string",
+        "belongsTo": ["track"],
+        "description": "Specifies the language of the track text data (required if kind=\"subtitles\").",
+        "documentation": []
+    },
+    {
+        "name": "srcset",
+        "type": "string",
+        "belongsTo": ["img", "source"],
+        "description": "One or more responsive image candidates.",
+        "documentation": []
+    },
+    {
+        "name": "start",
+        "type": "number",
+        "belongsTo": ["ol"],
+        "description": "Defines the first number if other than 1.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "step",
+        "type": "number",
+        "belongsTo": ["input"],
+        "description": "Specifies the interval between valid values in a number-based input.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "style",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Defines CSS styles which will override styles previously set.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/style"
+    },
+    {
+        "name": "tabindex",
+        "type": "number",
+        "belongsTo": "global",
+        "description": "Overrides the browser's default tab order and follows the one specified instead.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex",
+        "slider": {
+            "min": 1,
+            "max": 100,
+            "step": 1
+        }
+    },
+    {
+        "name": "target",
+        "type": "enum",
+        "belongsTo": ["a", "area", "base", "form"],
+        "description": "Specifies where to open the linked document (in the case of an <a> element) or where to display the response received (in the case of a <form> element)",
+        "options": [
+            {
+                "value": "_blank",
+                "belongsTo": ["a", "area", "base", "form"],
+                "description": "Opens the linked document in a new window or tab."
+            },
+            {
+                "value": "_parent",
+                "belongsTo": ["a", "area", "base", "form"],
+                "description": "Opens the linked document in the parent frame. If there is no parent, it acts as the _self value."
+            },
+            {
+                "value": "_self",
+                "belongsTo": ["a", "area", "base", "form"],
+                "description": "Opens the linked document in the same frame as it was clicked. (Default)"
+            },
+            {
+                "value": "_top",
+                "belongsTo": ["a", "area", "base", "form"],
+                "description": "Opens the linked document in the topmost frame."
+            }
+        ],
+        "documentation": []
+    },
+    {
+        "name": "title",
+        "type": "string",
+        "belongsTo": "global",
+        "description": "Text to be displayed in a tooltip when hovering over the element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/title"
+    },
+    {
+        "name": "translate",
+        "type": "enum",
+        "belongsTo": "global",
+        "description": "Specify whether an element's attribute values and the values of its text node children are to be translated when the page is localized, or whether to leave them unchanged.",
+        "options": [
+            {
+                "value": "",
+                "belongsTo": "global",
+                "description": "Indicates that the element will be translated."
+            },
+            {
+                "value": "yes",
+                "belongsTo": "global",
+                "description": "Indicates that the element will be translated."
+            },
+            {
+                "value": "no",
+                "belongsTo": "global",
+                "description": "Indicates that the element will not be translated."
+            }
+        ],
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/translate"
+    },
+    {
+        "name": "type",
+        "type": "string",
+        "belongsTo": ["button", "input", "embed", "object", "ol", "script", "source", "style", "menu", "link"],
+        "description": "Defines the type of the element.",
+        "documentation": []
+    },
+    {
+        "name": "usemap",
+        "type": "string",
+        "belongsTo": ["img", "input", "object"],
+        "description": "Specifies an image as a client-side image map.",
+        "documentation": []
+    },
+    {
+        "name": "value",
+        "type": "string",
+        "belongsTo": ["button", "data", "input", "li", "meter", "option", "progress", "param"],
+        "description": "Defines a default value which will be displayed in the element on page load.",
+        "documentation": []
+    },
+    {
+        "name": "width",
+        "type": "number",
+        "belongsTo": ["canvas", "embed", "iframe", "img", "input", "object", "video"],
+        "description": "For the elements listed here, this establishes the element's width.",
+        "documentation": [],
+        "slider": {
+            "min": 1,
+            "max": 1000,
+            "step": 1
+        }
+    },
+    {
+        "name": "wrap",
+        "type": "enum",
+        "belongsTo": ["textarea"],
+        "description": "Indicates whether the text should be wrapped.",
+        "options": [
+            {
+                "value": "hard",
+                "belongsTo": ["textarea"],
+                "description": "The browser automatically inserts line breaks (CR+LF) so that each line has no more than the width of the control; the cols attribute must also be specified for this to take effect."
+            },
+            {
+                "value": "soft",
+                "belongsTo": ["textarea"],
+                "description": "The browser ensures that all line breaks in the value consist of a CR+LF pair, but does not insert any additional line breaks."
+            }
+        ],
+        "documentation": []
+    }
+]

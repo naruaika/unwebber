@@ -83,6 +83,7 @@ We use the following dependencies:
 - [Electron](https://github.com/electron/electron), licensed under the MIT License
 - [Electron Forge](https://github.com/electron/forge), licensed under the MIT License
 - [Feather Icons](https://github.com/feathericons/feather), licensed under the MIT License
+- [Color.js](https://colorjs.io/), licensed under the MIT License
 
 ## Similars
 

@@ -7,24 +7,27 @@ const path = require('node:path');
 const schema = () => {
     // Get API schema file path
     const filePath = path.join(__dirname, '../../res/schemas/api.json');
+    const folderPath = path.join(__dirname, '../../res/schemas');
 
-    let apiSchema = {};
+    let schema = {};
 
+    // Read the API schema file
     try {
-        // Read the API schema file
-        apiSchema = JSON.parse(fs.readFileSync(filePath));
+        schema = JSON.parse(fs.readFileSync(filePath));
+        for (const key in schema) {
+            const dependencyFilePath = path.join(folderPath, schema[key]);
+            try {
+                schema[key] = JSON.parse(fs.readFileSync(dependencyFilePath));
+            } catch (error) {
+                console.error(error);
+            }
+        }
         console.debug(`Web API schema file loaded from ${filePath}`);
     } catch (error) {
-        if (error.code === 'ENOENT') {
-            // Create the API schema file if it doesn't exist
-            fs.writeFileSync(filePath, JSON.stringify(apiSchema));
-            console.debug(`Web API schema file created at ${filePath}`);
-        } else {
-            console.error(error);
-        }
+        console.error(error);
     }
 
-    return apiSchema;
+    return schema;
 };
 
 /**
@@ -49,17 +52,38 @@ const template = (event, templateId, className = 'element') => {
         return '<div>[Empty]</div>';
     }
 
-    let apiTemplate = '';
+    let template = '';
 
+    // Read the API template file
     try {
-        // Read the API template file
-        apiTemplate = fs.readFileSync(filePath, 'utf8');
+        template = fs.readFileSync(filePath, 'utf8');
         console.debug(`Web API template file loaded from ${filePath}`);
     } catch (error) {
         console.error(error);
     }
 
-    return apiTemplate;
+    return template;
 }
 
-module.exports = { schema, template };
+/**
+ * Predefined color palettes from well-known design systems,
+ * such as HTML colors, Bootstrap, Tailwind CSS, etc.
+ */
+const palette = () => {
+    // Get API palette file path
+    const filePath = path.join(__dirname, '../../res/schemas/palette.json');
+
+    let palette = {};
+
+    // Read the API palette file
+    try {
+        palette = JSON.parse(fs.readFileSync(filePath));
+        console.debug(`Application palette file loaded from ${filePath}`);
+    } catch (error) {
+        console.error(error);
+    }
+
+    return palette;
+}
+
+module.exports = { schema, template, palette };

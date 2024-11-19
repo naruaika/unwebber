@@ -107,50 +107,70 @@ export const searchInText = (query, text) => {
 }
 
 export const getAppliedStyleRules = (element) => {
-    let appliedStyleRules = [];
+    let styleRules = [];
 
-    // Get CSS style rules from all stylesheets applied to the element
-    const mainFrame = document.getElementById('main-iframe');
-    let cssStyleRules = Array.from(mainFrame.contentDocument.styleSheets)
-        .slice(0, -1)
-        .flatMap(styleSheet => Array.from(styleSheet.cssRules))
-        .filter(cssRule => element.matches(cssRule.selectorText));
-    for (let i = 0; i < cssStyleRules.length; i++) {
-        const cssStyleRule = cssStyleRules[i];
-        appliedStyleRules.push({
-            order: i,
-            selector: cssStyleRule.selectorText,
-            stylesheet: cssStyleRule.parentStyleSheet.href,
-            styles: Object.entries(cssStyleRule.style)
-                .filter(([key, value]) => value !== '' && isNaN(key))
-                .reduce((style, [key, value]) => {
-                    style[convertCamelToKebab(key)] = value;
-                    return style;
-                }, {}),
-        })
-    }
+    // TODO: Get CSS style rules from all stylesheets applied to the element
+    // const mainFrame = document.getElementById('main-iframe');
+    // let cssStyleRules = Array.from(mainFrame.contentDocument.styleSheets)
+    //     .slice(0, -1)
+    //     .flatMap(styleSheet => Array.from(styleSheet.cssRules))
+    //     .filter(cssRule => element.matches(cssRule.selectorText));
+    // for (let i = 0; i < cssStyleRules.length; i++) {
+    //     const cssStyleRule = cssStyleRules[i];
+    //     appliedStyleRules.push({
+    //         order: i,
+    //         selector: cssStyleRule.selectorText,
+    //         stylesheet: cssStyleRule.parentStyleSheet.href,
+    //         styles: Object.entries(cssStyleRule.style)
+    //             .filter(([key, value]) => value !== '' && isNaN(key))
+    //             .reduce((style, [key, value]) => {
+    //                 style[convertCamelToKebab(key)] = value;
+    //                 return style;
+    //             }, {}),
+    //     })
+    // }
 
     // Get the inline CSS style rules applied to the element
     if (element.getAttribute('style')) {
-        appliedStyleRules.push({
-            order: cssStyleRules.length,
+        // Get the rules from CSSStyleDeclaration
+        const styles = Object.keys(element.style)
+            .filter(key => ! isNaN(parseInt(key)))
+            .map(key => element.style[key])
+            .reduce((style, key) => {
+                style[convertCamelToKebab(key)] = element.style[key];
+                return style;
+            }, {});
+
+        // Since HSL colors automatically convert to RGB colors,
+        // we need to get back the original HSL colors
+        element.getAttribute('style')
+            .split(';')
+            .map(rule => rule.trim().split(':').map(s => s.trim()))
+            .filter(([property, value]) => property && value && value.startsWith('hsl'))
+            .forEach(([property, value]) => {
+                // Validate the value
+                const dElement = document.createElement('div');
+                dElement.style[property] = value;
+                if (
+                    dElement.style[property] === '' ||
+                    dElement.style[property] !== styles[property]
+                ) {
+                    return;
+                }
+                // Restore the original value
+                styles[property] = value;
+            });
+
+        // Push the rules to the applied style rules
+        styleRules.push({
+            order: 1, // cssStyleRules.length,
             selector: 'inline',
             stylesheet: 'inline',
-            styles: element.getAttribute('style')
-                .trim()
-                .replace(/\n/g, '')
-                .replace(/\s+/g, ' ')
-                .split(';')
-                .filter(rule => rule.trim() !== '')
-                .reduce((style, rule) => {
-                    const [property, value] = rule.split(':').map(s => s.trim());
-                    style[convertCamelToKebab(property)] = value;
-                    return style;
-                }, {}),
+            styles,
         });
     }
 
-    return appliedStyleRules;
+    return styleRules;
 }
 
 export const setupDocument = (element, regenerateId = true) => {

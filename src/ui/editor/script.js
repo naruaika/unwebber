@@ -26,10 +26,16 @@ const onWindowMessage = (event) => {
             // Setup the document to be compatible with the editor
             setupDocument(mainFrame.contentDocument.documentElement, false);
 
+            // TODO: implement save and load metadata if exists.
+            // This is quite important for example to retain original styles of the elements,
+            // especially for colors in different color spaces since often times the precision
+            // of the color values are lost when converting between different color spaces.
+
             // Emit events to trigger the sidebar panels refresh
             window.dispatchEvent(new CustomEvent('canvas:refresh'));
             window.dispatchEvent(new CustomEvent('pages:refresh'));
             window.dispatchEvent(new CustomEvent('assets:refresh'));
+            window.dispatchEvent(new CustomEvent('fill-and-stroke:refresh'));
 
             //
             console.log('[Editor] Setting up the document... [DONE]');
@@ -78,9 +84,6 @@ const onWindowMouseDown = () => {
         sidebar.initialize(appConfig);
         canvas.initialize(appConfig);
         statusbar.initialize(appConfig);
-
-        // Select the default edit tool
-        toolbar.setMode(toolbar.Mode.MOVE);
 
         // Load the project entry point
         const filePath = `${appConfig.project.current.path}/${appConfig.project.current.cursor}`;

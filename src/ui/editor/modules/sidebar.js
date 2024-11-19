@@ -44,6 +44,9 @@ export const setActive = (targetPanel) => {
     const tabHeaderItems = tabContainer.querySelectorAll('.main-sidebar__tab-header-item');
     tabHeaderItems.forEach(item => item.classList.toggle('selected', item === selectedTabHeaderItem));
     const tabBody = tabContainer.querySelector('.main-sidebar__tab-body');
+    // FIXME: toggling display property will trigger reflow,
+    // we may consider toggling content-visibility property instead,
+    // but only when the panel has been rendered once
     tabBody.querySelectorAll('.main-sidebar__panel').forEach(panel => panel.classList.toggle('hidden', panel !== selectedPanel));
 }
 

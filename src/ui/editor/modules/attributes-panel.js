@@ -19,7 +19,7 @@ const filterDropdownItems = (attribute, container, inputBox, dropdownList) => {
     const filteredValues = [];
 
     // Filter the dropdown values based on the query
-    attribute.options.forEach(option => {
+    attribute.predefinedValues.forEach(option => {
         if (
             ! option.value.toLowerCase().includes(query) ||
             (
@@ -460,7 +460,7 @@ const refreshPanel = () => {
     // Create a placeholder element if no node is selected
     if (! selectedNode.node) {
         const placeholder = document.createElement('span');
-        placeholder.innerText = 'No selection.';
+        placeholder.textContent = 'No selection.';
         placeholder.classList.add('placeholder');
         panelContentContainer.appendChild(placeholder);
         return;
@@ -469,7 +469,7 @@ const refreshPanel = () => {
     // Create a placeholder element if the selected node is a text node
     if (selectedNode.node.nodeType !== Node.ELEMENT_NODE) {
         const placeholder = document.createElement('span');
-        placeholder.innerText = 'No attributes available for text nodes.';
+        placeholder.textContent = 'No attributes available for text nodes.';
         placeholder.classList.add('placeholder');
         panelContentContainer.appendChild(placeholder);
         previousSelectedNodeId = null;
@@ -538,7 +538,7 @@ export const initialize = () => {
     const container = document.createElement('div');
     container.classList.add('content__container', 'scrollable');
     const placeholder = document.createElement('span');
-    placeholder.innerText = 'No selection.';
+    placeholder.textContent = 'No selection.';
     placeholder.classList.add('placeholder');
     container.appendChild(placeholder);
     fragment.appendChild(container);

@@ -258,6 +258,7 @@ const read = () => {
     validate(appConfig, schema);
 
     // Verify if the recent project paths are valid
+    // TODO: also check for the project entrypoint
     appConfig.project.recent.paths = appConfig.project.recent.paths.filter((projectPath) => {
         return fs.existsSync(projectPath);
     });

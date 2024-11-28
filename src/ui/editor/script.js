@@ -39,7 +39,7 @@ const onWindowMessage = (event) => {
 
             //
             console.log('[Editor] Setting up the document... [DONE]');
-        }, 0);
+        }, 50);
 
         return;
     }

@@ -2115,7 +2115,7 @@ export const initialize = () => {
     // add placeholder for the panel container
     const placeholder = document.createElement('span');
     placeholder.classList.add('placeholder');
-    placeholder.textContent = 'Loading...';
+    // placeholder.textContent = 'Loading...';
     container.appendChild(placeholder);
     // add the breadcrumb element
     container = document.createElement('div');

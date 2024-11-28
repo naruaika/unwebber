@@ -333,6 +333,12 @@ canvas {
                         border-bottom-right-radius: 5px;
                     }
                 }
+
+                .label + .button {
+                    border-left: var(--border-size) solid var(--color-primary);
+                    border-top-left-radius: 5px;
+                    border-bottom-left-radius: 5px;
+                }
             }
         }
 

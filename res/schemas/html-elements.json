@@ -594,7 +594,7 @@
         "alias": "Link",
         "tag": "link",
         "categories": ["metadata", "flow", "phrasing", "void"],
-        "attributes": ["global", "as", "crossorigin", "disabled", "fetchpriority", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "referrerpolicy", "rel", "sizes", "title", "type"],
+        "attributes": ["global", "as", "blocking", "crossorigin", "disabled", "fetchpriority", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "referrerpolicy", "rel", "sizes", "title", "type"],
         "interfaces": ["element"],
         "description": "Specifies relationships between the current document and an external resource.",
         "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link"

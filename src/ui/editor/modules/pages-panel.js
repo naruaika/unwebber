@@ -85,9 +85,6 @@ const refreshPanel = () => {
             };
             const files = walk(tree);
 
-            //
-            console.log('[Pages] Refreshing the panel...');
-
             // Create a DocumentFragment to hold the new elements
             const fragment = document.createDocumentFragment();
 
@@ -131,7 +128,7 @@ export const initialize = () => {
     const container = document.createElement('div');
     container.classList.add('content__container', 'scrollable');
     const placeholder = document.createElement('span');
-    placeholder.innerText = 'Loading...';
+    // placeholder.textContent = 'Loading...';
     placeholder.classList.add('placeholder');
     container.appendChild(placeholder);
     fragment.appendChild(container);

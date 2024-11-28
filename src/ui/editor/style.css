@@ -91,10 +91,7 @@
 .field-options {
     position: absolute;
     box-sizing: border-box;
-    width: calc(50% - 19px);
     max-height: 102px;
-    top: 100%;
-    right: 8px;
     margin: 0;
     margin-left: auto;
     padding: 0;
@@ -105,6 +102,8 @@
     border: var(--border-size) solid var(--color-gray-400);
 
     z-index: 9999;
+
+    overscroll-behavior: contain;
 
     &.top {
         top: 100%;
@@ -973,15 +972,18 @@
                 gap: 2px;
 
                 label {
-                    width: 10px;
+                    width: 14px;
+                    text-align: right;
                 }
 
                 input[type="range"] {
                     flex: 1;
                     height: 8px;
-                    background-color: var(--color-gray-400);
-                    border: none;
                     padding: 0;
+
+                    --stops: var(--color-gray-400), var(--color-gray-400);
+                    background: linear-gradient(to right, var(--stops)), repeating-conic-gradient(var(--color-gray) 0% 25%, var(--color-gray-450) 0% 50%) 0% / 8px 8px;;
+                    border: none;
 
                     &:focus {
                         outline: none !important;
@@ -991,6 +993,8 @@
                         background-color: transparent;
                         border: 2px solid var(--color-base);
                         box-shadow: 0 0 0 1px var(--color-gray);
+                        outline: 1px solid var(--color-gray);
+                        outline-offset: -2px;
                         border-radius: 0;
                         -webkit-appearance: none;
                         appearance: none;

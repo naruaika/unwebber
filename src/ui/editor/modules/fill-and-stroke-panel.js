@@ -4,18 +4,26 @@ import Color from "../../../../node_modules/colorjs.io/dist/color.min.js";
 import { metadata, selectedNode, setMetadata } from "../globals.js";
 import { styleElement } from "../helpers.js";
 
+// TODO: add a new mode to change text color?
 export const Mode = Object.freeze({
     FILL: 'fill',
     STROKE: 'stroke',
     OUTLINE: 'outline',
 });
 
+export const Side = Object.freeze({
+    TOP: 'top',
+    RIGHT: 'right',
+    BOTTOM: 'bottom',
+    LEFT: 'left',
+});
+
 export const Type = Object.freeze({
     NONE: 'none',
     FLAT: 'flat',
-    LINEAR_GRADIENT: 'linear-gradient',
-    RADIAL_GRADIENT: 'radial-gradient',
-    PATTERN: 'pattern', // alias image
+    LGRAD: 'linear-gradient',
+    RGRAD: 'radial-gradient',
+    PATTERN: 'pattern',
 });
 
 // TODO: add support for more color spaces
@@ -30,6 +38,8 @@ export const Space = Object.freeze({
 });
 
 export var currentMode = Mode.FILL;
+
+export var currentSide = Side.TOP;
 
 export var currentType = Type.NONE;
 
@@ -85,6 +95,7 @@ const colorSliders = {
     ],
 };
 
+// TODO: add support for mixing multiple colors
 let currentColor;
 
 let panelContentContainer;
@@ -122,7 +133,9 @@ const onModeSelectorItemClick = (event) => {
     // Repopulate the color sliders
     const colorSliders = createColorSliders();
     panelContentContainer.querySelector('.color-sliders').replaceWith(colorSliders);
+
     refreshColorSliders();
+    colorizeColorSliders();
 }
 
 const createTypeSelector = () => {
@@ -136,6 +149,7 @@ const createTypeSelector = () => {
         if (index === 0) {
             item.classList.add('selected');
         }
+        // TODO: implement event listener
         container.appendChild(item);
     });
 
@@ -191,7 +205,9 @@ const onSpaceSelectorItemClick = (event, space) => {
     // Repopulate the color sliders
     const colorSliders = createColorSliders();
     panelContentContainer.querySelector('.color-sliders').replaceWith(colorSliders);
+
     refreshColorSliders();
+    colorizeColorSliders();
 
     // Hide the dropdown
     const dropdownList = event.target.parentElement;
@@ -207,7 +223,7 @@ const createColorSliders = () => {
         sliderContainer.classList.add('slider');
 
         const label = document.createElement('label');
-        label.innerText = slider.label;
+        label.innerText = slider.label + ':';
 
         const output = document.createElement('output');
         output.innerText = slider.max;
@@ -232,6 +248,16 @@ const createColorSliders = () => {
 }
 
 const onColorSliderInput = (event) => {
+    // Update the output text
+    const output = event.target.nextElementSibling;
+    output.innerText = event.target.value;
+
+    // Request panel updates
+    setTimeout(() => {
+        colorizeColorSliders();
+        window.dispatchEvent(new CustomEvent('contextbar:refresh'));
+    }, 0);
+
     // Return if there is no selected element
     if (! selectedNode.node) {
         return;
@@ -283,15 +309,6 @@ const onColorSliderInput = (event) => {
     const _metadata = metadata[selectedNode.node.dataset.uwId];
     _metadata.properties[property] = { value: currentColor.toString(), checked: true };
     setMetadata(selectedNode.node.dataset.uwId, _metadata);
-
-    // Update the output text
-    const output = event.target.nextElementSibling;
-    output.innerText = event.target.value;
-
-    // Request panel updates
-    setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('contextbar:refresh'));
-    }, 0);
 }
 
 const refreshColorSliders = () => {
@@ -303,7 +320,7 @@ const refreshColorSliders = () => {
     // Get the context
     let property;
     if (currentMode === Mode.STROKE) {
-        property = 'border-color';
+        property = `border-${currentSide}-color`;
     } else if (currentMode === Mode.OUTLINE) {
         property = 'outline-color';
     } else {
@@ -312,17 +329,26 @@ const refreshColorSliders = () => {
 
     // Get the color string from the metadata
     const _metadata = metadata[selectedNode.node.dataset.uwId];
-    let colorString =  _metadata.properties[property]?.value;
+    let colorString = _metadata.properties[property]?.value;
 
     // Get the color string from the computed style
     // if the user has not explicitly set the color
-    if (! colorString) {
+    if ([
+            'initial',
+            'inherit',
+            'revert',
+            'revert-layer',
+            'unset',
+            'currentcolor',
+        ].includes(colorString) ||
+        ! colorString
+    ) {
         colorString = window.getComputedStyle(selectedNode.node)[property];
     }
 
     // Create a new color object
-    // FIXME: sometimes the alpha channel is not parsed correctly,
-    // hsl(235, 100%, 50%, 80%) for example
+    // FIXME: sometimes the alpha channel is not parsed correctly, hsl(235, 100%, 50%, 80%) for example
+    // FIXME: automatically correct the gamut if the color is out of bounds after the conversion
     currentColor = new Color(colorString).to(currentSpace);
 
     // Skip if the color is transparent
@@ -335,10 +361,7 @@ const refreshColorSliders = () => {
     const sliders = panelContentContainer.querySelectorAll('.color-sliders .slider');
     currentColor.coords.forEach((color, index) => {
         color = color || 0;
-        if (currentSpace !== Space.CMYK && index === 3) {
-            color *= 100;
-        }
-        color *= colorSliders[currentSpace][index].multiplier || 1;
+        color *= colorSliders[currentSpace][index]?.multiplier || 1;
         color = color.toString();
         sliders[index].querySelector('input').value = color;
         sliders[index].querySelector('output').innerText = parseInt(color);
@@ -347,6 +370,75 @@ const refreshColorSliders = () => {
         const alpha = currentColor.alpha.toString() * 100;
         sliders[3].querySelector('input').value = alpha;
         sliders[3].querySelector('output').innerText = parseInt(alpha);
+    }
+}
+
+const colorizeColorSliders = () => {
+    const ranges = panelContentContainer.querySelectorAll('.color-sliders input[type="range"]');
+    const stops = (count, fn) => Array.from({length: count}, (_, i) => fn(i)).join(', ');
+    const x = ranges[0].value;
+    const y = ranges[1].value;
+    const z = ranges[2].value;
+
+    switch (currentSpace) {
+        case 'srgb':
+            ranges[0].style.setProperty('--stops', stops(11, i => `rgb(${i * 10}% ${y}% ${z}%)`));
+            ranges[1].style.setProperty('--stops', stops(11, i => `rgb(${x}% ${i * 10}% ${z}%)`));
+            ranges[2].style.setProperty('--stops', stops(11, i => `rgb(${x}% ${y}% ${i * 10}%)`));
+            ranges[3].style.setProperty('--stops', stops(11, i => `rgb(${x}% ${y}% ${z}% / ${i * 10}%)`));
+            break;
+
+        case 'hsl':
+            ranges[0].style.setProperty('--stops', stops(11, i => `hsl(${i * 36} 100 50)`));
+            ranges[1].style.setProperty('--stops', stops(11, i => `hsl(${x} ${i * 10} ${z})`));
+            ranges[2].style.setProperty('--stops', stops(11, i => `hsl(${x} ${y} ${i * 10})`));
+            ranges[3].style.setProperty('--stops', stops(11, i => `hsl(${x} ${y} ${z} / ${i * 10}%)`));
+            break;
+
+        case 'hsluv':
+            // FIXME: the color stops are not accurate
+            ranges[0].style.setProperty('--stops', stops(11, i => new Color('hsluv', [i * 36, 100, 50]).to('hsl').toString()));
+            ranges[1].style.setProperty('--stops', stops(11, i => new Color('hsluv', [x, i * 10, 50]).to('hsl').toString()));
+            ranges[2].style.setProperty('--stops', stops(11, i => new Color('hsluv', [x, 100, i * 10]).to('hsl').toString()));
+            ranges[3].style.setProperty('--stops', stops(11, i => {
+                const color = new Color('hsluv', [x, 100, 50]).to('hsl');
+                color.alpha = i / 10;
+                return color.toString();
+            }));
+            break;
+
+        case 'hsv':
+            // FIXME: the color stops are not accurate
+            ranges[0].style.setProperty('--stops', stops(11, i => new Color('hsv', [i * 36, 100, 100]).to('hsl').toString()));
+            ranges[1].style.setProperty('--stops', stops(11, i => new Color('hsv', [x, i * 10, 100]).to('hsl').toString()));
+            ranges[2].style.setProperty('--stops', stops(11, i => new Color('hsv', [x, 100, i * 10]).to('hsl').toString()));
+            ranges[3].style.setProperty('--stops', stops(11, i => {
+                const color = new Color('hsv', [x, 100, 100]).to('hsl');
+                color.alpha = i / 10;
+                return color.toString();
+            }));
+            break;
+
+        case 'hwb':
+            ranges[0].style.setProperty('--stops', stops(11, i => `hwb(${i * 36} 0% 0%)`));
+            ranges[1].style.setProperty('--stops', stops(11, i => `hwb(${x} ${i * 10}% ${z}%)`));
+            ranges[2].style.setProperty('--stops', stops(11, i => `hwb(${x} ${y}% ${i * 10}%)`));
+            ranges[3].style.setProperty('--stops', stops(11, i => `hwb(${x} ${y}% ${z}% / ${i * 10}%)`));
+            break;
+
+        case 'lab':
+            ranges[0].style.setProperty('--stops', stops(11, i => `lab(${i * 10}% ${y} ${z})`));
+            ranges[1].style.setProperty('--stops', stops(11, i => `lab(${x}% ${-125 + i * 25} ${z})`));
+            ranges[2].style.setProperty('--stops', stops(11, i => `lab(${x}% ${y} ${-125 + i * 25})`));
+            ranges[3].style.setProperty('--stops', stops(11, i => `lab(${x}% ${y} ${z} / ${i * 10}%)`));
+            break;
+
+        case 'lch':
+            ranges[0].style.setProperty('--stops', stops(11, i => `lch(${i * 10}% ${y} ${z})`));
+            ranges[1].style.setProperty('--stops', stops(11, i => `lch(${x}% ${i * 15} ${z})`));
+            ranges[2].style.setProperty('--stops', stops(11, i => `lch(50% 150 ${i * 36})`));
+            ranges[3].style.setProperty('--stops', stops(11, i => `lch(${x}% ${y} ${z} / ${i * 10}%)`));
+            break;
     }
 }
 
@@ -371,14 +463,30 @@ const initializePanel = () => {
     const spaceSelector = createSpaceSelector();
     tabContainer.appendChild(spaceSelector);
 
-    // TODO: create a border side selector
+    // TODO: implement border side selector for stroke mode
+
+    // TODO: implement color picker tool
+
+    // TODO: implement recent colors grid
 
     // Create a content container
     const contentContainer = document.createElement('div');
     contentContainer.classList.add('content');
     fragment.appendChild(contentContainer);
 
-    // TODO: implement a color wheel for HSL color space
+    // TODO: implement color wheel for HSL color space
+
+    // TODO: implement gradient editor
+
+    // TODO: implement pattern editor
+
+    // TODO: implement hex input field for sRGB color space
+
+    // TODO: implement image theme extractor
+
+    // TODO: implement intelligent contrast checker
+
+    // TODO: implement color blind safe checker
 
     // Create color sliders
     const colorSliders = createColorSliders();
@@ -399,6 +507,7 @@ const refreshPanel = () => {
     }
 
     refreshColorSliders();
+    colorizeColorSliders();
 }
 
 export const initialize = () => {
@@ -407,7 +516,7 @@ export const initialize = () => {
     const container = document.createElement('div');
     container.classList.add('content__container', 'scrollable');
     const placeholder = document.createElement('span');
-    placeholder.innerText = 'Loading...';
+    // placeholder.textContent = 'Loading...';
     placeholder.classList.add('placeholder');
     container.appendChild(placeholder);
     fragment.appendChild(container);

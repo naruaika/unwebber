@@ -101,7 +101,7 @@ export const initialize = () => {
     container.classList.add('content__container', 'scrollable');
     const placeholder = document.createElement('span');
     placeholder.classList.add('placeholder');
-    placeholder.textContent = 'Loading...';
+    // placeholder.textContent = 'Loading...';
     container.appendChild(placeholder);
     fragment.appendChild(container);
 

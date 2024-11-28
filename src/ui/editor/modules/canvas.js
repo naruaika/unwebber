@@ -766,51 +766,51 @@ const refreshSelectedBox = () => {
 
         // Get the original position and size of the selected node
         // before considering the offset of the positioned element
-        if (
-            ! isEditingText &&
-            Object.keys(_metadata.properties).some(property =>
-                [
-                    'left',
-                    'right',
-                    'top',
-                    'bottom',
-                    'margin-left',
-                    'margin-right',
-                    'margin-top',
-                    'margin-bottom',
-                ].includes(property)
-            )
-        ) {
-            let left = 0;
-            left -= parseFloat(_metadata.properties['left']?.value || 0);
-            left -= parseFloat(_metadata.properties['margin-left']?.value || 0);
-            left *= currentScale;
+        // if (
+        //     ! isEditingText &&
+        //     Object.keys(_metadata.properties).some(property =>
+        //         [
+        //             'left',
+        //             'right',
+        //             'top',
+        //             'bottom',
+        //             'margin-left',
+        //             'margin-right',
+        //             'margin-top',
+        //             'margin-bottom',
+        //         ].includes(property)
+        //     )
+        // ) {
+        //     let left = 0;
+        //     left -= parseFloat(_metadata.properties['left']?.value || 0);
+        //     left -= parseFloat(_metadata.properties['margin-left']?.value || 0);
+        //     left *= currentScale;
 
-            let right = 0;
-            right += parseFloat(_metadata.properties['right']?.value || 0);
-            right += parseFloat(_metadata.properties['margin-right']?.value || 0);
-            right *= currentScale;
+        //     let right = 0;
+        //     right += parseFloat(_metadata.properties['right']?.value || 0);
+        //     right += parseFloat(_metadata.properties['margin-right']?.value || 0);
+        //     right *= currentScale;
 
-            let top = 0;
-            top -= parseFloat(_metadata.properties['top']?.value || 0);
-            top -= parseFloat(_metadata.properties['margin-top']?.value || 0);
-            top *= currentScale;
+        //     let top = 0;
+        //     top -= parseFloat(_metadata.properties['top']?.value || 0);
+        //     top -= parseFloat(_metadata.properties['margin-top']?.value || 0);
+        //     top *= currentScale;
 
-            let bottom = 0;
-            bottom += parseFloat(_metadata.properties['bottom']?.value || 0);
-            bottom += parseFloat(_metadata.properties['margin-bottom']?.value || 0);
-            bottom *= currentScale;
+        //     let bottom = 0;
+        //     bottom += parseFloat(_metadata.properties['bottom']?.value || 0);
+        //     bottom += parseFloat(_metadata.properties['margin-bottom']?.value || 0);
+        //     bottom *= currentScale;
 
-            selectedBox.style.setProperty('--original-top', `${top - 1}px`);
-            selectedBox.style.setProperty('--original-left', `${left - 1}px`);
-            selectedBox.style.setProperty('--original-right', `${right - 1}px`);
-            selectedBox.style.setProperty('--original-bottom', `${bottom - 1}px`);
-            selectedBox.style.setProperty('--original-width', `${width}px`);
-            selectedBox.style.setProperty('--original-height', `${height}px`);
-            selectedBox.style.setProperty('--original-visibility', 'visible');
-        } else {
-            selectedBox.style.setProperty('--original-visibility', 'hidden');
-        }
+        //     selectedBox.style.setProperty('--original-top', `${top - 1}px`);
+        //     selectedBox.style.setProperty('--original-left', `${left - 1}px`);
+        //     selectedBox.style.setProperty('--original-right', `${right - 1}px`);
+        //     selectedBox.style.setProperty('--original-bottom', `${bottom - 1}px`);
+        //     selectedBox.style.setProperty('--original-width', `${width}px`);
+        //     selectedBox.style.setProperty('--original-height', `${height}px`);
+        //     selectedBox.style.setProperty('--original-visibility', 'visible');
+        // } else {
+        //     selectedBox.style.setProperty('--original-visibility', 'hidden');
+        // }
 
         //
         selectedBox.querySelectorAll('.transform-area').forEach(element => {

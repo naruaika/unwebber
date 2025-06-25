@@ -1,0 +1,199 @@
+@import url('../../../../res/colors.css');
+@import url('../../../../res/uwicon/uwicon.css');
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../../../../res/fonts/Inter.ttf') format('truetype');
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    --title-bar-height: 35px;
+    --switcher-height: 22px;
+    --status-bar-height: 22px;
+
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #333333;
+
+    > .column {
+        position: absolute;
+        top: var(--title-bar-height);
+        left: 0;
+        right: 0;
+        bottom: var(--status-bar-height);
+    }
+
+    .column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .row {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .container {
+        background-color: var(--uwcolor-gray-650);
+        overflow: hidden;
+
+        &.column,
+        &.row {
+            flex: 1;
+        }
+    }
+
+    .dock-area {
+        &.left {
+            margin-left: 1px;
+            border-right: 1px solid var(--uwcolor-gray-650);
+
+            > *:not(:first-of-type) {
+                border-left: 1px solid var(--uwcolor-gray-650);
+            }
+        }
+
+        &.top {
+            margin: 0 1px;
+            border-bottom: 1px solid var(--uwcolor-gray-650);
+
+            &:has(> *) {
+                border-top: 1px solid var(--uwcolor-gray-650);
+            }
+
+            > *:not(:first-of-type) {
+                border-top: 1px solid var(--uwcolor-gray-650);
+            }
+        }
+
+        &.right {
+            margin-right: 1px;
+            border-left: 1px solid var(--uwcolor-gray-650);
+
+            > *:not(:last-of-type) {
+                border-right: 1px solid var(--uwcolor-gray-650);
+            }
+        }
+
+        &.bottom {
+            margin: 0 1px;
+            border-top: 1px solid var(--uwcolor-gray-650);
+
+            &:has(> *) {
+                border-bottom: 1px solid var(--uwcolor-gray-650);
+            }
+
+            > *:not(:last-of-type) {
+                border-bottom: 1px solid var(--uwcolor-gray-650);
+            }
+        }
+    }
+
+    > .title-bar {
+        display: flex;
+        height: var(--title-bar-height);
+        app-region: drag;
+        user-select: none;
+    }
+
+    .switcher {
+        display: flex;
+        max-height: var(--switcher-height);
+        background-color: var(--uwcolor-gray-500);
+        border-bottom: 1px solid var(--uwcolor-gray-600);
+
+        > .button {
+            height: var(--switcher-height);
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+
+            font-size: 11px;
+            color: var(--uwcolor-gray-150);
+
+            background-color: var(--uwcolor-gray-500);
+            border-right: 1px solid var(--uwcolor-gray-600);
+
+            &:hover {
+                color: var(--uwcolor-base);
+            }
+
+            &.focused {
+                color: var(--uwcolor-base);
+                background-color: var(--uwcolor-gray-450);
+            }
+
+            &:not(:first-of-type) {
+                border-left: none;
+            }
+
+            > .close {
+                padding: 0 3px;
+                border-radius: 50%;
+                margin-right: -3px;
+
+                &:hover {
+                    background-color: var(--uwcolor-red-300);
+                }
+            }
+        }
+    }
+
+    .viewport {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    > .status-bar {
+        display: flex;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: var(--status-bar-height);
+    }
+}
+
+.button {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}
+
+.scrollable {
+    overflow: auto;
+    scroll-behavior: smooth;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    &::-webkit-scrollbar-corner {
+        background: var(--uwcolor-gray-600);
+        background-color: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--uwcolor-gray-400);
+        border-left: 1px solid var(--uwcolor-gray-600);
+        border-right: 1px solid var(--uwcolor-gray-600);
+    }
+    &::-webkit-scrollbar-thumb:active {
+        background-color: var(--uwcolor-gray-300);
+    }
+    &::-webkit-scrollbar-track {
+        background-color: var(--uwcolor-gray-600);
+    }
+    &::-webkit-resizer {
+        appearance: none;
+    }
+}
+
+::part(icon) {
+    font-family: 'uwicon' !important;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

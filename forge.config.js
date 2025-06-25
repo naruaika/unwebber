@@ -4,14 +4,14 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: './res/icons/unwebber.ico',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        // certificateFile: './cert.pfx',
-        // certificatePassword: process.env.CERTIFICATE_PASSWORD
+        setupIcon: './res/icons/unwebber.ico',
       }
     },
     {
@@ -27,23 +27,37 @@ module.exports = {
       config: {},
     },
   ],
-  publishers: [
-    {
-      name: '@electron-forge/publisher-github',
-      config: {
-        repository: {
-          owner: 'naruaika',
-          name: 'unwebber'
-        },
-        prerelease: false,
-        draft: true
-      }
-    }
-  ],
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',
       config: {},
+    },
+    {
+      name: '@electron-forge/plugin-webpack',
+      config: {
+        mainConfig: './webpack.main.config.js',
+        renderer: {
+          config: './webpack.renderer.config.js',
+          entryPoints: [
+            {
+              name: 'main_window',
+              html: './src/browser/interfaces/main-window/main-window.html',
+              js: './src/browser/interfaces/main-window/main-window.js',
+              preload: {
+                js: './src/preload.js',
+              },
+            },
+            {
+              name: 'new_document',
+              html: './src/browser/interfaces/new-document/new-document.html',
+              js: './src/browser/interfaces/new-document/new-document.js',
+              preload: {
+                js: './src/preload.js',
+              },
+            },
+          ],
+        },
+      },
     },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application

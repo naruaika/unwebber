@@ -1,26 +1,25 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('unwebber', {
-    version: {
+    about: {
+        platform: process.platform,
         node: process.versions.node,
         chrome: process.versions.chrome,
         electron: process.versions.electron,
     },
 
-    api: {
-        schema: () => ipcRenderer.invoke('api:schema'),
-        template: (tid, cname) => ipcRenderer.invoke('api:template', tid, cname),
-        palette: () => ipcRenderer.invoke('api:palette'),
+    language: {
+        translate: (key, language = 'en') => ipcRenderer.invoke('language:translate', key, language),
     },
 
-    config: {
-        load: () => ipcRenderer.invoke('config:load'),
+    file: {
+        openNewDocumentDialog: () => ipcRenderer.send('file:open-new-document-dialog'),
+        watchNewDocumentDialog: (callback) => ipcRenderer.on('file:watch-new-document-dialog', (event, settings) => callback(settings)),
+        exitApplication: () => ipcRenderer.send('file:exit-application'),
     },
 
-    project: {
-        create: () => ipcRenderer.send('project:create'),
-        open: (path) => ipcRenderer.send('project:open', path),
-        close: () => ipcRenderer.send('project:close'),
-        tree: (path) => ipcRenderer.invoke('project:tree', path),
+    newDocument: {
+        create: (settings) => ipcRenderer.send('new-document:create', settings),
+        close: () => ipcRenderer.send('new-document:close'),
     },
 })

@@ -1,0 +1,6 @@
+{
+    "src": "res/icons",
+    "dist": "res/uwicon",
+    "fontName": "uwicon",
+    "css": true
+}

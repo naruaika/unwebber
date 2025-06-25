@@ -1,5 +1,7 @@
 .vscode/
+.webpack/
 node_modules*/
 out/
+lib/
+.backup/
 .env
-*.backup*

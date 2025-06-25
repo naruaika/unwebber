@@ -1,0 +1,115 @@
+@import url('../../../../res/colors.css');
+@import url('../../../../res/uwicon/uwicon.css');
+
+@font-face {
+    font-family: 'Inter';
+    src: url('../../../../res/fonts/Inter.ttf') format('truetype');
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    --title-bar-height: 22px;
+
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #333333;
+
+    > .title-bar {
+        height: var(--title-bar-height);
+        display: flex;
+        justify-content: space-between;
+        padding: 0 1px;
+        app-region: drag;
+        user-select: none;
+
+        > .title {
+            padding-left: 5px;
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            color: var(--uwcolor-base);
+        }
+
+        > .controls {
+            display: flex;
+
+            &:has(> .button:hover) {
+                opacity: 1 !important;
+            }
+
+            > .button {
+                width: calc(var(--title-bar-height) - 4px);
+                height: calc(var(--title-bar-height) - 4px);
+                margin: 2px;
+                padding: 0;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                background-color: transparent;
+                color: var(--uwcolor-base);
+                border: none;
+                outline: none;
+                border-radius: 50%;
+
+                app-region: no-drag;
+
+                &:hover {
+                    background-color: var(--uwcolor-red-300);
+                }
+            }
+        }
+    }
+
+    > .container {
+        position: absolute;
+        top: var(--title-bar-height);
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+
+        border-top: 1px solid var(--uwcolor-gray-650);
+
+        .button {
+            padding: 4px 8px;
+
+            font-size: 11px;
+            color: var(--uwcolor-base);
+            background-color: transparent;
+            border: 1px solid var(--uwcolor-gray-300);
+            border-radius: 10px;
+            outline: 0;
+
+            &:hover {
+                border-color: transparent;
+                background-color: var(--uwcolor-gray-400);
+            }
+
+            &:focus-visible {
+                outline: 3px solid var(--uwcolor-blue-350);
+                outline-offset: -1px;
+            }
+
+            &.close:active {
+                border-color: transparent;
+                background-color: var(--uwcolor-gray-350);
+            }
+
+            &.create:active {
+                border-color: transparent;
+                background-color: var(--uwcolor-blue-350);
+            }
+        }
+    }
+}
+
+.button {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}

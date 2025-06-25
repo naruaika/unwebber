@@ -1,4 +1,4 @@
-<img src="res/icons/unwebber-rounded.svg" width="128px" align="left">
+<img src="res/icons/unwebber.svg" width="128px" align="left">
 
 # Unwebber
 
@@ -14,7 +14,11 @@ Just as Visual Studio Code transformed how we write code, analyze business data 
 
 ## Status
 
-Currently in early development. Stay tuned for updates.
+**[2025-06-25]:** We're very sorry, but the project is currently in a state of flux.
+
+The project is currently facing a significant technical difficulty due to the need to optimize Chromium's rendering engine for our specific use case, which impacts performance and stability. We are actively seeking solutions to this issue. In the meantime, we are planning to pivot the project towards a more feasible direction, transforming it into a presentation tool.
+
+**[2024-11-19]:** <del>Currently in early development. Stay tuned for updates.</del>
 
 ## Use Cases
 
@@ -82,7 +86,6 @@ Licensed under GNU GPLv3. See [`LICENSE`](LICENSE) for details.
 We use the following dependencies:
 - [Electron](https://github.com/electron/electron), licensed under the MIT License
 - [Electron Forge](https://github.com/electron/forge), licensed under the MIT License
-- [Feather Icons](https://github.com/feathericons/feather), licensed under the MIT License
 - [Color.js](https://colorjs.io/), licensed under the MIT License
 
 ## Similars
@@ -99,5 +102,11 @@ In fact, when designing and developing, we have done some research on various so
 - Adobe Edge Animate
 - Google Web Designer
 - Tumult Hype
+- Figma Slides
+- Google Slides
+- Powtoon
+- Prezi
+- Canva
+- VistaCreate
 
 We're not affiliated with these applications but acknowledge their contributions to web development. Choose what works best for your needs and let's make the web a better place!

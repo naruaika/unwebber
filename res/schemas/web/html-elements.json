@@ -1,0 +1,1141 @@
+[
+    {
+        "name": "Hyperlink",
+        "alias": "Anchor",
+        "tag": "a",
+        "categories": ["flow", "phrasing", "interactive", "palpable"],
+        "attributes": ["global", "download", "href", "hreflang", "ping", "referrerpolicy", "rel", "target", "type"],
+        "interfaces": ["element"],
+        "description": "Defines a hyperlink to webpages, files, email address, telephone numbers, SMS numbers, data URLs, or other URLs.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a"
+    },
+    {
+        "name": "Abbreviation",
+        "alias": "Abbreviation",
+        "tag": "abbr",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines an abbreviation or an acronym, like HTML, CSS, or HTTP.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/abbr"
+    },
+    {
+        "name": "Address",
+        "alias": "Contact Address",
+        "tag": "address",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines the contact information for the author/owner of a document or an article.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/address"
+    },
+    {
+        "name": "Image Map Area",
+        "alias": "Image Map Area",
+        "tag": "area",
+        "belongsTo": "map",
+        "categories": ["flow", "phrasing", "void"],
+        "attributes": ["global", "alt", "coords", "download", "href", "ping", "referrerpolicy", "rel", "shape", "target"],
+        "interfaces": ["element", "area-element"],
+        "description": "Defines an area inside an image map.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/area"
+    },
+    {
+        "name": "Article",
+        "alias": "Article Contents",
+        "tag": "article",
+        "categories": ["flow", "sectioning", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a self-contained composition in a document, page, application, or site.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/article"
+    },
+    {
+        "name": "Aside",
+        "alias": "Aside",
+        "tag": "aside",
+        "categories": ["flow", "sectioning", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a portion of a document whose content is only indirectly related to the document's main content.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/aside"
+    },
+    {
+        "name": "Audio",
+        "alias": "Audio",
+        "tag": "audio",
+        "categories": ["flow", "phrasing", "embedded", "interactive", "palpable", "replaced"],
+        "attributes": ["global", "autoplay", "controls", "controlslist", "crossorigin", "disableremoteplayback", "loop", "muted", "preload", "src"],
+        "interfaces": ["element", "media-element", "audio-element"],
+        "description": "Embeds sound content in documents.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio"
+    },
+    {
+        "name": "Bold",
+        "alias": "Bring Attention To",
+        "tag": "b",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines bold text to draw the reader's attention to the element's contents",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/b"
+    },
+    {
+        "name": "Base",
+        "alias": "Base",
+        "tag": "base",
+        "categories": ["metadata", "void"],
+        "attributes": ["global", "href", "target"],
+        "interfaces": ["element", "base-element"],
+        "description": "Specifies the base URL for all relative URLs in the document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base"
+    },
+    {
+        "name": "Bidirectional Isolation",
+        "alias": "Bidirectional Isolation",
+        "tag": "bdi",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Isolates a part of text that might be formatted in a different direction from other text outside it.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/bdi"
+    },
+    {
+        "name": "Bidirectional Text Override",
+        "alias": "Bidirectional Text Override",
+        "tag": "bdo",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Overrides the current directionality of text, so that the text within is rendered in a different direction.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/bdo"
+    },
+    {
+        "name": "Blockquote",
+        "alias": "Block Quotation",
+        "tag": "blockquote",
+        "categories": ["flow", "sectioning", "palpable"],
+        "attributes": ["global", "cite"],
+        "interfaces": ["element", "quote-element"],
+        "description": "Defines a section that is quoted from another source.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blockquote"
+    },
+    {
+        "name": "Body",
+        "alias": "Document Body",
+        "tag": "body",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "body-element"],
+        "description": "Defines the document's body, or content.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/body"
+    },
+    {
+        "name": "Break",
+        "alias": "Line Break",
+        "tag": "br",
+        "categories": ["flow", "phrasing", "void"],
+        "attributes": ["global"],
+        "interfaces": ["element", "br-element"],
+        "description": "Produces a line break in text (carriage-return).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/br"
+    },
+    {
+        "name": "Button",
+        "alias": "Button",
+        "tag": "button",
+        "categories": ["flow", "phrasing", "interactive", "listed", "labelable", "submittable", "form-associated", "palpable"],
+        "attributes": ["global", "autofocus", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "name", "popovertarget", "popovertargetaction", "type", "value"],
+        "interfaces": ["element", "button-element"],
+        "description": "Defines a clickable button.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/button"
+    },
+    {
+        "name": "Canvas",
+        "alias": "Canvas",
+        "tag": "canvas",
+        "categories": ["flow", "phrasing", "embedded", "palpable", "replaced"],
+        "attributes": ["global", "height", "width"],
+        "interfaces": ["element", "canvas-element"],
+        "description": "Used to draw graphics, on the fly, via scripting (usually JavaScript).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/canvas"
+    },
+    {
+        "name": "Caption",
+        "alias": "Table Caption",
+        "tag": "caption",
+        "belongsTo": "table",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-caption-element"],
+        "description": "Defines the caption (or title) of a table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/caption"
+    },
+    {
+        "name": "Cite",
+        "alias": "Citation",
+        "tag": "cite",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines the title of a cited creative work (e.g. a book, a song, a movie, a TV show, a painting, a sculpture, etc.).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/cite"
+    },
+    {
+        "name": "Code",
+        "alias": "Code",
+        "tag": "code",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a short fragment of computer code.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/code"
+    },
+    {
+        "name": "Column",
+        "alias": "Table Column",
+        "tag": "col",
+        "belongsTo": "colgroup",
+        "categories": ["void"],
+        "attributes": ["global", "span"],
+        "interfaces": ["element", "table-col-element"],
+        "description": "Defines a column within a table and is used for defining common semantics on all common cells.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/col"
+    },
+    {
+        "name": "Column Group",
+        "alias": "Table Column Group",
+        "tag": "colgroup",
+        "belongsTo": "table",
+        "categories": [],
+        "attributes": ["global", "span"],
+        "interfaces": ["element", "table-col-element"],
+        "description": "Defines a group of columns within a table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/colgroup"
+    },
+    {
+        "name": "Data",
+        "alias": "Data",
+        "tag": "data",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global", "value"],
+        "interfaces": ["element", "data-element"],
+        "description": "Adds a machine-readable translation of data into a more human-readable form.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/data"
+    },
+    {
+        "name": "Data List",
+        "alias": "HTML Data List",
+        "tag": "datalist",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Contains a set of <option> elements that represent the permissible or recommended options available to users.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/datalist"
+    },
+    {
+        "name": "Description Details",
+        "alias": "Description Details",
+        "tag": "dd",
+        "belongsTo": "dl",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Provides the description, definition, or value for the preceding term in a description list.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dd"
+    },
+    {
+        "name": "Deleted Text",
+        "alias": "Deleted Text",
+        "tag": "del",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global", "cite", "datetime"],
+        "interfaces": ["element", "mod-element"],
+        "description": "Defines text that has been deleted from a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/del"
+    },
+    {
+        "name": "Details",
+        "alias": "Details Disclosure",
+        "tag": "details",
+        "categories": ["flow", "sectioning", "interactive", "palpable"],
+        "attributes": ["global", "open", "name"],
+        "interfaces": ["element", "details-element"],
+        "description": "Defines additional details that the user can view or hide.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details"
+    },
+    {
+        "name": "Definition",
+        "alias": "Definition",
+        "tag": "dfn",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Indicates the term being defined within the context of a definition phrase or sentence.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dfn"
+    },
+    {
+        "name": "Dialog",
+        "alias": "Dialog",
+        "tag": "dialog",
+        "categories": ["flow", "sectioning"],
+        "attributes": ["global", "open"],
+        "interfaces": ["element", "dialog-element"],
+        "description": "Represents a modal or non-modal dialog box or other interactive component, such as a dismissible alert, inspector, or subwindow.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dialog"
+    },
+    {
+        "name": "Container",
+        "alias": "Content Division",
+        "tag": "div",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "div-element"],
+        "description": "Defines a generic container for flow content, which does not inherently represent anything.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/div"
+    },
+    {
+        "name": "Description List",
+        "alias": "Description List",
+        "tag": "dl",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a description list.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dl"
+    },
+    {
+        "name": "Description Term",
+        "alias": "Description Term",
+        "tag": "dt",
+        "belongsTo": "dl",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a term (or name) in a description list.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/dt"
+    },
+    {
+        "name": "Emphasis",
+        "alias": "Emphasis",
+        "tag": "em",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines emphasized text.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/em"
+    },
+    {
+        "name": "Embed",
+        "alias": "Embed External Content",
+        "tag": "embed",
+        "categories": ["flow", "phrasing", "embedded", "interactive", "palpable", "void", "replaced"],
+        "attributes": ["global", "height", "src", "type", "width"],
+        "interfaces": ["element", "embed-element"],
+        "description": "Embeds external content at the specified point in the document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/embed"
+    },
+    {
+        "name": "Field Set",
+        "alias": "Field Set",
+        "tag": "fieldset",
+        "categories": ["flow", "sectioning", "listed", "form-associated", "palpable"],
+        "attributes": ["global", "disabled", "form", "name"],
+        "interfaces": ["element", "field-set-element"],
+        "description": "Groups related elements in a form.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/fieldset"
+    },
+    {
+        "name": "Figure Caption",
+        "alias": "Figure Caption",
+        "tag": "figcaption",
+        "belongsTo": "figure",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a caption or legend for a <figure> element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/figcaption"
+    },
+    {
+        "name": "Figure",
+        "alias": "Figure With Optional Caption",
+        "tag": "figure",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents self-contained content, potentially with an optional caption, which is specified using the <figcaption> element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/figure"
+    },
+    {
+        "name": "Footer",
+        "alias": "Footer",
+        "tag": "footer",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Defines a footer for a document or section.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/footer"
+    },
+    {
+        "name": "Form",
+        "alias": "Form",
+        "tag": "form",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global", "accept-charset", "autocapitalize", "autocomplete", "name", "rel", "action", "enctype", "method", "novalidate", "target"],
+        "interfaces": ["element", "form-element"],
+        "description": "Represents a document section containing interactive controls for submitting information.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 1",
+        "tag": "h1",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "heading-element"],
+        "description": "Defines the highest-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 2",
+        "tag": "h2",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "heading-element"],
+        "description": "Defines the second-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 3",
+        "tag": "h3",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "heading-element"],
+        "description": "Defines the third-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 4",
+        "tag": "h4",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "heading-element"],
+        "description": "Defines the fourth-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 5",
+        "tag": "h5",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["heading-element"],
+        "description": "Defines the fifth-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Heading",
+        "alias": "Heading 6",
+        "tag": "h6",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["heading-element"],
+        "description": "Defines the sixth-level heading for a section or subsection.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Heading_Elements"
+    },
+    {
+        "name": "Head",
+        "alias": "Head",
+        "tag": "head",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Contains machine-readable information (metadata) about the document, like its title, scripts, and style sheets.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/head"
+    },
+    {
+        "name": "Header",
+        "alias": "Header",
+        "tag": "header",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents introductory content, typically a group of introductory or navigational aids.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/header"
+    },
+    {
+        "name": "Heading Group",
+        "alias": "Heading Group",
+        "tag": "hgroup",
+        "categories": ["flow", "heading", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a heading and groups it with the content it's related to.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/hr"
+    },
+    {
+        "name": "Horizontal Rule",
+        "alias": "Horizontal Rule",
+        "tag": "hr",
+        "categories": ["flow", "void"],
+        "attributes": ["global"],
+        "interfaces": ["element", "h-r-element"],
+        "description": "Represents a thematic break between paragraph-level elements.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/hr"
+    },
+    {
+        "name": "HTML",
+        "alias": "HTML",
+        "tag": "html",
+        "categories": [],
+        "attributes": ["global", "xmlns"],
+        "interfaces": ["element"],
+        "description": "Represents the root (top-level element) of an HTML document, so it is also referred to as the root element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html"
+    },
+    {
+        "name": "Idiomatic Text",
+        "alias": "Idiomatic Text",
+        "tag": "i",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a range of text that is set off from the normal text for some reason, like idiomatic text, technical terms, taxonomical designations, among others.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/i"
+    },
+    {
+        "name": "Iframe",
+        "alias": "Inline Frame",
+        "tag": "iframe",
+        "categories": ["flow", "phrasing", "embedded", "interactive", "palpable", "replaced"],
+        "attributes": ["global", "allow", "allowfullscreen", "height", "loading", "name", "referrerpolicy", "sandbox", "src", "srcdoc", "width"],
+        "interfaces": ["element", "frame-element"],
+        "description": "Represents a nested browsing context, effectively embedding another HTML page into the current page.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
+    },
+    {
+        "name": "Image",
+        "alias": "Image",
+        "tag": "img",
+        "categories": ["flow", "phrasing", "embedded", "palpable", "void", "replaced"],
+        "attributes": ["global", "alt", "crossorigin", "decoding", "elementtiming", "fetchpriority", "height", "ismap", "loading", "referrerpolicy", "sizes", "src", "srcset", "usemap", "width"],
+        "interfaces": ["element", "embed-element"],
+        "description": "Embeds an image into the document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types"
+    },
+    {
+        "name": "Input",
+        "alias": "Input",
+        "tag": "input",
+        "categories": ["flow", "listed", "submittable", "resettable", "form-associated", "phrasing", "void", "replaced"],
+        "attributes": ["global", "accept", "alt", "autocomplete", "autofocus", "capture", "checked", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "size", "src", "step", "type", "value", "width"],
+        "interfaces": ["element", "input-element"],
+        "description": "Represents an interactive control for web-based forms in order to accept data from the user.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input"
+    },
+    {
+        "name": "Inserted Text",
+        "alias": "Inserted Text",
+        "tag": "ins",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global", "cite", "datetime"],
+        "interfaces": ["element", "mod-element"],
+        "description": "Represents a range of text that has been added to a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ins"
+    },
+    {
+        "name": "Keyboard Input",
+        "alias": "Keyboard Input",
+        "tag": "kbd",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents user input, typically keyboard input.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/kbd"
+    },
+    {
+        "name": "Label",
+        "alias": "Label",
+        "tag": "label",
+        "belongsTo": ["button", "input", "meter", "output", "progress", "select", "textarea"],
+        "categories": ["flow", "phrasing", "interactive", "form-associated", "palpable"],
+        "attributes": ["global", "for"],
+        "interfaces": ["element", "label-element"],
+        "description": "Represents a caption for an item in a user interface.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label"
+    },
+    {
+        "name": "Legend",
+        "alias": "Legend",
+        "tag": "legend",
+        "belongsTo": "fieldset",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "legend-element"],
+        "description": "Represents a caption for the content of its parent fieldset.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/legend"
+    },
+    {
+        "name": "List Item",
+        "alias": "List Item",
+        "tag": "li",
+        "belongsTo": ["ol", "ul", "menu"],
+        "categories": [],
+        "attributes": ["global", "value"],
+        "interfaces": ["element"],
+        "description": "Represents a list item.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/li"
+    },
+    {
+        "name": "Link",
+        "alias": "Link",
+        "tag": "link",
+        "categories": ["metadata", "flow", "phrasing", "void"],
+        "attributes": ["global", "as", "blocking", "crossorigin", "disabled", "fetchpriority", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "referrerpolicy", "rel", "sizes", "title", "type"],
+        "interfaces": ["element"],
+        "description": "Specifies relationships between the current document and an external resource.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link"
+    },
+    {
+        "name": "Main",
+        "alias": "Main",
+        "tag": "main",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents the dominant content of the body of a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/main"
+    },
+    {
+        "name": "Image Map",
+        "alias": "Image Map",
+        "tag": "map",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global", "name"],
+        "interfaces": ["element"],
+        "description": "The map element is used with area elements to define an image map.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/map"
+    },
+    {
+        "name": "Mark Text",
+        "alias": "Mark Text",
+        "tag": "mark",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents text which is marked or highlighted for reference purposes.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/mark"
+    },
+    {
+        "name": "Menu",
+        "alias": "Menu",
+        "tag": "menu",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global", "type", "label"],
+        "interfaces": ["element", "menu-element"],
+        "description": "Represents a semantic alternative to a list of items, for example, a list of commands.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/menu"
+    },
+    {
+        "name": "Meta",
+        "alias": "Meta",
+        "tag": "meta",
+        "categories": ["metadata", "flow", "phrasing", "void"],
+        "attributes": ["global","charset", "content", "http-equiv", "name"],
+        "interfaces": ["element"],
+        "description": "Represents metadata that cannot be represented by other HTML meta-related elements.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta"
+    },
+    {
+        "name": "Meter",
+        "alias": "Meter",
+        "tag": "meter",
+        "categories": ["flow", "phrasing", "labelable", "palpable"],
+        "attributes": ["global", "value", "min", "max", "low", "high", "optimum", "form"],
+        "interfaces": ["element", "meter-element"],
+        "description": "Represents a scalar measurement within a known range, or a fractional value.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meter"
+    },
+    {
+        "name": "Navigation",
+        "alias": "Navigation",
+        "tag": "nav",
+        "categories": ["flow", "sectioning", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a section of a page that links to other pages or to parts within the page.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/nav"
+    },
+    {
+        "name": "No Script",
+        "alias": "No Script",
+        "tag": "noscript",
+        "categories": ["metadata", "flow", "phrasing"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "The noscript element defines a section of HTML to be inserted if a script type on the page is unsupported or if scripting is currently turned off in the browser.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/noscript"
+    },
+    {
+        "name": "Object",
+        "alias": "External Object",
+        "tag": "object",
+        "categories": ["flow", "phrasing", "embedded", "interactive", "listed", "submittable", "form-associated", "palpable", "replaced"],
+        "attributes": ["global", "data", "form", "height", "name", "type", "usemap", "width"],
+        "interfaces": ["element", "object-element"],
+        "description": "Represents an external resource, which can be treated as an image, a nested browsing context, or a resource to be handled by a plugin.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/object"
+    },
+    {
+        "name": "Ordered List",
+        "alias": "Ordered List",
+        "tag": "ol",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global", "reversed", "start", "type"],
+        "interfaces": ["element", "o-list-element"],
+        "description": "Represents an ordered list of items, typically rendered as a numbered list.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ol"
+    },
+    {
+        "name": "Option Group",
+        "alias": "Option Group",
+        "tag": "optgroup",
+        "belongsTo": "select",
+        "categories": [],
+        "attributes": ["global", "disabled", "label"],
+        "interfaces": ["element", "opt-group-element"],
+        "description": "Represents a group of options within a select element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/optgroup"
+    },
+    {
+        "name": "Option",
+        "alias": "HTML Option",
+        "tag": "option",
+        "belongsTo": ["select", "optgroup", "datalist"],
+        "categories": [],
+        "attributes": ["global", "disabled", "label", "selected", "value"],
+        "interfaces": ["element", "option-element"],
+        "description": "Represents an option in a select element or as part of a list of suggestions in a datalist element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/option"
+    },
+    {
+        "name": "Output",
+        "alias": "Output",
+        "tag": "output",
+        "categories": ["flow", "phrasing", "listed", "labelable", "resettable", "form-associated", "palpable"],
+        "attributes": ["global", "for", "form", "name"],
+        "interfaces": ["element", "output-element"],
+        "description": "Represents a container for the result of a calculation or user action.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/output"
+    },
+    {
+        "name": "Paragraph",
+        "alias": "Paragraph",
+        "tag": "p",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "paragraph-element"],
+        "description": "Represents a paragraph.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/p"
+    },
+    {
+        "name": "Picture",
+        "alias": "Picture",
+        "tag": "picture",
+        "categories": ["flow", "phrasing", "embedded"],
+        "attributes": ["global"],
+        "interfaces": ["element", "picture-element"],
+        "description": "The picture element contains zero or more source elements and one img element to provide versions of an image for different display/device scenarios.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/picture"
+    },
+    {
+        "name": "Preformatted Text",
+        "alias": "Preformatted Text",
+        "tag": "pre",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "pre-element"],
+        "description": "Represents preformatted text which is to be presented exactly as written in the HTML file.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/pre"
+    },
+    {
+        "name": "Progress",
+        "alias": "Progress Indicator",
+        "tag": "progress",
+        "categories": ["flow", "phrasing", "labelable", "palpable"],
+        "attributes": ["global", "value", "max"],
+        "interfaces": ["element", "progress-element"],
+        "description": "Represents the completion progress of a task.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/progress"
+    },
+    {
+        "name": "Quote",
+        "alias": "Inline Quotation",
+        "tag": "q",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global", "cite"],
+        "interfaces": ["element", "quote-element"],
+        "description": "Represents a short inline quotation.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/q"
+    },
+    {
+        "name": "Ruby Parenthesis",
+        "alias": "Ruby Fallback Parenthesis",
+        "tag": "rp",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents parentheses around a ruby annotation, used to display the parentheses in browsers that do not support ruby annotations.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rp"
+    },
+    {
+        "name": "Ruby Text",
+        "alias": "Ruby Text",
+        "tag": "rt",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents the text of a ruby annotation, which is used to provide pronunciation, translation, or transliteration information for East Asian typography.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rt"
+    },
+    {
+        "name": "Ruby",
+        "alias": "Ruby Annotation",
+        "tag": "ruby",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a ruby annotation, which is a small text attached to the main text to indicate pronunciation or meaning.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ruby"
+    },
+    {
+        "name": "Strikethrough",
+        "alias": "Strikethrough",
+        "tag": "s",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents text that is no longer accurate or relevant.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/s"
+    },
+    {
+        "name": "Sample Output",
+        "alias": "Sample Output",
+        "tag": "samp",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents sample output from a computer program.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/samp"
+    },
+    {
+        "name": "Script",
+        "alias": "Script",
+        "tag": "script",
+        "categories": ["metadata", "flow", "phrasing"],
+        "attributes": ["global", "async", "crossorigin", "defer", "fetchpriority", "integrity", "nomodule", "nonce", "referrerpolicy", "src", "type"],
+        "interfaces": ["element", "script-element"],
+        "description": "The script element allows authors to include dynamic script and data blocks in their documents.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script"
+    },
+    {
+        "name": "Search",
+        "alias": "Generic Search",
+        "tag": "search",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a control for searching through a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/search"
+    },
+    {
+        "name": "Section",
+        "alias": "Generic Section",
+        "tag": "section",
+        "categories": ["flow", "sectioning", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a generic standalone section of a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section"
+    },
+    {
+        "name": "Select",
+        "alias": "HTML Select",
+        "tag": "select",
+        "categories": ["flow", "phrasing", "interactive", "listed", "labelable",  "resettable", "submittable", "form-associated"],
+        "attributes": ["global", "autocomplete", "disabled", "form", "multiple", "name", "required", "size"],
+        "interfaces": ["element", "select-element"],
+        "description": "Represents a control that provides a menu of options.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/select"
+    },
+    {
+        "name": "Slot",
+        "alias": "Web Component Slot",
+        "tag": "slot",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global", "name"],
+        "interfaces": ["element", "slot-element"],
+        "description": "The slot element is a placeholder inside a web component that you can fill with your own markup.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot"
+    },
+    {
+        "name": "Small",
+        "alias": "Side-Comment",
+        "tag": "small",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents side-comments and small print, like copyright and legal text, independent of its styled presentation.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/small"
+    },
+    {
+        "name": "Source",
+        "alias": "Media Source",
+        "tag": "source",
+        "belongsTo": ["audio", "video", "picture"],
+        "categories": ["void"],
+        "attributes": ["global", "src", "type", "srcset", "sizes", "media", "height", "width"],
+        "interfaces": ["element", "source-element"],
+        "description": "Specifies one or more media resources for the picture, audio, or video elements.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/source"
+    },
+    {
+        "name": "Span",
+        "alias": "Content Span",
+        "tag": "span",
+        "categories": ["flow", "phrasing"],
+        "attributes": ["global"],
+        "interfaces": ["element", "span-element"],
+        "description": "The span element is a generic inline container for phrasing content.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/span"
+    },
+    {
+        "name": "Strong",
+        "alias": "Strong Importance",
+        "tag": "strong",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents strong importance, seriousness, or urgency for its contents.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/strong"
+    },
+    {
+        "name": "Style",
+        "alias": "Style Information",
+        "tag": "style",
+        "categories": ["metadata"],
+        "attributes": ["global", "media", "nonce", "title"],
+        "interfaces": ["element", "style-element"],
+        "description": "The style element contains style information for a document, or part of a document.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/style"
+    },
+    {
+        "name": "Subscript",
+        "alias": "Subscript",
+        "tag": "sub",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a subscript.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/sub"
+    },
+    {
+        "name": "Summary",
+        "alias": "Disclosure Summary",
+        "tag": "summary",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a summary, caption, or legend for the rest of the contents of the summary element's parent details element.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/summary"
+    },
+    {
+        "name": "Superscript",
+        "alias": "Superscript",
+        "tag": "sup",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a superscript.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/sup"
+    },
+    {
+        "name": "Table",
+        "alias": "Table",
+        "tag": "table",
+        "categories": ["flow"],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-element"],
+        "description": "Represents data in a two-dimensional table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/table"
+    },
+    {
+        "name": "Table Body",
+        "alias": "Table Body",
+        "tag": "tbody",
+        "belongsTo": "table",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-section-element"],
+        "description": "The tbody element encapsulates a set of table rows (tr elements), indicating that they comprise the body of the table (table).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tbody"
+    },
+    {
+        "name": "Table Data Cell",
+        "alias": "Table Data Cell",
+        "tag": "td",
+        "belongsTo": "tr",
+        "categories": ["sectioning"],
+        "attributes": ["global", "colspan", "headers", "rowspan"],
+        "interfaces": ["element", "table-cell-element"],
+        "description": "Represents a data cell in a table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/td"
+    },
+    {
+        "name": "Template",
+        "alias": "Template",
+        "tag": "template",
+        "categories": ["metadata", "flow", "phrasing", "script-supporting"],
+        "attributes": ["global", "shadowrootmode", "shadowrootclonable", "shadowrootdelegatesfocus"],
+        "interfaces": ["element", "template-element"],
+        "description": "The template element is a mechanism for holding client-side content that you don't want to be rendered when the page loads.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template"
+    },
+    {
+        "name": "Text Area",
+        "alias": "Text Area",
+        "tag": "textarea",
+        "categories": ["flow", "phrasing", "interactive", "listed", "labelable", "resettable", "submittable", "form-associated", "replaced"],
+        "attributes": ["global", "autocomplete", "autofocus", "cols", "dirname", "disabled", "form", "maxlength", "minlength", "name", "placeholder", "readonly", "required", "rows", "wrap"],
+        "interfaces": ["element", "text-area-element"],
+        "description": "Represents a multi-line plain-text editing control.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea"
+    },
+    {
+        "name": "Table Foot",
+        "alias": "Table Foot",
+        "tag": "tfoot",
+        "belongsTo": "table",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-section-element"],
+        "description": "The tfoot element encapsulates a set of table rows (tr elements), indicating that they comprise the foot of the table (table).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tfoot"
+    },
+    {
+        "name": "Table Header Cell",
+        "alias": "Table Header Cell",
+        "tag": "th",
+        "belongsTo": "tr",
+        "categories": [],
+        "attributes": ["global", "abbr", "colspan", "headers", "rowspan", "scope"],
+        "interfaces": ["element", "table-cell-element"],
+        "description": "Represents a header cell in a table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/th"
+    },
+    {
+        "name": "Table Head",
+        "alias": "Table Head",
+        "tag": "thead",
+        "belongsTo": "table",
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-section-element"],
+        "description": "The thead element encapsulates a set of table rows (tr elements), indicating that they comprise the head of the table (table).",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/thead"
+    },
+    {
+        "name": "Time",
+        "alias": "Time",
+        "tag": "time",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global", "datetime"],
+        "interfaces": ["element", "time-element"],
+        "description": "Represents a specific period in time.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/time"
+    },
+    {
+        "name": "Title",
+        "alias": "Title",
+        "tag": "title",
+        "categories": ["metadata"],
+        "attributes": ["global"],
+        "interfaces": ["element", "title-element"],
+        "description": "The title element defines the document's title that is shown in a browser's title bar or a page's tab.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/title"
+    },
+    {
+        "name": "Table Row",
+        "alias": "Table Row",
+        "tag": "tr",
+        "belongsTo": ["table", "thead", "tfoot"],
+        "categories": [],
+        "attributes": ["global"],
+        "interfaces": ["element", "table-row-element"],
+        "description": "The tr element defines a row of cells in a table.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr"
+    },
+    {
+        "name": "Track",
+        "alias": "Track",
+        "tag": "track",
+        "categories": ["void"],
+        "attributes": ["global", "default", "kind", "label", "src", "srclang"],
+        "interfaces": ["element", "track-element"],
+        "description": "The track element is used as a child of the media elements audio and video. It lets you specify timed text tracks (or time-based data), for example to automatically handle subtitles.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/track"
+    },
+    {
+        "name": "Unarticulated Annotation",
+        "alias": "Unarticulated Annotation (Underline)",
+        "tag": "u",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a span of inline text which should be rendered in a way that indicates that it has a non-textual annotation.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/u"
+    },
+    {
+        "name": "Unordered List",
+        "alias": "Unordered List",
+        "tag": "ul",
+        "categories": ["flow", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element", "u-list-element"],
+        "description": "Represents an unordered list of items, typically rendered as a bulleted list.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ul"
+    },
+    {
+        "name": "Variable",
+        "alias": "Variable",
+        "tag": "var",
+        "categories": ["flow", "phrasing", "palpable"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a variable in a mathematical expression or a programming context.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/var"
+    },
+    {
+        "name": "Video",
+        "alias": "Video",
+        "tag": "video",
+        "categories": ["flow", "phrasing", "embedded", "interactive", "palpable"],
+        "attributes": ["global", "autoplay", "controls", "controlslist", "crossorigin", "disablepictureinpicture", "disableremoteplayback", "height", "loop", "muted", "playsinline", "poster", "preload", "src", "width"],
+        "interfaces": ["element", "video-element"],
+        "description": "The video element is used to embed video content.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video"
+    },
+    {
+        "name": "Word Break Opportunity",
+        "alias": "Word Break Opportunity",
+        "tag": "wbr",
+        "categories": ["flow", "phrasing", "void"],
+        "attributes": ["global"],
+        "interfaces": ["element"],
+        "description": "Represents a word break opportunity—a position within text where the browser may optionally break a line.",
+        "documentation": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/wbr"
+    }
+]
